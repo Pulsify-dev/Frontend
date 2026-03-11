@@ -2,7 +2,7 @@ import type {
   Profile,
   ProfileDto,
   UpdateProfilePayload,
-} from "../types/profileType";
+} from "../types/profileTypes";
 
 export function mapProfileDtoToProfile(dto: ProfileDto): Profile {
   return {

@@ -1,22 +1,20 @@
-import type { Profile } from "../types/profileType";
-
-type ProfileCardProps = {
+import type { Profile } from "../types/profileTypes";
+import coverImage from "./profile.jpg";
+import profilePhoto from "./profilephoto.jpg";
+type Props = {
   profile: Profile;
 };
 
-export default function ProfileCard({ profile }: ProfileCardProps) {
+export default function ProfileCard({ profile }: Props) {
   return (
     <section className="profile-card">
-      <img src={profile.coverUrl} alt="Cover" className="cover-photo" />
-
+      <img src={coverImage} alt="Cover" className="cover-photo" />
+      {/* {Change image} */}
       <div className="profile-info">
-        <img
-          src={profile.avatarUrl}
-          alt={profile.displayName}
-          className="avatar"
-        />
+        <img src={profilePhoto} alt={profile.displayName} className="avatar" />
 
         <h1>{profile.displayName}</h1>
+        <p>@{profile.username}</p>
         <p>{profile.bio}</p>
 
         <p>
