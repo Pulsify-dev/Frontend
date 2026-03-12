@@ -1,6 +1,4 @@
-import type { Profile, UpdateProfilePayload } from "../types/profileTypes";
-
-let mockProfile: Profile = {
+let mockProfile = {
   id: "u1",
   username: "ahmad",
   displayName: "Ahmad Hisham",
@@ -18,16 +16,16 @@ let mockProfile: Profile = {
   },
 };
 
-function wait(ms: number) {
+function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function getMyProfileMock(): Promise<Profile> {
+export async function getMyProfileMock() {
   await wait(300);
   return mockProfile;
 }
 
-export async function getPublicProfileMock(userId: string): Promise<Profile> {
+export async function getPublicProfileMock(userId) {
   await wait(300);
   return {
     ...mockProfile,
@@ -37,9 +35,7 @@ export async function getPublicProfileMock(userId: string): Promise<Profile> {
   };
 }
 
-export async function updateMyProfileMock(
-  payload: UpdateProfilePayload,
-): Promise<Profile> {
+export async function updateMyProfileMock(payload) {
   await wait(300);
 
   mockProfile = {
@@ -55,12 +51,12 @@ export async function updateMyProfileMock(
   return mockProfile;
 }
 
-export async function uploadAvatarMock(file: File): Promise<string> {
+export async function uploadAvatarMock(file) {
   await wait(300);
   return URL.createObjectURL(file);
 }
 
-export async function uploadCoverMock(file: File): Promise<string> {
+export async function uploadCoverMock(file) {
   await wait(300);
   return URL.createObjectURL(file);
 }

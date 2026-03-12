@@ -2,11 +2,6 @@ import {
   mapProfileDtoToProfile,
   mapUpdateProfilePayloadToDto,
 } from "../adapters/profileAdapter";
-import type {
-  Profile,
-  ProfileDto,
-  UpdateProfilePayload,
-} from "../types/profileTypes";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/v1";
@@ -19,7 +14,7 @@ function getAuthHeaders() {
   };
 }
 
-export async function getMyProfileApi(): Promise<Profile> {
+export async function getMyProfileApi() {
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     headers: {
       ...getAuthHeaders(),
@@ -30,24 +25,24 @@ export async function getMyProfileApi(): Promise<Profile> {
     throw new Error("Failed to fetch profile");
   }
 
-  const data: ProfileDto = await response.json();
+  const  ProfileDto = await response.json();
   return mapProfileDtoToProfile(data);
 }
 
-export async function getPublicProfileApi(userId: string): Promise<Profile> {
+export async function getPublicProfileApi(userId) {
   const response = await fetch(`${API_BASE_URL}/users/${userId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch public profile");
   }
 
-  const data: ProfileDto = await response.json();
+  const  ProfileDto = await response.json();
   return mapProfileDtoToProfile(data);
 }
 
 export async function updateMyProfileApi(
-  payload: UpdateProfilePayload,
-): Promise<Profile> {
+  payload
+) {
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     method: "PATCH",
     headers: {
@@ -61,11 +56,11 @@ export async function updateMyProfileApi(
     throw new Error("Failed to update profile");
   }
 
-  const data: ProfileDto = await response.json();
+  const ProfileDto = await response.json();
   return mapProfileDtoToProfile(data);
 }
 
-export async function uploadAvatarApi(file: File): Promise<string> {
+export async function uploadAvatarApi(file) {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -85,7 +80,7 @@ export async function uploadAvatarApi(file: File): Promise<string> {
   return data.url;
 }
 
-export async function uploadCoverApi(file: File): Promise<string> {
+export async function uploadCoverApi(file) {
   const formData = new FormData();
   formData.append("file", file);
 

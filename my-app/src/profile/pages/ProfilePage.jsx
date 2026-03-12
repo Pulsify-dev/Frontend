@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import ProfileCard from "../components/ProfileCard";
 import EditProfileForm from "../components/EditProfileForm";
 import { profileService } from "../services/profileService";
-import type { Profile, UpdateProfilePayload } from "../types/profileTypes";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -22,10 +21,10 @@ export default function ProfilePage() {
       }
     }
 
-    void loadProfile();
+    loadProfile();
   }, []);
 
-  async function handleSave(payload: UpdateProfilePayload) {
+  async function handleSave(payload) {
     try {
       const updated = await profileService.updateMyProfile(payload);
       setProfile(updated);
@@ -34,7 +33,7 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleAvatarUpload(file: File) {
+  async function handleAvatarUpload(file) {
     try {
       const avatarUrl = await profileService.uploadAvatar(file);
       setProfile((current) => (current ? { ...current, avatarUrl } : current));
@@ -43,7 +42,7 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleCoverUpload(file: File) {
+  async function handleCoverUpload(file) {
     try {
       const coverUrl = await profileService.uploadCover(file);
       setProfile((current) => (current ? { ...current, coverUrl } : current));

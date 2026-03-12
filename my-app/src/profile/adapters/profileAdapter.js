@@ -1,10 +1,4 @@
-import type {
-  Profile,
-  ProfileDto,
-  UpdateProfilePayload,
-} from "../types/profileTypes";
-
-export function mapProfileDtoToProfile(dto: ProfileDto): Profile {
+export function mapProfileDtoToProfile(dto) {
   return {
     id: dto.id,
     username: dto.username,
@@ -20,7 +14,7 @@ export function mapProfileDtoToProfile(dto: ProfileDto): Profile {
   };
 }
 
-export function mapUpdateProfilePayloadToDto(payload: UpdateProfilePayload) {
+export function mapUpdateProfilePayloadToDto(payload) {
   return {
     display_name: payload.displayName,
     bio: payload.bio,

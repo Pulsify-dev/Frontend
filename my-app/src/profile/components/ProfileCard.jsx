@@ -1,11 +1,7 @@
-import type { Profile } from "../types/profileTypes";
 import coverImage from "./profile.jpg";
 import profilePhoto from "./profilephoto.jpg";
-type Props = {
-  profile: Profile;
-};
 
-export default function ProfileCard({ profile }: Props) {
+export default function ProfileCard({ profile }) {
   return (
     <section className="profile-card">
       <img src={coverImage} alt="Cover" className="cover-photo" />

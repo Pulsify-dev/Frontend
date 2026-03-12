@@ -1,19 +1,11 @@
 import { useState } from "react";
-import type { Profile, UpdateProfilePayload } from "../types/profileTypes";
-
-type Props = {
-  profile: Profile;
-  onSave: (payload: UpdateProfilePayload) => Promise<void>;
-  onAvatarUpload: (file: File) => Promise<void>;
-  onCoverUpload: (file: File) => Promise<void>;
-};
 
 export default function EditProfileForm({
   profile,
   onSave,
   onAvatarUpload,
   onCoverUpload,
-}: Props) {
+}) {
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [bio, setBio] = useState(profile.bio);
   const [location, setLocation] = useState(profile.location);
@@ -27,7 +19,7 @@ export default function EditProfileForm({
   const [website, setWebsite] = useState(profile.socialLinks.website ?? "");
   const [isPrivate, setIsPrivate] = useState(profile.isPrivate);
 
-  async function handleSubmit(event: React.ChangeEvent<HTMLFormElement>) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     await onSave({
@@ -47,15 +39,13 @@ export default function EditProfileForm({
     });
   }
 
-  async function handleAvatarChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  async function handleAvatarChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
     await onAvatarUpload(file);
   }
 
-  async function handleCoverChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCoverChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
     await onCoverUpload(file);
