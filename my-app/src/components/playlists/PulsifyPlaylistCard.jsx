@@ -2,8 +2,8 @@ import React from 'react';
 
 /**
  * PulsifyPlaylistCard
- * A raw, currently unstyled presentational component that displays
- * a single playlist's basic metadata based on the adapted camelCase model.
+ * Lessa component 3ady mn gher styling bs bya5od el props
+ * w by3red el metadata bta3t el playlist (camelCase b2a b3d el adapter).
  */
 export const PulsifyPlaylistCard = ({ playlist }) => {
   // Defensive check in case data is malformed

@@ -4,8 +4,8 @@ import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard
 
 /**
  * PulsifyPlaylistsView
- * A stateful page component that fetches data from the DI mock service
- * and manages loading/error states before mapping over the data to render cards.
+ * El page el r2iseya bta3t el playlists.
+ * Bt-hndl el loading wel error w b2a b-tmap 3la el data 3shan trsm el cards.
  */
 export const PulsifyPlaylistsView = () => {
   const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);
@@ -18,19 +18,19 @@ export const PulsifyPlaylistsView = () => {
     const loadPulsifyData = async () => {
       try {
         setIsLoading(true);
-        // Leaving this console.log in intentionally for the "Struggle Phase" realism
-        console.log('[Pulsify System] Attempting to fetch user playlists...');
+        // Bn-log 3shan n-debug
+        console.log('by-fetch el playlists dlwa2ty...');
         
         const data = await PulsifyPlaylistService.retrieveAllPlaylists();
         
         if (isMounted) {
           setPulsifyPlaylists(data);
-          console.log('[Pulsify System] Playlists retrieved:', data);
+          console.log('gibt el playlists:', data);
         }
       } catch (err) {
         if (isMounted) {
           setFetchError(err.message || 'Failed to retrieve playlist context.');
-          console.error('[Pulsify System] Fetch Error:', err);
+          console.error('fi moshkela fel fetch:', err);
         }
       } finally {
         if (isMounted) {
