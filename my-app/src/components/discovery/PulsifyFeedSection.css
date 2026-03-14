@@ -1,0 +1,140 @@
+.pulsify-feed-section {
+  padding: 32px 24px;
+  border-bottom: 1px solid var(--border, #e0e0e0);
+}
+
+.pulsify-feed-section h2 {
+  margin: 0 0 24px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-dark, #000);
+}
+
+.pulsify-track-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.pulsify-grid-item {
+  min-width: 0;
+}
+
+.pulsify-track-preview {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pulsify-track-preview:hover {
+  opacity: 0.8;
+}
+
+.pulsify-track-preview img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.pulsify-track-preview h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark, #000);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulsify-track-preview p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulsify-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.pulsify-skeleton-card {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: pulsify-skeleton-loading 1.5s infinite;
+  aspect-ratio: 1;
+  border-radius: 4px;
+}
+
+@keyframes pulsify-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.pulsify-empty-state {
+  text-align: center;
+  color: var(--text-secondary, #666);
+  font-size: 16px;
+  margin: 32px 0;
+}
+
+.pulsify-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.pulsify-spinner-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #aa3bff;
+  animation: pulsify-spin 1s ease-in-out infinite;
+}
+
+@keyframes pulsify-spin {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pulsify-error-alert {
+  background: #ffebee;
+  border-left: 4px solid #ff1744;
+  padding: 16px;
+  margin: 16px 0;
+  border-radius: 4px;
+}
+
+.pulsify-error-alert p {
+  margin: 0 0 12px 0;
+  color: #c62828;
+  font-size: 14px;
+}
+
+.pulsify-retry-btn {
+  background: #ff1744;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.pulsify-retry-btn:hover {
+  background: #f50057;
+}
