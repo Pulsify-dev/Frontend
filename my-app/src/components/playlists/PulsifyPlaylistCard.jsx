@@ -1,10 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-/**
- * PulsifyPlaylistCard
- * Lessa component 3ady mn gher styling bs bya5od el props
- * w by3red el metadata bta3t el playlist (camelCase b2a b3d el adapter).
- */
 export const PulsifyPlaylistCard = ({ playlist }) => {
   // Defensive check in case data is malformed
   if (!playlist) return null;
@@ -26,7 +22,9 @@ export const PulsifyPlaylistCard = ({ playlist }) => {
       <p><em>{playlist.playlistDescription}</em></p>
       
       {/* Action stubs for future days */}
-      <button type="button">View Details</button>
+      <Link to={`/playlists/${playlist.playlistId}`}>
+        <button type="button">View Details</button>
+      </Link>
     </div>
   );
 };

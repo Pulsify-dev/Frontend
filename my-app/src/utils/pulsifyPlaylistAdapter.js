@@ -24,11 +24,6 @@ export const adaptPulsifyTrack = (rawTrack) => {
   };
 };
 
-/**
- * Transforms a single playlist object from snake_case to camelCase.
- * @param {Object} rawPlaylist - The raw playlist object from the 'backend'
- * @returns {Object} The adapted camelCase playlist object
- */
 export const adaptPulsifyPlaylist = (rawPlaylist) => {
   if (!rawPlaylist) return null;
 

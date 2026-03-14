@@ -1,9 +1,3 @@
-/**
- * @file pulsifyPlaylistFixtures.js
- * @description Fake data 3shan n-test el UI (b-snake_case zay ma el backend 2alou).
- * Dih bas la7ad ma ykalsou el api bta3hom.
- */
-
 export const mockPulsifyPlaylistsResponse = [
   {
     playlist_id: 'pl_98x72abc',

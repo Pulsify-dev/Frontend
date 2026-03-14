@@ -16,10 +16,6 @@ const simulateNetworkDelay = () => {
 
 export const PulsifyPlaylistService = {
 
-  /**
-   * By-fetch el playlists bta3t el user.
-   * Zay el endpoint da /api/v1/users/{userId}/playlists
-   */
   async retrieveAllPlaylists() {
     await simulateNetworkDelay();
     
@@ -27,11 +23,6 @@ export const PulsifyPlaylistService = {
     return mockPulsifyPlaylistsResponse.map(rawPl => adaptPulsifyPlaylist(rawPl));
   },
 
-  /**
-   * By-fetch playlist wa7da b-tafyloha.
-   * Zay /api/v1/playlists/{playlistId}
-   * @param {string} targetPlaylistId 
-   */
   async retrievePlaylistById(targetPlaylistId) {
     await simulateNetworkDelay();
     
