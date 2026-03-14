@@ -4,10 +4,14 @@ import profilePhoto from "./profilephoto.jpg";
 export default function ProfileCard({ profile }) {
   return (
     <section className="profile-card">
-      <img src={coverImage} alt="Cover" className="cover-photo" />
+      <img src={profile.coverUrl} alt="Cover" className="cover-photo" />
       {/* {Change image} */}
       <div className="profile-info">
-        <img src={profilePhoto} alt={profile.displayName} className="avatar" />
+        <img
+          src={profile.avatarUrl}
+          alt={profile.displayName}
+          className="avatar"
+        />
 
         <h1>{profile.displayName}</h1>
         <p>@{profile.username}</p>

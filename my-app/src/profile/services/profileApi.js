@@ -25,8 +25,8 @@ export async function getMyProfileApi() {
     throw new Error("Failed to fetch profile");
   }
 
-  const  ProfileDto = await response.json();
-  return mapProfileDtoToProfile(data);
+  const ProfileDto = await response.json();
+  return mapProfileDtoToProfile(ProfileDto);
 }
 
 export async function getPublicProfileApi(userId) {
@@ -36,13 +36,11 @@ export async function getPublicProfileApi(userId) {
     throw new Error("Failed to fetch public profile");
   }
 
-  const  ProfileDto = await response.json();
-  return mapProfileDtoToProfile(data);
+  const ProfileDto = await response.json();
+  return mapProfileDtoToProfile(ProfileDto);
 }
 
-export async function updateMyProfileApi(
-  payload
-) {
+export async function updateMyProfileApi(payload) {
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     method: "PATCH",
     headers: {
@@ -57,7 +55,7 @@ export async function updateMyProfileApi(
   }
 
   const ProfileDto = await response.json();
-  return mapProfileDtoToProfile(data);
+  return mapProfileDtoToProfile(ProfileDto);
 }
 
 export async function uploadAvatarApi(file) {
