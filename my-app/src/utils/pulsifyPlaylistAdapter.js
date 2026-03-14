@@ -7,7 +7,7 @@
 /**
  * By-transform el track object mn snake_case l camelCase.
  * @param {Object} rawTrack - el track object el raw mn el backend
- * @returns {Object} el track nedeef camelCase
+ * @returns {Object} 
  */
 export const adaptPulsifyTrack = (rawTrack) => {
   if (!rawTrack) return null;

@@ -144,3 +144,8 @@ vite.config.ts.timestamp-*
 .vite/
 
 .cursorrules
+
+# Project requirement documents
+*.pdf
+*.docx
+*.doc

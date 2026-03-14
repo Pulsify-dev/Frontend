@@ -2,11 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
 
-/**
- * PulsifyPlaylistsView
- * El page el r2iseya bta3t el playlists.
- * Bt-hndl el loading wel error w b2a b-tmap 3la el data 3shan trsm el cards.
- */
 export const PulsifyPlaylistsView = () => {
   const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
