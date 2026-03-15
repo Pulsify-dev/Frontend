@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const PulsifyTrackRow = ({ track, index }) => {
+export const PulsifyTrackRow = ({ track, index, onMoveUp, onMoveDown, isFirst, isLast }) => {
   if (!track) return null;
 
   return (
@@ -8,6 +8,10 @@ export const PulsifyTrackRow = ({ track, index }) => {
       className="setup-wrapper-track-row"
       style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #444', padding: '10px 0' }}
     >
+      <div style={{ display: 'flex', flexDirection: 'column', marginRight: '10px' }}>
+        <button onClick={() => onMoveUp(index)} disabled={isFirst} style={{ background: 'none', border: 'none', cursor: isFirst ? 'default' : 'pointer', opacity: isFirst ? 0.3 : 1, color: '#aaa' }}>&#9650;</button>
+        <button onClick={() => onMoveDown(index)} disabled={isLast} style={{ background: 'none', border: 'none', cursor: isLast ? 'default' : 'pointer', opacity: isLast ? 0.3 : 1, color: '#aaa' }}>&#9660;</button>
+      </div>
       <div style={{ width: '30px', color: '#888' }}>{index + 1}</div>
       <img 
         src={track.coverArtUrl} 

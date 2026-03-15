@@ -40,6 +40,31 @@ export const PulsifyPlaylistDetailView = () => {
     }
   }, [playlistId]);
 
+  const handleMoveUp = (index) => {
+    if (index === 0) return;
+    const newTracks = [...playlistDetail.tracks];
+    const temp = newTracks[index - 1];
+    newTracks[index - 1] = newTracks[index];
+    newTracks[index] = temp;
+    setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
+  };
+
+  const handleMoveDown = (index) => {
+    if (index === playlistDetail.tracks.length - 1) return;
+    const newTracks = [...playlistDetail.tracks];
+    const temp = newTracks[index + 1];
+    newTracks[index + 1] = newTracks[index];
+    newTracks[index] = temp;
+    setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
+  };
+
+  const togglePrivacy = () => {
+    setPlaylistDetail({
+      ...playlistDetail,
+      isPublic: !playlistDetail.isPublic
+    });
+  };
+
   if (isLoading) {
     return <div>Loading details... please hold.</div>;
   }
@@ -66,7 +91,10 @@ export const PulsifyPlaylistDetailView = () => {
           height="250" 
         />
         <div>
-          <p>{playlistDetail.isPublic ? 'Public Record' : 'Private Stash'}</p>
+          <button onClick={togglePrivacy} style={{ padding: '5px 10px', fontSize: '12px', cursor: 'pointer', marginBottom: '10px', backgroundColor: playlistDetail.isPublic ? '#1db954' : '#e22134', color: 'white', border: 'none', borderRadius: '4px' }}>
+            {playlistDetail.isPublic ? 'Public Record' : 'Private Stash (Secret Token)'}
+          </button>
+          <p style={{ margin: 0, color: '#888', fontSize: '12px' }}>Click to toggle privacy</p>
           <h1>{playlistDetail.playlistName}</h1>
           <p>{playlistDetail.playlistDescription}</p>
           <div style={{ marginTop: '20px', color: '#666' }}>
@@ -79,7 +107,15 @@ export const PulsifyPlaylistDetailView = () => {
       <div className="setup-wrapper-track-list">
         {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
           playlistDetail.tracks.map((track, idx) => (
-            <PulsifyTrackRow key={track.trackId} track={track} index={idx} />
+            <PulsifyTrackRow 
+              key={track.trackId} 
+              track={track} 
+              index={idx} 
+              onMoveUp={handleMoveUp}
+              onMoveDown={handleMoveDown}
+              isFirst={idx === 0}
+              isLast={idx === playlistDetail.tracks.length - 1}
+            />
           ))
         ) : (
           <p>Lessa mfesh tracks hena...</p>
