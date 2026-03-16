@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
+import { Link } from 'react-router-dom';
 
 export const PulsifyPlaylistsView = () => {
   const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);
@@ -55,7 +56,12 @@ export const PulsifyPlaylistsView = () => {
 
   return (
     <div className="pulsify-page-container">
-      <h2>Your Sets & Playlists</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Your Sets & Playlists</h2>
+        <Link to="/upload" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+          Upload Track
+        </Link>
+      </div>
       <div 
         className="pulsify-grid-container"
         style={{ display: 'flex', flexWrap: 'wrap' }}
