@@ -1,0 +1,39 @@
+.pulsify-feed-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.feed-header {
+  margin-bottom: 32px;
+}
+
+.feed-header h2 {
+  font-size: 28px;
+  margin: 0 0 8px 0;
+  /* Premium textual gradient */
+  background: linear-gradient(90deg, #fff, var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 15px;
+}
+
+.feed-loader {
+  text-align: center;
+  padding: 60px;
+  color: var(--accent-primary);
+  font-weight: 500;
+  opacity: 0.8;
+  animation: feedPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes feedPulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}

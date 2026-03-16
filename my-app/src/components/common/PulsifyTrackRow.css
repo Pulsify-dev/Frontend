@@ -1,0 +1,62 @@
+.pulsify-track-row {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  gap: 16px;
+  margin-bottom: 12px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+}
+
+.pulsify-track-row:hover {
+  transform: translateX(4px);
+  background: var(--glass-bg-hover);
+}
+
+.pulsify-track-art {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.pulsify-track-info {
+  flex: 1;
+}
+
+.pulsify-track-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.artist-name {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.artist-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+.pulsify-track-stats {
+  display: flex;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding-right: 20px;
+}
+
+.play-btn {
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+}
