@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
 
 export const PulsifyTrackUploadScreen = () => {
   const [dragActive, setDragActive] = useState(false);
@@ -32,6 +33,12 @@ export const PulsifyTrackUploadScreen = () => {
       const files = Array.from(e.target.files);
       setUploadedFiles(files);
     }
+  };
+
+  const handleMetadataSubmit = (data) => {
+    console.log('Metadata Saved for', data.file.name, data);
+    // Simulating save logic
+    alert(`Track "${data.title}" has been saved and is now ${data.isPublic ? 'Public' : 'Private'}!`);
   };
 
   return (
@@ -88,14 +95,10 @@ export const PulsifyTrackUploadScreen = () => {
 
       {uploadedFiles.length > 0 && (
         <div style={{ marginTop: '30px' }}>
-          <h3>Selected Files</h3>
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            {uploadedFiles.map((f, i) => (
-              <li key={i} style={{ padding: '10px', backgroundColor: '#222', marginBottom: '5px', borderRadius: '4px' }}>
-                {f.name} - {(f.size / (1024 * 1024)).toFixed(2)} MB
-              </li>
-            ))}
-          </ul>
+          <h3>Editing Metadata ({uploadedFiles.length})</h3>
+          {uploadedFiles.map((file, i) => (
+            <PulsifyMetadataForm key={i} file={file} onSubmit={handleMetadataSubmit} />
+          ))}
         </div>
       )}
     </div>
