@@ -1,0 +1,39 @@
+.pulsify-notification-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.pulsify-bell-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+  padding: 8px; /* expanding click target organically */
+}
+
+.pulsify-bell-icon:hover {
+  color: var(--accent-primary);
+}
+
+.pulsify-unread-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 5px;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); /* subtle glow */
+}
+
+.pulsify-dropdown-overlay {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  width: 340px;
+  z-index: 100;
+}
