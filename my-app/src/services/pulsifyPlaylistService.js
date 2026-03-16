@@ -1,8 +1,7 @@
 /**
  * @file pulsifyPlaylistService.js
  * @description El mock service bta3t el playlists.
- * B-tegib el fake data, trmyha 3la el adapter w trg3ha b promise 3shan n-simulate el delay
- * w kanena shaghaleen m3 server 7a2i2y.
+
  */
 
 import { mockPulsifyPlaylistsResponse } from '../mocks/pulsifyPlaylistFixtures.js';
@@ -18,14 +17,14 @@ export const PulsifyPlaylistService = {
 
   async retrieveAllPlaylists() {
     await simulateNetworkDelay();
-    
+
     // Simulate mapping the raw API response through our adapter
     return mockPulsifyPlaylistsResponse.map(rawPl => adaptPulsifyPlaylist(rawPl));
   },
 
   async retrievePlaylistById(targetPlaylistId) {
     await simulateNetworkDelay();
-    
+
     const rawTarget = mockPulsifyPlaylistsResponse.find(
       (pl) => pl.playlist_id === targetPlaylistId
     );
