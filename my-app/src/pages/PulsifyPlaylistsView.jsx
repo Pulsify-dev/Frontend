@@ -58,9 +58,14 @@ export const PulsifyPlaylistsView = () => {
     <div className="pulsify-page-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Your Sets & Playlists</h2>
-        <Link to="/upload" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
-          Upload Track
-        </Link>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link to="/upload" style={{ padding: '8px 16px', backgroundColor: '#333', color: 'white', textDecoration: 'none', borderRadius: '4px', border: '1px solid #555' }}>
+            Upload Track
+          </Link>
+          <Link to="/premium" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
+            Go Premium &starf;
+          </Link>
+        </div>
       </div>
       <div 
         className="pulsify-grid-container"
