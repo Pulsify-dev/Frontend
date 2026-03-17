@@ -53,14 +53,43 @@ export const fetchTrending = async () => {
 };
 
 export const searchTracks = async (term) => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(() => {
-      const lowerCaseTerm = term.toLowerCase();
-      const hits = mockFeedData.filter(tr => 
-        tr.title.toLowerCase().includes(lowerCaseTerm) || 
-        tr.artist.name.toLowerCase().includes(lowerCaseTerm)
+      if (!term.trim()) return resolve([]);
+      const lowerTerm = term.toLowerCase();
+      const results = [...mockFeedData, ...mockTrendingData].filter(t => 
+        t.title.toLowerCase().includes(lowerTerm) || 
+        t.artist.name.toLowerCase().includes(lowerTerm)
       );
-      resolve(hits);
-    }, 300);
+      // Remove duplicates by trackId
+      const unique = Array.from(new Map(results.map(item => [item.trackId, item])).values());
+      resolve(unique);
+    }, 400); // 400ms network delay
+  });
+};
+
+// --- New Mutations for Interactive Features ---
+export const likeTrack = async (trackId) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      // In a real mock we might toggle a boolean, here we just resolve success
+      resolve({ success: true, trackId, action: 'liked' });
+    }, 200);
+  });
+};
+
+export const repostTrack = async (trackId) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({ success: true, trackId, action: 'reposted' });
+    }, 200);
+  });
+};
+
+export const recordPlay = async (trackId) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({ success: true, trackId, action: 'played' });
+    }, 200);
   });
 };

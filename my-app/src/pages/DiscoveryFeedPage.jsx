@@ -7,6 +7,10 @@ import './DiscoveryFeedPage.css';
 const DiscoveryFeedPage = () => {
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Track local active states since we are modifying via DI responses
+  const [likedTracks, setLikedTracks] = useState(new Set());
+  const [repostedTracks, setRepostedTracks] = useState(new Set());
 
   // Fetch feed using DI service locator
   useEffect(() => {
@@ -27,9 +31,30 @@ const DiscoveryFeedPage = () => {
     return () => { mounted = false; };
   }, []);
 
-  const handlePlay = (track) => {
-    // Console log simulating integration with global audio player state
-    console.log(`Intercepted play event for: ${track.trackId}`);
+  const handleLike = async (trackId) => {
+    try {
+      if (likedTracks.has(trackId)) {
+        setLikedTracks(prev => { const next = new Set(prev); next.delete(trackId); return next; });
+      } else {
+        await serviceLocator.discovery.likeTrack(trackId);
+        setLikedTracks(prev => new Set(prev).add(trackId));
+      }
+    } catch (e) {
+      console.error("Failed to like:", e);
+    }
+  };
+
+  const handleRepost = async (trackId) => {
+    try {
+      if (repostedTracks.has(trackId)) {
+        setRepostedTracks(prev => { const next = new Set(prev); next.delete(trackId); return next; });
+      } else {
+        await serviceLocator.discovery.repostTrack(trackId);
+        setRepostedTracks(prev => new Set(prev).add(trackId));
+      }
+    } catch (e) {
+      console.error("Failed to repost:", e);
+    }
   };
 
   return (
@@ -47,7 +72,10 @@ const DiscoveryFeedPage = () => {
             <PulsifyTrackRow 
               key={track.trackId} 
               track={track} 
-              onPlay={handlePlay} 
+              onLike={handleLike}
+              onRepost={handleRepost}
+              isLiked={likedTracks.has(track.trackId)}
+              isReposted={repostedTracks.has(track.trackId)}
             />
           ))}
         </div>

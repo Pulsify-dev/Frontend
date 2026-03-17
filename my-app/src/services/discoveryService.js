@@ -38,3 +38,18 @@ export const searchTracks = async (term) => {
   const { data } = await apiClient.get(`/discovery/search?q=${safeTerm}`);
   return Array.isArray(data) ? data.map(adaptTrack) : [];
 };
+
+export const likeTrack = async (trackId) => {
+  const { data } = await apiClient.post(`/tracks/${trackId}/like`);
+  return data;
+};
+
+export const repostTrack = async (trackId) => {
+  const { data } = await apiClient.post(`/tracks/${trackId}/repost`);
+  return data;
+};
+
+export const recordPlay = async (trackId) => {
+  const { data } = await apiClient.post(`/tracks/${trackId}/play`);
+  return data;
+};

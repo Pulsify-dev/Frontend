@@ -8,6 +8,10 @@ const SearchHubPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // Track local active states since we are modifying via DI responses
+  const [likedTracks, setLikedTracks] = useState(new Set());
+  const [repostedTracks, setRepostedTracks] = useState(new Set());
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -40,6 +44,32 @@ const SearchHubPage = () => {
     };
   }, [searchTerm]);
 
+  const handleLike = async (trackId) => {
+    try {
+      if (likedTracks.has(trackId)) {
+        setLikedTracks(prev => { const next = new Set(prev); next.delete(trackId); return next; });
+      } else {
+        await serviceLocator.discovery.likeTrack(trackId);
+        setLikedTracks(prev => new Set(prev).add(trackId));
+      }
+    } catch (e) {
+      console.error("Failed to like:", e);
+    }
+  };
+
+  const handleRepost = async (trackId) => {
+    try {
+      if (repostedTracks.has(trackId)) {
+        setRepostedTracks(prev => { const next = new Set(prev); next.delete(trackId); return next; });
+      } else {
+        await serviceLocator.discovery.repostTrack(trackId);
+        setRepostedTracks(prev => new Set(prev).add(trackId));
+      }
+    } catch (e) {
+      console.error("Failed to repost:", e);
+    }
+  };
+
   return (
     <div className="pulsify-search-container" data-testid="search-hub-page">
       <header className="search-header">
@@ -67,7 +97,10 @@ const SearchHubPage = () => {
           <PulsifyTrackRow 
             key={track.trackId} 
             track={track} 
-            onPlay={() => console.log('Intercepted play from SearchHub:', track.title)} 
+            onLike={handleLike}
+            onRepost={handleRepost}
+            isLiked={likedTracks.has(track.trackId)}
+            isReposted={repostedTracks.has(track.trackId)}
           />
         ))}
       </section>
