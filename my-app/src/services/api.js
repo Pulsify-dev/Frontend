@@ -1,6 +1,6 @@
 import mockData from '../mock/track.json'
-const API_BASE = import.meta.env.VITE_API_BASE ?? ''
-const useMock = String(import.meta.env.VITE_USE_MOCK) === 'true'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const useMock = String(import.meta.env.VITE_USE_MOCKS) === 'true'
 
 export const getTrack = async () => {
   if (useMock) {
