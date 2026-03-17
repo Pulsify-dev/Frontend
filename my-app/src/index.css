@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@600;700&family=Work+Sans:wght@400;600;700&display=swap');
 
 :root {
   --title: #111111;
@@ -10,8 +10,8 @@
   --accent: #ff5500;
   --accent-soft: rgba(255, 85, 0, 0.12);
   --tag-bg: #f7f7f7;
-  --display: 'Space Grotesk', system-ui, sans-serif;
-  --body: 'Source Sans 3', system-ui, sans-serif;
+  --display: 'Cabin', 'Trebuchet MS', sans-serif;
+  --body: 'Work Sans', 'Segoe UI', sans-serif;
   color-scheme: light;
   font-family: var(--body);
   background: var(--page-bg);

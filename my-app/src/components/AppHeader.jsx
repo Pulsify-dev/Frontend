@@ -11,7 +11,7 @@ function AppHeader() {
           type="text"
           placeholder="Search for tracks, artists, playlists"
         />
-        <div className="status-pill">Playback Phase 1 - 20%</div>
+        <div className="status-pill">Playback Phase 2 - 20%</div>
       </div>
     </header>
   )
