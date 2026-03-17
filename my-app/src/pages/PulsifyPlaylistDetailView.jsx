@@ -79,7 +79,7 @@ export const PulsifyPlaylistDetailView = () => {
 
   return (
     <div className="pulsify-detail-container" style={{ padding: '20px' }}>
-      <Link to="/playlists" style={{ marginBottom: '20px', display: 'inline-block' }}>
+      <Link data-testid="detail-back-link" to="/playlists" style={{ marginBottom: '20px', display: 'inline-block' }}>
         &larr; Back to all sets
       </Link>
       
@@ -91,7 +91,7 @@ export const PulsifyPlaylistDetailView = () => {
           height="250" 
         />
         <div>
-          <button onClick={togglePrivacy} style={{ padding: '5px 10px', fontSize: '12px', cursor: 'pointer', marginBottom: '10px', backgroundColor: playlistDetail.isPublic ? '#1db954' : '#e22134', color: 'white', border: 'none', borderRadius: '4px' }}>
+          <button data-testid="detail-privacy-toggle" onClick={togglePrivacy} style={{ padding: '5px 10px', fontSize: '12px', cursor: 'pointer', marginBottom: '10px', backgroundColor: playlistDetail.isPublic ? '#1db954' : '#e22134', color: 'white', border: 'none', borderRadius: '4px' }}>
             {playlistDetail.isPublic ? 'Public Record' : 'Private Stash (Secret Token)'}
           </button>
           <p style={{ margin: 0, color: '#888', fontSize: '12px' }}>Click to toggle privacy</p>

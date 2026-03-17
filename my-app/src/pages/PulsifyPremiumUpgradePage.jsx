@@ -59,6 +59,7 @@ export const PulsifyPremiumUpgradePage = () => {
             <li style={{ padding: '10px 0' }}>&#10003; Basic Analytics</li>
           </ul>
           <button 
+            data-testid="upgrade-pro-btn"
             onClick={() => handleCheckout('Pro')}
             disabled={isProcessing}
             style={{ width: '100%', padding: '15px', backgroundColor: '#f50', color: 'white', border: 'none', borderRadius: '4px', cursor: isProcessing ? 'wait' : 'pointer', fontWeight: 'bold' }}
@@ -78,6 +79,7 @@ export const PulsifyPremiumUpgradePage = () => {
             <li style={{ padding: '10px 0' }}>&#10003; Priority Support</li>
           </ul>
           <button 
+            data-testid="upgrade-go-btn"
             onClick={() => handleCheckout('Go+')}
             disabled={isProcessing}
             style={{ width: '100%', padding: '15px', backgroundColor: 'transparent', color: 'white', border: '1px solid white', borderRadius: '4px', cursor: isProcessing ? 'wait' : 'pointer', fontWeight: 'bold' }}

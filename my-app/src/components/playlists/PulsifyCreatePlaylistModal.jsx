@@ -28,6 +28,7 @@ export const PulsifyCreatePlaylistModal = ({ isOpen, onClose, onSubmit }) => {
           <div style={{ marginBottom: '10px' }}>
             <label style={{ display: 'block', marginBottom: '5px' }}>Name</label>
             <input 
+              data-testid="create-playlist-name"
               type="text" 
               required 
               value={playlistName} 
@@ -38,6 +39,7 @@ export const PulsifyCreatePlaylistModal = ({ isOpen, onClose, onSubmit }) => {
           <div style={{ marginBottom: '10px' }}>
             <label style={{ display: 'block', marginBottom: '5px' }}>Description</label>
             <textarea 
+              data-testid="create-playlist-desc"
               value={playlistDescription} 
               onChange={(e) => setPlaylistDescription(e.target.value)} 
               style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
@@ -46,6 +48,7 @@ export const PulsifyCreatePlaylistModal = ({ isOpen, onClose, onSubmit }) => {
           <div style={{ marginBottom: '20px' }}>
             <label>
               <input 
+                data-testid="create-playlist-public"
                 type="checkbox" 
                 checked={isPublic} 
                 onChange={(e) => setIsPublic(e.target.checked)} 
@@ -54,8 +57,8 @@ export const PulsifyCreatePlaylistModal = ({ isOpen, onClose, onSubmit }) => {
             </label>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button type="button" onClick={onClose} style={{ padding: '8px 16px', cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', border: 'none', cursor: 'pointer' }}>Create</button>
+            <button data-testid="create-playlist-cancel" type="button" onClick={onClose} style={{ padding: '8px 16px', cursor: 'pointer' }}>Cancel</button>
+            <button data-testid="create-playlist-submit" type="submit" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', border: 'none', cursor: 'pointer' }}>Create</button>
           </div>
         </form>
       </div>

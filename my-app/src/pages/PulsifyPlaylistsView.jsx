@@ -59,10 +59,10 @@ export const PulsifyPlaylistsView = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Your Sets & Playlists</h2>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <Link to="/upload" style={{ padding: '8px 16px', backgroundColor: '#333', color: 'white', textDecoration: 'none', borderRadius: '4px', border: '1px solid #555' }}>
+          <Link data-testid="upload-track-link" to="/upload" style={{ padding: '8px 16px', backgroundColor: '#333', color: 'white', textDecoration: 'none', borderRadius: '4px', border: '1px solid #555' }}>
             Upload Track
           </Link>
-          <Link to="/premium" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
+          <Link data-testid="go-premium-link" to="/premium" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
             Go Premium &starf;
           </Link>
         </div>

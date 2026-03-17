@@ -19,6 +19,7 @@ export const PulsifyMetadataForm = ({ file, onSubmit }) => {
         <div>
           <label style={{ display: 'block', marginBottom: '5px', color: '#ccc' }}>Title</label>
           <input 
+            data-testid="meta-title-input"
             type="text" 
             required 
             value={title} 
@@ -63,6 +64,7 @@ export const PulsifyMetadataForm = ({ file, onSubmit }) => {
         <div style={{ padding: '15px', backgroundColor: '#222', borderRadius: '4px', borderLeft: '4px solid #f50' }}>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
             <input 
+              data-testid="meta-public-toggle"
               type="checkbox" 
               checked={isPublic} 
               onChange={(e) => setIsPublic(e.target.checked)} 
@@ -85,7 +87,7 @@ export const PulsifyMetadataForm = ({ file, onSubmit }) => {
           </div>
         </div>
 
-        <button type="submit" style={{ padding: '12px', backgroundColor: '#f50', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
+        <button data-testid="meta-submit-btn" type="submit" style={{ padding: '12px', backgroundColor: '#f50', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
           Save & Publish Metadata
         </button>
       </form>
