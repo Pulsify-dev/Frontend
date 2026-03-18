@@ -43,7 +43,7 @@
 
 .nav-link:hover {
   color: var(--text-main);
-  text-shadow: 0 0 8px rgba(255,255,255,0.3);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .pulsify-nav-actions {
@@ -57,4 +57,21 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+}
+
+@media (max-width: 900px) {
+  .pulsify-navbar {
+    padding: 14px 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pulsify-nav-links {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .pulsify-main-content {
+    padding: 20px;
+  }
 }

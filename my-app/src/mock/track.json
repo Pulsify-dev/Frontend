@@ -1,0 +1,27 @@
+{
+  "track": {
+    "id": "trk-2026-014",
+    "title": "Desert Skyline (Live Take)",
+    "artist": "Mayar Ayman",
+    "cover": "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=900&auto=format&fit=crop",
+    "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    "duration": 248,
+    "plays": 18234,
+    "likes": 1240,
+    "reposts": 312,
+    "comments": [
+      {
+        "id": "c-01",
+        "user": "Noor",
+        "time": 32,
+        "text": "The bass here is gorgeous."
+      },
+      {
+        "id": "c-02",
+        "user": "Omar",
+        "time": 118,
+        "text": "That drop feels so clean."
+      }
+    ]
+  }
+}
