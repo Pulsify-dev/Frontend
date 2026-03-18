@@ -22,24 +22,174 @@
 
 * {
   box-sizing: border-box;
-}
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
 
 body {
+  font-family: "DM Sans", sans-serif;
   margin: 0;
+  background: #0f0f0f;
+  color: #e8e8e8;
+  -webkit-font-smoothing: antialiased;
 }
 
-#root {
-  min-height: 100svh;
-  max-width: 1200px;
+.profile-page {
+  max-width: 900px;
   margin: 0 auto;
+  padding: 24px;
 }
 
-h1,
-h2,
-h3 {
-  margin: 0;
+.profile-card {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 24px;
 }
 
-p {
-  margin: 0;
+.cover-photo {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 0;
+  display: block;
+}
+
+.profile-info {
+  padding: 16px 20px 20px;
+}
+
+.avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #181818;
+  margin-top: -55px;
+  display: block;
+  background: #222;
+}
+
+.profile-info h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 10px 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.profile-info p {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 4px;
+  line-height: 1.5;
+}
+
+.profile-info p strong {
+  color: #bbb;
+}
+
+.genres {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.genre-tag {
+  background: rgba(255, 85, 0, 0.15);
+  color: #ff5500;
+  border: 1px solid rgba(255, 85, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.social-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.social-links a {
+  color: #ff5500;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.social-links a:hover {
+  opacity: 0.7;
+}
+
+.edit-form {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.edit-form label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.edit-form input,
+.edit-form textarea,
+.edit-form select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #e8e8e8;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.edit-form input:focus,
+.edit-form textarea:focus,
+.edit-form select:focus {
+  border-color: #ff5500;
+}
+
+.edit-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-form select option {
+  background: #222;
+}
+
+.edit-form button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px;
+  background: #ff5500;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s;
+}
+
+.edit-form button:hover {
+  opacity: 0.85;
 }
