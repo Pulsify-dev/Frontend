@@ -5,7 +5,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<TrackPage />} />
+        <Route path="/trackpage" element={<TrackPage />} />
       </Routes>
     </BrowserRouter>
   )
