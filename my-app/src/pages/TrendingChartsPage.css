@@ -1,0 +1,63 @@
+.pulsify-trending-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.trending-header {
+  margin-bottom: 40px;
+}
+
+.trending-header h2 {
+  font-size: 32px;
+  margin: 0 0 8px 0;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.trending-rank-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.rank-badge {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-muted);
+  width: 50px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.rank-1 {
+  color: #fbbf24;
+  text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+  font-size: 32px;
+}
+
+.rank-2 {
+  color: #94a3b8;
+  text-shadow: 0 0 12px rgba(148, 163, 184, 0.4);
+  font-size: 28px;
+}
+
+.rank-3 {
+  color: #b45309;
+  text-shadow: 0 0 10px rgba(180, 83, 9, 0.4);
+}
+
+.rank-track-content {
+  flex: 1;
+}
+
+.trending-loader {
+  text-align: center;
+  padding: 60px;
+  color: #f59e0b;
+  opacity: 0.8;
+  animation: feedPulse 1.5s infinite ease-in-out;
+}

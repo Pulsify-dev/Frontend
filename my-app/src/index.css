@@ -13,10 +13,20 @@
   --sc-orange: #ff5500;
   --sc-orange-soft: rgba(255, 85, 0, 0.15);
   --sc-tag-bg: #222222;
-}
-:root {
+
   --display: "DM Sans", sans-serif;
+
+  /* Discovery / Notifications tokens */
+  --app-bg: #09090b;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --accent-primary: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.4);
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
 }
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    BASE RESET
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -32,6 +42,8 @@ body {
   font-family: "DM Sans", sans-serif;
   background: var(--sc-bg);
   color: var(--sc-text);
+  background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--app-bg) 50%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -71,10 +83,73 @@ textarea,
 select {
   font-family: inherit;
 }
+
 button {
   cursor: pointer;
   border: none;
   background: none;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   DISCOVERY / NOTIFICATIONS GLOBALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.pulsify-glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.pulsify-btn-primary {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.pulsify-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px var(--accent-primary);
+  filter: brightness(1.1);
+}
+
+.pulsify-app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.pulsify-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.pulsify-nav-links {
+  display: flex;
+  gap: 24px;
+}
+
+.pulsify-main-content {
+  flex: 1;
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -337,38 +412,22 @@ button {
 .auth-bg-blob--tr {
   top: -80px;
   right: -80px;
-  background: radial-gradient(
-    circle,
-    rgba(255, 85, 0, 0.3),
-    rgba(220, 50, 50, 0.1)
-  );
+  background: radial-gradient(circle, rgba(255, 85, 0, 0.3), rgba(220, 50, 50, 0.1));
 }
 .auth-bg-blob--bl {
   bottom: -80px;
   left: -80px;
-  background: radial-gradient(
-    circle,
-    rgba(50, 80, 255, 0.15),
-    rgba(150, 50, 255, 0.1)
-  );
+  background: radial-gradient(circle, rgba(50, 80, 255, 0.15), rgba(150, 50, 255, 0.1));
 }
 .auth-bg-blob--tl {
   top: -80px;
   left: -80px;
-  background: radial-gradient(
-    circle,
-    rgba(100, 50, 255, 0.2),
-    rgba(50, 100, 255, 0.1)
-  );
+  background: radial-gradient(circle, rgba(100, 50, 255, 0.2), rgba(50, 100, 255, 0.1));
 }
 .auth-bg-blob--br {
   bottom: -80px;
   right: -80px;
-  background: radial-gradient(
-    circle,
-    rgba(255, 85, 0, 0.15),
-    rgba(220, 50, 100, 0.1)
-  );
+  background: radial-gradient(circle, rgba(255, 85, 0, 0.15), rgba(220, 50, 100, 0.1));
   animation-delay: 1s;
 }
 
@@ -420,7 +479,6 @@ button {
   margin-bottom: 24px;
 }
 
-/* Alerts */
 .auth-alert {
   display: flex;
   align-items: center;
@@ -458,7 +516,6 @@ button {
   }
 }
 
-/* OAuth buttons */
 .auth-oauth-group {
   display: flex;
   flex-direction: column;
@@ -516,7 +573,6 @@ button {
   background: #1a1a1a;
 }
 
-/* Divider */
 .auth-divider {
   display: flex;
   align-items: center;
@@ -534,7 +590,6 @@ button {
   background: #2b2b2b;
 }
 
-/* Fields */
 .auth-field {
   position: relative;
   margin-bottom: 12px;
@@ -620,7 +675,6 @@ button {
   flex: 1;
 }
 
-/* Checkbox */
 .auth-checkbox-label {
   display: flex;
   align-items: flex-start;
@@ -642,7 +696,6 @@ button {
   line-height: 1.5;
 }
 
-/* Submit button */
 .auth-submit-btn {
   width: 100%;
   height: 40px;
@@ -679,7 +732,6 @@ button {
   cursor: not-allowed;
 }
 
-/* Footer row (links at bottom of card) */
 .auth-footer-row {
   display: flex;
   align-items: center;
@@ -729,7 +781,6 @@ button {
   color: #bdbdbd;
 }
 
-/* Forgot password success state */
 .auth-success-state {
   text-align: center;
 }
@@ -780,7 +831,6 @@ button {
   text-align: left;
 }
 
-/* Spinner */
 .auth-spinner {
   width: 20px;
   height: 20px;
@@ -799,7 +849,7 @@ button {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   APP PAGES  (AppHeader, playlists, profile, track)
+   APP PAGES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .app-shell {
   min-height: 100svh;
@@ -1315,8 +1365,10 @@ button {
   .page {
     padding: 20px;
   }
+
   .pulsify-page-container,
-  .pulsify-detail-container {
+  .pulsify-detail-container,
+  .pulsify-main-content {
     padding: 20px;
   }
 
@@ -1326,16 +1378,20 @@ button {
     gap: 10px;
     padding: 12px 20px;
   }
+
   .topbar-actions {
     flex-direction: column;
     align-items: stretch;
   }
+
   .search {
     width: 100%;
   }
+
   .track-hero {
     grid-template-columns: 1fr;
   }
+
   .pulsify-grid-container {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 14px;
@@ -1344,15 +1400,29 @@ button {
   .auth-card {
     padding: 32px 24px;
   }
+
   .auth-navbar {
     padding: 12px 16px;
   }
+
   .auth-nav-links,
   .auth-nav-upload,
   .auth-search-form {
     display: none;
   }
+
   .auth-mobile-toggle {
     display: block;
+  }
+
+  .pulsify-navbar {
+    padding: 14px 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pulsify-nav-links {
+    gap: 16px;
+    flex-wrap: wrap;
   }
 }
