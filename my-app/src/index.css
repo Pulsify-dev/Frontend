@@ -1,195 +1,127 @@
-@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@600;700&family=Work+Sans:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+}
 
 :root {
-  --title: #111111;
-  --text: #333333;
-  --muted: #7a7a7a;
-  --border: #e5e5e5;
-  --panel: #ffffff;
-  --page-bg: #f2f2f2;
-  --accent: #ff5500;
-  --accent-soft: rgba(255, 85, 0, 0.12);
-  --tag-bg: #f7f7f7;
-  --display: 'Cabin', 'Trebuchet MS', sans-serif;
-  --body: 'Work Sans', 'Segoe UI', sans-serif;
-  color-scheme: light;
-  font-family: var(--body);
-  background: var(--page-bg);
-  color: var(--text);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  /* Dark theme - SoundCloud style */
+  --background: 0 0% 7%;
+  --foreground: 0 0% 98%;
+
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 98%;
+
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 24 100% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 64%;
+
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 15%;
+  --ring: 24 100% 50%;
+
+  --radius: 0.25rem;
 }
 
+/* Base Styles */
 * {
   box-sizing: border-box;
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  font-family: "DM Sans", sans-serif;
-  margin: 0;
-  background: #0f0f0f;
-  color: #e8e8e8;
+  font-family: "Interstate", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Garuda, Verdana, Tahoma, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-.profile-page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
+#root {
+  min-height: 100vh;
 }
 
-.profile-card {
-  background: #181818;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.cover-photo {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 0;
-  display: block;
-}
-
-.profile-info {
-  padding: 16px 20px 20px;
-}
-
-.avatar {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #181818;
-  margin-top: -55px;
-  display: block;
-  background: #222;
-}
-
-.profile-info h1 {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 10px 0 4px;
-  letter-spacing: -0.3px;
-}
-
-.profile-info p {
-  font-size: 13px;
-  color: #888;
-  margin: 0 0 4px;
-  line-height: 1.5;
-}
-
-.profile-info p strong {
-  color: #bbb;
-}
-
-.genres {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-
-.genre-tag {
-  background: rgba(255, 85, 0, 0.15);
-  color: #ff5500;
-  border: 1px solid rgba(255, 85, 0, 0.3);
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.social-links {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-
-.social-links a {
-  color: #ff5500;
+/* Links */
+a {
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  transition: opacity 0.15s;
+  color: inherit;
 }
 
-.social-links a:hover {
-  opacity: 0.7;
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
-.edit-form {
-  background: #181818;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
-  padding: 24px;
-  display: grid;
-  gap: 16px;
-  margin-bottom: 24px;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.edit-form label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #888;
-  margin-bottom: 6px;
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
 }
 
-.edit-form input,
-.edit-form textarea,
-.edit-form select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  background: #0f0f0f;
-  border: 1px solid #2a2a2a;
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
   border-radius: 4px;
-  color: #e8e8e8;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Form elements reset */
+input,
+button,
+textarea,
+select {
   font-family: inherit;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.15s;
 }
 
-.edit-form input:focus,
-.edit-form textarea:focus,
-.edit-form select:focus {
-  border-color: #ff5500;
-}
-
-.edit-form textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.edit-form select option {
-  background: #222;
-}
-
-.edit-form button {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px;
-  background: #ff5500;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
+button {
   cursor: pointer;
-  letter-spacing: 0.2px;
-  transition: opacity 0.15s;
+  border: none;
+  background: none;
 }
 
-.edit-form button:hover {
-  opacity: 0.85;
+/* Utility Classes */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
