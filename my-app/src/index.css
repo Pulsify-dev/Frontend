@@ -1,3 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@600;700&family=Work+Sans:wght@400;600;700&display=swap');
+
+:root {
+  --title: #111111;
+  --text: #333333;
+  --muted: #7a7a7a;
+  --border: #e5e5e5;
+  --panel: #ffffff;
+  --page-bg: #f2f2f2;
+  --accent: #ff5500;
+  --accent-soft: rgba(255, 85, 0, 0.12);
+  --tag-bg: #f7f7f7;
+  --display: 'Cabin', 'Trebuchet MS', sans-serif;
+  --body: 'Work Sans', 'Segoe UI', sans-serif;
+  color-scheme: light;
+  font-family: var(--body);
+  background: var(--page-bg);
+  color: var(--text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
 
 body {
