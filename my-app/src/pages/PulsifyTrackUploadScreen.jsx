@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
 
 export const PulsifyTrackUploadScreen = () => {
+  const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   
-  // Mock Paywall State (Free Tier User with 3 uploads already)
+  // Mock Paywall State (Free Tier User with 0 initial uploads)
   const [isPremium, setIsPremium] = useState(false);
-  const [uploadCount, setUploadCount] = useState(3);
+  const [uploadCount, setUploadCount] = useState(0);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -25,28 +26,32 @@ export const PulsifyTrackUploadScreen = () => {
     e.stopPropagation();
     setDragActive(false);
 
-    if (!isPremium && uploadCount >= 3) {
-      alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
-      return;
-    }
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles(files);
+      
+      if (!isPremium && uploadCount + files.length > 3) {
+        alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
+        return;
+      }
+      
+      setUploadCount(prev => prev + files.length);
+      setUploadedFiles(prev => [...prev, ...files]);
     }
   };
 
   const handleChange = (e) => {
     e.preventDefault();
 
-    if (!isPremium && uploadCount >= 3) {
-      alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
-      return;
-    }
-
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      setUploadedFiles(files);
+      
+      if (!isPremium && uploadCount + files.length > 3) {
+        alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
+        return;
+      }
+      
+      setUploadCount(prev => prev + files.length);
+      setUploadedFiles(prev => [...prev, ...files]);
     }
   };
 
@@ -54,6 +59,8 @@ export const PulsifyTrackUploadScreen = () => {
     console.log('Metadata Saved for', data.file.name, data);
     // Simulating save logic
     alert(`Track "${data.title}" has been saved and is now ${data.isPublic ? 'Public' : 'Private'}!`);
+    setUploadedFiles([]);
+    navigate('/playlists');
   };
 
   return (

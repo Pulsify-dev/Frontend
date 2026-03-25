@@ -7,12 +7,10 @@ export const PulsifyPremiumUpgradePage = () => {
 
   const handleCheckout = (tierName) => {
     setIsProcessing(true);
-    // Mocking Stripe Checkout latency
     setTimeout(() => {
       alert(`Success! You have purchased the ${tierName} subscription. Payment simulated.`);
       setIsProcessing(false);
-      // In a real app we would update Context/Redux here
-      // localStorage.setItem('isPulsifyPremium', 'true');
+
       navigate('/upload');
     }, 1500);
   };
@@ -29,7 +27,7 @@ export const PulsifyPremiumUpgradePage = () => {
       </p>
 
       <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        
+
         {/* Basic Tier (Current) */}
         <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '8px', border: '1px solid #333' }}>
           <h2>Basic</h2>
@@ -58,7 +56,7 @@ export const PulsifyPremiumUpgradePage = () => {
             <li style={{ padding: '10px 0', borderBottom: '1px solid #333', color: '#1db954' }}>&#10003; Unlimited Uploads</li>
             <li style={{ padding: '10px 0' }}>&#10003; Basic Analytics</li>
           </ul>
-          <button 
+          <button
             data-testid="upgrade-pro-btn"
             onClick={() => handleCheckout('Pro')}
             disabled={isProcessing}
@@ -78,7 +76,7 @@ export const PulsifyPremiumUpgradePage = () => {
             <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; High Quality Audio</li>
             <li style={{ padding: '10px 0' }}>&#10003; Priority Support</li>
           </ul>
-          <button 
+          <button
             data-testid="upgrade-go-btn"
             onClick={() => handleCheckout('Go+')}
             disabled={isProcessing}

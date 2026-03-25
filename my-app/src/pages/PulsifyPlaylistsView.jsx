@@ -16,9 +16,9 @@ export const PulsifyPlaylistsView = () => {
         setIsLoading(true);
         // Bn-log 3shan n-debug
         console.log('by-fetch el playlists dlwa2ty...');
-        
+
         const data = await PulsifyPlaylistService.retrieveAllPlaylists();
-        
+
         if (isMounted) {
           setPulsifyPlaylists(data);
           console.log('gibt el playlists:', data);
@@ -63,11 +63,11 @@ export const PulsifyPlaylistsView = () => {
             Upload Track
           </Link>
           <Link data-testid="go-premium-link" to="/premium" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
-            Go Premium &starf;
+            Go Premium ★
           </Link>
         </div>
       </div>
-      <div 
+      <div
         className="pulsify-grid-container"
         style={{ display: 'flex', flexWrap: 'wrap' }}
       >
