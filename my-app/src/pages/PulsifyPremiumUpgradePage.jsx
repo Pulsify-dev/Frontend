@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import '../components/premium/css/PulsifyPremium.css';
 
 export const PulsifyPremiumUpgradePage = () => {
   const [isProcessing, setIsProcessing] = useState(false);

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
 import { Link } from 'react-router-dom';
+import '../components/playlists/css/PulsifyPlaylists.css';
+
 
 export const PulsifyPlaylistsView = () => {
   const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);

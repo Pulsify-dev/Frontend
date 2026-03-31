@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
+import '../components/upload/css/PulsifyUploads.css';
 
 export const PulsifyTrackUploadScreen = () => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  
+
   // Mock Paywall State (Free Tier User with 3 uploads already)
   const [isPremium, setIsPremium] = useState(false);
-  const [uploadCount, setUploadCount] = useState(3);
+  const [uploadCount, setUploadCount] = useState(1);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -29,7 +30,7 @@ export const PulsifyTrackUploadScreen = () => {
       alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
       return;
     }
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files);
       setUploadedFiles(files);
@@ -61,15 +62,15 @@ export const PulsifyTrackUploadScreen = () => {
       <Link to="/playlists" style={{ marginBottom: '20px', display: 'inline-block', color: '#f50', textDecoration: 'none' }}>
         &larr; Back to Sets
       </Link>
-      
+
       <h1>Upload to Pulsify</h1>
-      
-      <form 
-        onDragEnter={handleDrag} 
+
+      <form
+        onDragEnter={handleDrag}
         onSubmit={(e) => e.preventDefault()}
         style={{ marginTop: '20px' }}
       >
-        <div 
+        <div
           data-testid="upload-dropzone"
           style={{
             border: dragActive ? '2px solid #f50' : '2px dashed #666',
@@ -87,7 +88,7 @@ export const PulsifyTrackUploadScreen = () => {
           <p style={{ color: '#ccc', marginBottom: '15px' }}>
             Drag and drop your audio files here (MP3, WAV, High-Bitrate)
           </p>
-          <label 
+          <label
             data-testid="upload-choose-files-btn"
             style={{
               padding: '10px 20px',
@@ -99,11 +100,11 @@ export const PulsifyTrackUploadScreen = () => {
             }}
           >
             Choose Files
-            <input 
+            <input
               data-testid="upload-file-input"
-              type="file" 
-              multiple 
-              onChange={handleChange} 
+              type="file"
+              multiple
+              onChange={handleChange}
               style={{ display: 'none' }}
               accept=".mp3,.wav,audio/*"
             />

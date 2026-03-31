@@ -4,7 +4,7 @@ import LoadingState from '../components/LoadingState'
 import PlayerCard from '../components/PlayerCard'
 import TrackHeader from '../components/TrackHeader'
 import { getTrack } from '../services/api'
-import '../App.css'
+
 
 function TrackPage() {
   const [track, setTrack] = useState(null)
