@@ -1,35 +1,82 @@
-@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@600;700&family=Work+Sans:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@600;700&family=DM+Sans:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap');
 
 :root {
   --title: #111111;
-  --text: #333333;
-  --muted: #7a7a7a;
-  --border: #e5e5e5;
-  --panel: #ffffff;
-  --page-bg: #f2f2f2;
+  --text: #262626;
+  --muted: #6f6f6f;
   --accent: #ff5500;
-  --accent-soft: rgba(255, 85, 0, 0.12);
-  --tag-bg: #f7f7f7;
+  --page-bg: #f2f2f2;
   --display: 'Cabin', 'Trebuchet MS', sans-serif;
-  --body: 'Work Sans', 'Segoe UI', sans-serif;
+  --body: 'Work Sans', 'DM Sans', 'Segoe UI', sans-serif;
   color-scheme: light;
   font-family: var(--body);
   background: var(--page-bg);
   color: var(--text);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
 }
 
 * {
   box-sizing: border-box;
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
-  font-family: "DM Sans", sans-serif;
   margin: 0;
+  min-width: 320px;
   background: #0f0f0f;
   color: #e8e8e8;
-  -webkit-font-smoothing: antialiased;
+}
+
+body,
+button,
+input,
+textarea {
+  font-family: var(--body);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:disabled:hover {
+  transform: none;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
 }
 
 .profile-page {

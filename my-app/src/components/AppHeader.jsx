@@ -1,17 +1,36 @@
+import { Link } from 'react-router-dom'
+
 function AppHeader() {
   return (
     <header className="topbar">
-      <span className="brand">
-        <span className="logo-mark" aria-hidden="true" />
-        SoundCloud
-      </span>
-      <div className="topbar-actions">
-        <input
-          className="search"
-          type="text"
-          placeholder="Search for tracks, artists, playlists"
-        />
-        <div className="status-pill">Playback Phase 2 - 20%</div>
+      <div className="topbar-inner">
+        <div className="brand-cluster">
+          <Link className="brand" to="/tracks/trk-2026-014">
+            <span className="logo-mark" aria-hidden="true" />
+            <span>Pulsify</span>
+          </Link>
+
+          <nav className="main-nav" aria-label="Primary">
+            <a href="#stream">Stream</a>
+            <a href="#comments">Comments</a>
+            <a href="#history">History</a>
+          </nav>
+        </div>
+
+        <div className="topbar-actions">
+          <input
+            className="search"
+            type="text"
+            placeholder="Search tracks, people, and playlists"
+            aria-label="Search"
+          />
+          <Link className="header-action" to="/upload">
+            Upload
+          </Link>
+          <Link className="profile-chip" to="/profile">
+            Profile
+          </Link>
+        </div>
       </div>
     </header>
   )

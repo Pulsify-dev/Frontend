@@ -3,25 +3,182 @@
     "id": "trk-2026-014",
     "title": "Desert Skyline (Live Take)",
     "artist": "Mayar Ayman",
+    "artistHandle": "@mayar.ayman",
+    "artistAvatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=240&auto=format&fit=crop",
     "cover": "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=900&auto=format&fit=crop",
     "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     "duration": 248,
-    "plays": 18234,
-    "likes": 1240,
-    "reposts": 312,
-    "comments": [
-      {
-        "id": "c-01",
-        "user": "Noor",
-        "time": 32,
-        "text": "The bass here is gorgeous."
-      },
-      {
-        "id": "c-02",
-        "user": "Omar",
-        "time": 118,
-        "text": "That drop feels so clean."
-      }
+    "description": "A warm, late-night live take built for long headphones sessions, floating synths, and a heavy low-end groove.",
+    "genre": "Electronic",
+    "location": "Cairo, Egypt",
+    "postedAt": "2026-03-27T20:15:00.000Z",
+    "playCount": 18234,
+    "likeCount": 1240,
+    "repostCount": 312,
+    "commentCount": 4,
+    "viewerHasLiked": false,
+    "viewerHasReposted": false,
+    "playbackState": "Playable",
+    "previewDurationSeconds": 30,
+    "waveform": [
+      0.21, 0.34, 0.48, 0.62, 0.58, 0.44, 0.29, 0.36, 0.54, 0.68,
+      0.73, 0.66, 0.41, 0.28, 0.22, 0.35, 0.51, 0.74, 0.82, 0.77,
+      0.63, 0.47, 0.3, 0.24, 0.33, 0.49, 0.71, 0.79, 0.67, 0.43,
+      0.31, 0.26, 0.38, 0.57, 0.75, 0.84, 0.8, 0.69, 0.52, 0.34,
+      0.28, 0.32, 0.46, 0.59, 0.74, 0.78, 0.72, 0.61, 0.44, 0.3,
+      0.25, 0.37, 0.55, 0.7, 0.81, 0.76, 0.65, 0.48, 0.35, 0.27,
+      0.22, 0.31, 0.46, 0.64, 0.77, 0.83, 0.71, 0.56, 0.4, 0.29
     ]
-  }
+  },
+  "comments": [
+    {
+      "id": "c-01",
+      "user": {
+        "id": "usr-01",
+        "name": "Noor Salah",
+        "handle": "@noorsalah",
+        "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop"
+      },
+      "timestamp_ms": 32000,
+      "text": "The bass here is gorgeous.",
+      "created_at": "2026-04-01T18:00:00.000Z"
+    },
+    {
+      "id": "c-02",
+      "user": {
+        "id": "usr-02",
+        "name": "Omar Adel",
+        "handle": "@omr.adel",
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"
+      },
+      "timestamp_ms": 118000,
+      "text": "That drop feels so clean.",
+      "created_at": "2026-04-02T20:40:00.000Z"
+    },
+    {
+      "id": "c-03",
+      "user": {
+        "id": "usr-03",
+        "name": "Dana Fathy",
+        "handle": "@danaf",
+        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop"
+      },
+      "timestamp_ms": 183000,
+      "text": "Love the room tone on the vocal take.",
+      "created_at": "2026-04-03T09:10:00.000Z"
+    },
+    {
+      "id": "c-04",
+      "user": {
+        "id": "usr-04",
+        "name": "Khaled Amin",
+        "handle": "@khaledamin",
+        "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop"
+      },
+      "timestamp_ms": null,
+      "text": "This whole mix feels very SoundCloud-era in the best way.",
+      "created_at": "2026-04-03T21:30:00.000Z"
+    }
+  ],
+  "likers": [
+    {
+      "id": "usr-10",
+      "name": "Rana Magdy",
+      "handle": "@ranamagdy",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      "id": "usr-11",
+      "name": "Youssef Tarek",
+      "handle": "@yousseftrk",
+      "avatar": "https://images.unsplash.com/photo-1504593811423-6dd665756598?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      "id": "usr-12",
+      "name": "Salma Samir",
+      "handle": "@salmasamir",
+      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200&auto=format&fit=crop"
+    }
+  ],
+  "reposters": [
+    {
+      "id": "usr-20",
+      "name": "Mostafa Hamed",
+      "handle": "@mostafahamed",
+      "avatar": "https://images.unsplash.com/photo-1504257432389-52343af06ae3?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      "id": "usr-21",
+      "name": "Farah Ahmed",
+      "handle": "@farahahmed",
+      "avatar": "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df2?q=80&w=200&auto=format&fit=crop"
+    }
+  ],
+  "recentlyPlayed": [
+    {
+      "id": "trk-2026-014",
+      "title": "Desert Skyline (Live Take)",
+      "artist": "Mayar Ayman",
+      "cover": "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=900&auto=format&fit=crop",
+      "duration": 248,
+      "played_at": "2026-04-04T08:45:00.000Z",
+      "duration_played_ms": 226000
+    },
+    {
+      "id": "trk-2026-011",
+      "title": "Dust After Rain",
+      "artist": "Nadine Waleed",
+      "cover": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=900&auto=format&fit=crop",
+      "duration": 214,
+      "played_at": "2026-04-03T22:15:00.000Z",
+      "duration_played_ms": 214000
+    },
+    {
+      "id": "trk-2026-009",
+      "title": "Neon Harbor",
+      "artist": "Basel Karim",
+      "cover": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=900&auto=format&fit=crop",
+      "duration": 196,
+      "played_at": "2026-04-03T19:30:00.000Z",
+      "duration_played_ms": 88000
+    }
+  ],
+  "history": [
+    {
+      "id": "trk-2026-014",
+      "title": "Desert Skyline (Live Take)",
+      "artist": "Mayar Ayman",
+      "cover": "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=900&auto=format&fit=crop",
+      "duration": 248,
+      "played_at": "2026-04-04T08:45:00.000Z",
+      "duration_played_ms": 226000
+    },
+    {
+      "id": "trk-2026-011",
+      "title": "Dust After Rain",
+      "artist": "Nadine Waleed",
+      "cover": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=900&auto=format&fit=crop",
+      "duration": 214,
+      "played_at": "2026-04-03T22:15:00.000Z",
+      "duration_played_ms": 214000
+    },
+    {
+      "id": "trk-2026-009",
+      "title": "Neon Harbor",
+      "artist": "Basel Karim",
+      "cover": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=900&auto=format&fit=crop",
+      "duration": 196,
+      "played_at": "2026-04-03T19:30:00.000Z",
+      "duration_played_ms": 88000
+    },
+    {
+      "id": "trk-2026-006",
+      "title": "Blue Taxi Radio",
+      "artist": "Lina Osama",
+      "cover": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=900&auto=format&fit=crop",
+      "duration": 241,
+      "played_at": "2026-04-02T23:55:00.000Z",
+      "duration_played_ms": 241000
+    }
+  ]
 }

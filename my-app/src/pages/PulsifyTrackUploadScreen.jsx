@@ -7,8 +7,8 @@ export const PulsifyTrackUploadScreen = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   
   // Mock Paywall State (Free Tier User with 3 uploads already)
-  const [isPremium, setIsPremium] = useState(false);
-  const [uploadCount, setUploadCount] = useState(3);
+  const [isPremium] = useState(false);
+  const [uploadCount] = useState(3);
 
   const handleDrag = (e) => {
     e.preventDefault();

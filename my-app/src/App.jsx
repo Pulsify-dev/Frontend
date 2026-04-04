@@ -1,10 +1,12 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { PulsifyPlaylistsView } from "./pages/PulsifyPlaylistsView";
-import { PulsifyPlaylistDetailView } from "./pages/PulsifyPlaylistDetailView";
-import { PulsifyTrackUploadScreen } from "./pages/PulsifyTrackUploadScreen";
-import { PulsifyPremiumUpgradePage } from "./pages/PulsifyPremiumUpgradePage";
-import ProfilePage from "./profile/pages/ProfilePage";
-import "./App.css";
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AppHeader from './components/AppHeader'
+import { PulsifyPlaylistDetailView } from './pages/PulsifyPlaylistDetailView'
+import { PulsifyPlaylistsView } from './pages/PulsifyPlaylistsView'
+import { PulsifyPremiumUpgradePage } from './pages/PulsifyPremiumUpgradePage'
+import { PulsifyTrackUploadScreen } from './pages/PulsifyTrackUploadScreen'
+import TrackPage from './pages/TrackPage'
+import ProfilePage from './profile/pages/ProfilePage'
+import './App.css'
 
 function App() {
   return (
@@ -19,9 +21,22 @@ function App() {
         <Route path="/upload" element={<PulsifyTrackUploadScreen />} />
         <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/trackpage"
+          element={<Navigate to="/tracks/trk-2026-014" replace />}
+        />
+        <Route
+          path="/tracks/:trackId"
+          element={
+            <>
+              <AppHeader />
+              <TrackPage />
+            </>
+          }
+        />
       </Routes>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

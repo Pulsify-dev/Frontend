@@ -1,6 +1,3 @@
-import coverImage from "./profile.jpg";
-import profilePhoto from "./profilephoto.jpg";
-
 export default function ProfileCard({ profile }) {
   return (
     <section className="profile-card">
