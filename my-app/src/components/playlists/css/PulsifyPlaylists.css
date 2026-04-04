@@ -1,0 +1,209 @@
+.pulsify-playlists-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 30px;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333;
+  background-color: #f2f2f2;
+  min-height: 100vh;
+}
+
+.pulsify-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.pulsify-header-bar h2 {
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.pulsify-action-group {
+  display: flex;
+  gap: 12px;
+}
+
+.pulsify-btn {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 100;
+  text-decoration: none;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.pulsify-btn-dark {
+  background-color: #333;
+  color: #fff;
+}
+
+.pulsify-btn-brand {
+  background-color: #f50;
+  color: #fff;
+}
+
+.pulsify-btn-outline {
+  background-color: #fff;
+  border-color: #e5e5e5;
+  color: #333;
+}
+
+.pulsify-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 25px;
+}
+
+.pulsify-playlist-card {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.pulsify-artwork-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: #e5e5e5;
+}
+
+.pulsify-artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pulsify-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #f50;
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.pulsify-artwork-wrapper:hover .pulsify-play-overlay {
+  opacity: 1;
+}
+
+.pulsify-card-meta {
+  padding-top: 10px;
+}
+
+.pulsify-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pulsify-card-subtitle {
+  font-size: 12px;
+  color: #999;
+  margin: 0 0 8px 0;
+}
+
+.pulsify-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pulsify-badge-secret {
+  background-color: #e5e5e5;
+  color: #999;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.pulsify-track-count {
+  font-size: 11px;
+  color: #999;
+}
+
+.pulsify-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pulsify-util-msg {
+  font-family: "Inter", sans-serif;
+  color: #999;
+  padding: 40px;
+  text-align: center;
+}
+
+.pulsify-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(242, 242, 242, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.pulsify-modal-content {
+  background-color: #fff;
+  padding: 25px;
+  width: 450px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  border: 1px solid #e5e5e5;
+}
+
+.pulsify-form-group {
+  margin-bottom: 15px;
+}
+
+.pulsify-form-group label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.pulsify-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.pulsify-checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pulsify-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}

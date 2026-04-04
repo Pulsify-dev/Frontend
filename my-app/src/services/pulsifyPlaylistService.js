@@ -1,39 +1,34 @@
-/**
- * @file pulsifyPlaylistService.js
- * @description El mock service bta3t el playlists.
-
- */
-
-import { mockPulsifyPlaylistsResponse } from '../mocks/pulsifyPlaylistFixtures.js';
-import { adaptPulsifyPlaylist } from '../utils/pulsifyPlaylistAdapter.js';
-
-// Bn-simulate el internet delay 3shan tb2a waq3ya shwaya
-const simulateNetworkDelay = () => {
-  const delayMs = Math.floor(Math.random() * 500) + 300;
-  return new Promise((resolve) => setTimeout(resolve, delayMs));
-};
+import { pulsifyAxiosInstance } from './api';
 
 export const PulsifyPlaylistService = {
-
-  async retrieveAllPlaylists() {
-    await simulateNetworkDelay();
-
-    // Simulate mapping the raw API response through our adapter
-    return mockPulsifyPlaylistsResponse.map(rawPl => adaptPulsifyPlaylist(rawPl));
+  async retrieveAllPlaylists(userId = 'me') {
+    const { data } = await pulsifyAxiosInstance.get(`/users/${userId}/playlists`);
+    return data;
   },
 
-  async retrievePlaylistById(targetPlaylistId) {
-    await simulateNetworkDelay();
+  async retrievePlaylistById(playlistId, secretToken = null) {
+    const params = secretToken ? { secret_token: secretToken } : {};
+    const { data } = await pulsifyAxiosInstance.get(`/playlists/${playlistId}`, { params });
+    return data;
+  },
 
-    const rawTarget = mockPulsifyPlaylistsResponse.find(
-      (pl) => pl.playlist_id === targetPlaylistId
-    );
+  async createPlaylist(payload) {
+    const { data } = await pulsifyAxiosInstance.post(`/playlists`, payload);
+    return data;
+  },
 
-    if (!rawTarget) {
-      throw new Error(`Pulsify Error: Playlist with ID ${targetPlaylistId} not found.`);
-    }
+  async deletePlaylist(playlistId) {
+    const { data } = await pulsifyAxiosInstance.delete(`/playlists/${playlistId}`);
+    return data;
+  },
 
-    return adaptPulsifyPlaylist(rawTarget);
+  async reorderTracks(playlistId, trackIds) {
+    const { data } = await pulsifyAxiosInstance.put(`/playlists/${playlistId}/tracks/reorder`, { track_ids: trackIds });
+    return data;
+  },
+
+  async generateEmbed(playlistId) {
+    const { data } = await pulsifyAxiosInstance.get(`/playlists/${playlistId}/embed`);
+    return data;
   }
-
 };
