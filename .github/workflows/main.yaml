@@ -19,9 +19,10 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ... ./my-app
+          docker build \
             --build-arg VITE_API_URL="https://pulsify.page/v1" \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest .
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest \
+            ./my-app
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
 
       - name: Deploy to Azure VM via SSH
