@@ -42,8 +42,6 @@ body {
   font-family: "DM Sans", sans-serif;
   background: var(--sc-bg);
   color: var(--sc-text);
-  background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--app-bg) 50%);
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -412,22 +410,38 @@ button {
 .auth-bg-blob--tr {
   top: -80px;
   right: -80px;
-  background: radial-gradient(circle, rgba(255, 85, 0, 0.3), rgba(220, 50, 50, 0.1));
+  background: radial-gradient(
+    circle,
+    rgba(255, 85, 0, 0.3),
+    rgba(220, 50, 50, 0.1)
+  );
 }
 .auth-bg-blob--bl {
   bottom: -80px;
   left: -80px;
-  background: radial-gradient(circle, rgba(50, 80, 255, 0.15), rgba(150, 50, 255, 0.1));
+  background: radial-gradient(
+    circle,
+    rgba(50, 80, 255, 0.15),
+    rgba(150, 50, 255, 0.1)
+  );
 }
 .auth-bg-blob--tl {
   top: -80px;
   left: -80px;
-  background: radial-gradient(circle, rgba(100, 50, 255, 0.2), rgba(50, 100, 255, 0.1));
+  background: radial-gradient(
+    circle,
+    rgba(100, 50, 255, 0.2),
+    rgba(50, 100, 255, 0.1)
+  );
 }
 .auth-bg-blob--br {
   bottom: -80px;
   right: -80px;
-  background: radial-gradient(circle, rgba(255, 85, 0, 0.15), rgba(220, 50, 100, 0.1));
+  background: radial-gradient(
+    circle,
+    rgba(255, 85, 0, 0.15),
+    rgba(220, 50, 100, 0.1)
+  );
   animation-delay: 1s;
 }
 
@@ -1215,12 +1229,14 @@ button {
   border: 1px solid var(--sc-border);
   border-radius: 6px;
   overflow: hidden;
-  margin-bottom: 24px;
+  margin: 0 auto; /* 0 top/bottom, auto left/right = centered */
+  width: 1240px;
+  height: 254px;
 }
 
 .cover-photo {
   width: 100%;
-  height: 220px;
+  height: 254px;
   object-fit: cover;
   display: block;
 }
@@ -1354,8 +1370,65 @@ button {
   cursor: pointer;
   transition: opacity 0.15s;
 }
-.edit-form button:hover {
-  opacity: 0.85;
+.modal-overlay {
+  position: fixed;
+  inset: 0; /* covers the full screen */
+  background: rgba(0, 0, 0, 0.6); /* dark backdrop like SoundCloud */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.3s ease forwards;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.modal--in {
+  transform: translateY(0);
+}
+.modal--out {
+  transform: translateY(-100%);
+}
+
+.modal {
+  background: #1a1a1a; /* dark modal like SoundCloud */
+  color: #fff;
+  width: 620px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto; /* scroll inside if content is tall */
+  border-radius: 8px;
+  padding: 32px;
+  position: relative;
+
+  /* slide in from top */
+  animation: slideDown 0.4s ease forwards;
+}
+@keyframes slideDown {
+  from {
+    transform: translateY(-60px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
