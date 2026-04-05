@@ -1,34 +1,37 @@
 import React from 'react';
 
-export const PulsifyTrackRow = ({ track, index, onMoveUp, onMoveDown, isFirst, isLast }) => {
+export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop, onDragEnd }) => {
   if (!track) return null;
 
   return (
     <div
       className="setup-wrapper-track-row"
-      style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #444', padding: '10px 0' }}
+      draggable
+      onDragStart={(e) => onDragStart(e, index)}
+      onDragOver={(e) => onDragOver(e, index)}
+      onDrop={(e) => onDrop(e, index)}
+      onDragEnd={onDragEnd}
+      style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e5e5e5', padding: '10px 0', cursor: 'grab', backgroundColor: '#fff' }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', marginRight: '10px' }}>
-        <button data-testid="track-move-up-btn" onClick={() => onMoveUp(index)} disabled={isFirst} style={{ background: 'none', border: 'none', cursor: isFirst ? 'default' : 'pointer', opacity: isFirst ? 0.3 : 1, color: '#aaa' }}>&#9650;</button>
-        <button data-testid="track-move-down-btn" onClick={() => onMoveDown(index)} disabled={isLast} style={{ background: 'none', border: 'none', cursor: isLast ? 'default' : 'pointer', opacity: isLast ? 0.3 : 1, color: '#aaa' }}>&#9660;</button>
+      <div style={{ width: '30px', color: '#999', fontSize: '14px', textAlign: 'center', marginRight: '10px' }}>
+        {index + 1}
       </div>
-      <div style={{ width: '30px', color: '#888' }}>{index + 1}</div>
       <img
-        src={track.coverArtUrl}
-        alt={track.trackTitle}
+        src={track.cover_art_url || 'https://via.placeholder.com/40'}
+        alt={track.title}
         width="40"
         height="40"
         style={{ marginRight: '15px' }}
       />
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 'bold' }}>{track.trackTitle}</div>
-        <div style={{ fontSize: '0.85em', color: '#aaa' }}>{track.artistName}</div>
+        <div style={{ fontWeight: '400', fontSize: '14px', color: '#333' }}>{track.title}</div>
+        <div style={{ fontSize: '12px', color: '#999' }}>{track.artist_name || 'Unknown Artist'}</div>
       </div>
       <div style={{ marginRight: '20px' }}>
-        {track.isExplicit ? <span style={{ color: 'red', fontSize: '10px', border: '1px solid red', padding: '2px' }}>E</span> : null}
+        {track.is_explicit ? <span style={{ color: '#f50', fontSize: '10px', border: '1px solid #f50', padding: '2px 4px', borderRadius: '2px' }}>E</span> : null}
       </div>
-      <div>
-        {Math.floor(track.durationSeconds / 60)}:{(track.durationSeconds % 60).toString().padStart(2, '0')}
+      <div style={{ color: '#999', fontSize: '12px' }}>
+        {Math.floor((track.duration_seconds || 0) / 60)}:{((track.duration_seconds || 0) % 60).toString().padStart(2, '0')}
       </div>
     </div>
   );

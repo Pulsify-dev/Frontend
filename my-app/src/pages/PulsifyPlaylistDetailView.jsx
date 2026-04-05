@@ -1,124 +1,119 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyTrackRow } from '../components/playlists/PulsifyTrackRow';
 
 export const PulsifyPlaylistDetailView = () => {
-  const { playlistId } = useParams(); // bnktb el ID mn el URL
+  const { playlistId } = useParams();
   const [playlistDetail, setPlaylistDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const dragItem = useRef(null);
+  const dragOverItem = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
-
-    const loadTargetPlaylist = async () => {
+    const fetchTarget = async () => {
       try {
         setIsLoading(true);
-        console.log(`Bngib el detail bta3 playlist: ${playlistId} ...`);
-        
         const data = await PulsifyPlaylistService.retrievePlaylistById(playlistId);
-        
-        if (isMounted) {
-          setPlaylistDetail(data);
-          console.log('gbt el details:', data);
-        }
+        if (isMounted) setPlaylistDetail(data);
       } catch (err) {
-        if (isMounted) {
-          setFetchError(err.message || 'Error occurred fetching this set.');
-          console.error('fi moshkela fel fetch detail:', err);
-        }
+        if (isMounted) setFetchError(err.message || 'Error occurred fetching this set.');
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
-
-    if (playlistId) {
-      loadTargetPlaylist();
-    }
+    if (playlistId) fetchTarget();
+    return () => { isMounted = false; };
   }, [playlistId]);
 
-  const handleMoveUp = (index) => {
-    if (index === 0) return;
+  const handleDragStart = (e, position) => {
+    dragItem.current = position;
+  };
+
+  const handleDragOver = (e, position) => {
+    e.preventDefault();
+    dragOverItem.current = position;
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) return;
+    
     const newTracks = [...playlistDetail.tracks];
-    const temp = newTracks[index - 1];
-    newTracks[index - 1] = newTracks[index];
-    newTracks[index] = temp;
+    const draggedTrackContent = newTracks.splice(dragItem.current, 1)[0];
+    newTracks.splice(dragOverItem.current, 0, draggedTrackContent);
+    
+    dragItem.current = null;
+    dragOverItem.current = null;
+    
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
+    
+    try {
+      const trackIds = newTracks.map(t => t.id);
+      await PulsifyPlaylistService.reorderTracks(playlistId, trackIds);
+    } catch (err) {
+      setFetchError('Failed to persist sequence order.');
+    }
   };
 
-  const handleMoveDown = (index) => {
-    if (index === playlistDetail.tracks.length - 1) return;
-    const newTracks = [...playlistDetail.tracks];
-    const temp = newTracks[index + 1];
-    newTracks[index + 1] = newTracks[index];
-    newTracks[index] = temp;
-    setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
+  const copyEmbedCode = async () => {
+    try {
+      const embedData = await PulsifyPlaylistService.generateEmbed(playlistId);
+      navigator.clipboard.writeText(embedData.embed_html || 'No embed string resolved');
+      alert('Embed iframe copied to clipboard!');
+    } catch (err) {
+      alert('Failed to generate embed code.');
+    }
   };
 
-  const togglePrivacy = () => {
-    setPlaylistDetail({
-      ...playlistDetail,
-      isPublic: !playlistDetail.isPublic
-    });
-  };
-
-  if (isLoading) {
-    return <div>Loading details... please hold.</div>;
-  }
-
-  if (fetchError) {
-    return <div>Error: {fetchError} <Link to="/playlists">Go Back</Link></div>;
-  }
-
-  if (!playlistDetail) {
-    return <div>Playlist not found.</div>;
-  }
+  if (isLoading) return <div className="pulsify-util-msg">Loading...</div>;
+  if (fetchError) return <div className="pulsify-util-msg pulsify-err-msg">Error: {fetchError}</div>;
+  if (!playlistDetail) return <div className="pulsify-util-msg">Playlist not found.</div>;
 
   return (
-    <div className="pulsify-detail-container" style={{ padding: '20px' }}>
-      <Link data-testid="detail-back-link" to="/playlists" style={{ marginBottom: '20px', display: 'inline-block' }}>
-        &larr; Back to all sets
+    <div className="pulsify-playlists-container">
+      <Link to="/playlists" className="pulsify-btn pulsify-btn-outline" style={{ marginBottom: '20px' }}>
+        Back to sets
       </Link>
-      
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid #e5e5e5' }}>
         <img 
-          src={playlistDetail.thumbnailUrl} 
-          alt={playlistDetail.playlistName} 
-          width="250" 
-          height="250" 
+          src={playlistDetail.thumbnail_url || 'https://via.placeholder.com/250'} 
+          alt={playlistDetail.title} 
+          width="200" 
+          height="200" 
+          style={{ objectFit: 'cover' }}
         />
         <div>
-          <button data-testid="detail-privacy-toggle" onClick={togglePrivacy} style={{ padding: '5px 10px', fontSize: '12px', cursor: 'pointer', marginBottom: '10px', backgroundColor: playlistDetail.isPublic ? '#1db954' : '#e22134', color: 'white', border: 'none', borderRadius: '4px' }}>
-            {playlistDetail.isPublic ? 'Public Record' : 'Private Stash (Secret Token)'}
-          </button>
-          <p style={{ margin: 0, color: '#888', fontSize: '12px' }}>Click to toggle privacy</p>
-          <h1>{playlistDetail.playlistName}</h1>
-          <p>{playlistDetail.playlistDescription}</p>
-          <div style={{ marginTop: '20px', color: '#666' }}>
-            <span>Created by: {playlistDetail.creatorId}</span> &bull; 
-            <span> {playlistDetail.trackCount} Tracks, {Math.floor(playlistDetail.totalDuration / 60)} mins</span>
+          <div className="pulsify-badge-row">
+            {playlistDetail.is_private && <span className="pulsify-badge-secret">Secret Stash</span>}
           </div>
+          <h1 style={{ fontSize: '28px', fontWeight: '400', margin: '0 0 10px 0' }}>{playlistDetail.title}</h1>
+          <p style={{ margin: '0 0 15px 0', color: '#666' }}>{playlistDetail.description}</p>
+          <div style={{ color: '#999', fontSize: '13px', marginBottom: '15px' }}>
+            <span>Created by: {playlistDetail.creator_username || 'You'}</span> &bull; 
+            <span> {playlistDetail.tracks ? playlistDetail.tracks.length : 0} Tracks</span>
+          </div>
+          <button onClick={copyEmbedCode} className="pulsify-btn pulsify-btn-brand">
+            Share & Embed
+          </button>
         </div>
       </div>
-
-      <div className="setup-wrapper-track-list">
+      <div>
         {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
           playlistDetail.tracks.map((track, idx) => (
             <PulsifyTrackRow 
-              key={track.trackId} 
+              key={track.id || idx} 
               track={track} 
-              index={idx} 
-              onMoveUp={handleMoveUp}
-              onMoveDown={handleMoveDown}
-              isFirst={idx === 0}
-              isLast={idx === playlistDetail.tracks.length - 1}
+              index={idx}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
             />
           ))
         ) : (
-          <p>Lessa mfesh tracks hena...</p>
+          <p className="pulsify-util-msg">No tracks sequenced yet.</p>
         )}
       </div>
     </div>
