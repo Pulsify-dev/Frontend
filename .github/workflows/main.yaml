@@ -20,7 +20,11 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           docker build \
-            --build-arg VITE_API_URL="https://pulsify.page/v1" \
+            --build-arg VITE_API_URL="${{ secrets.VITE_API_URL }}" \
+            --build-arg VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
+            --build-arg VITE_USE_MOCKS=false \
+            --build-arg VITE_USE_MOCK=false \
+            --build-arg VITE_USE_MOCK_API=false \
             -t ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest \
             ./my-app
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
