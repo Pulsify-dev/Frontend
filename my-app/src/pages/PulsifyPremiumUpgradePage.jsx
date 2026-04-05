@@ -1,94 +1,76 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { pulsifyAxiosInstance } from '../services/api';
 import '../components/premium/css/PulsifyPremium.css';
 
 export const PulsifyPremiumUpgradePage = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const navigate = useNavigate();
+  const [loadingPro, setLoadingPro] = useState(false);
+  const [loadingGoPlus, setLoadingGoPlus] = useState(false);
+  const [errMessage, setErrMessage] = useState(null);
 
-  const handleCheckout = (tierName) => {
-    setIsProcessing(true);
-    // Mocking Stripe Checkout latency
-    setTimeout(() => {
-      alert(`Success! You have purchased the ${tierName} subscription. Payment simulated.`);
-      setIsProcessing(false);
-      // In a real app we would update Context/Redux here
-      // localStorage.setItem('isPulsifyPremium', 'true');
-      navigate('/upload');
-    }, 1500);
+  const initStripeSession = async (planType) => {
+    try {
+      if (planType === 'pro') setLoadingPro(true);
+      if (planType === 'goplus') setLoadingGoPlus(true);
+      
+      const response = await pulsifyAxiosInstance.post('/subscriptions/checkout', { plan: planType });
+      const checkoutUrl = response.data.checkout_url || response.data.url;
+      
+      if (checkoutUrl) {
+         window.location.href = checkoutUrl;
+      } else {
+         setErrMessage('Stripe session URL missing from response.');
+      }
+    } catch (err) {
+      setErrMessage('Payment gateway unreachable. Try again.');
+    } finally {
+      setLoadingPro(false);
+      setLoadingGoPlus(false);
+    }
   };
 
   return (
-    <div style={{ padding: '40px', maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
-      <Link to="/playlists" style={{ display: 'block', textAlign: 'left', marginBottom: '20px', color: '#f50', textDecoration: 'none' }}>
-        &larr; Back to Dashboard
-      </Link>
-
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Upgrade Your Sound</h1>
-      <p style={{ color: '#aaa', fontSize: '1.2rem', marginBottom: '40px' }}>
-        Get unlimited uploads, advanced analytics, and priority support.
-      </p>
-
-      <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+    <div className="pulsify-premium-container">
+      <div className="pulsify-premium-header">
+        <h1>Support the artists you love with Next Pro</h1>
+        <p>Get unlimited uploads, pro stats, and ad-free listening.</p>
+        {errMessage && <div className="pulsify-premium-error">{errMessage}</div>}
+      </div>
+      <div className="pulsify-pricing-grid">
+        <div className="pulsify-pricing-card">
+          <h2>Next Pro</h2>
+          <div className="pulsify-price">$12<span>/mo</span></div>
+          <ul className="pulsify-perk-list">
+            <li>Unlimited track uploads</li>
+            <li>Advanced audience stats</li>
+            <li>Custom profile controls</li>
+          </ul>
+          <button 
+            className="pulsify-btn-premium" 
+            onClick={() => initStripeSession('pro')}
+            disabled={loadingPro}
+          >
+            {loadingPro ? 'Connecting Sandbox...' : 'Subscribe to Pro'}
+          </button>
+        </div>
         
-        {/* Basic Tier (Current) */}
-        <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '8px', border: '1px solid #333' }}>
-          <h2>Basic</h2>
-          <h3 style={{ fontSize: '2rem', margin: '20px 0' }}>Free</h3>
-          <ul style={{ listStyle: 'none', padding: 0, textAlign: 'left', margin: '0 auto 30px auto', maxWidth: '200px' }}>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; Listen ad-free</li>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; Create Playlists</li>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333', color: '#f50' }}>&#10007; Max 3 Uploads</li>
-            <li style={{ padding: '10px 0', color: '#666' }}>&#10007; No Analytics</li>
-          </ul>
-          <button disabled style={{ width: '100%', padding: '15px', backgroundColor: '#333', color: '#888', border: 'none', borderRadius: '4px', cursor: 'not-allowed' }}>
-            Current Plan
-          </button>
-        </div>
-
-        {/* Pro Tier */}
-        <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#222', padding: '30px', borderRadius: '8px', border: '2px solid #f50', position: 'relative' }}>
-          <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#f50', padding: '5px 15px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-            MOST POPULAR
-          </div>
-          <h2>Pro</h2>
-          <h3 style={{ fontSize: '2rem', margin: '20px 0' }}>$4.99<span style={{ fontSize: '1rem', color: '#888' }}>/mo</span></h3>
-          <ul style={{ listStyle: 'none', padding: 0, textAlign: 'left', margin: '0 auto 30px auto', maxWidth: '200px' }}>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; Listen ad-free</li>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; Create Playlists</li>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333', color: '#1db954' }}>&#10003; Unlimited Uploads</li>
-            <li style={{ padding: '10px 0' }}>&#10003; Basic Analytics</li>
+        <div className="pulsify-pricing-card pulsify-pricing-featured">
+          <div className="pulsify-featured-badge">MOST POPULAR</div>
+          <h2>SoundCloud Go+</h2>
+          <div className="pulsify-price">$15<span>/mo</span></div>
+          <ul className="pulsify-perk-list">
+            <li>Ad-free listening</li>
+            <li>Offline sync support</li>
+            <li>High quality audio</li>
+            <li>Full catalogue access</li>
           </ul>
           <button 
-            data-testid="upgrade-pro-btn"
-            onClick={() => handleCheckout('Pro')}
-            disabled={isProcessing}
-            style={{ width: '100%', padding: '15px', backgroundColor: '#f50', color: 'white', border: 'none', borderRadius: '4px', cursor: isProcessing ? 'wait' : 'pointer', fontWeight: 'bold' }}
+            className="pulsify-btn-premium" 
+            onClick={() => initStripeSession('goplus')}
+            disabled={loadingGoPlus}
           >
-            {isProcessing ? 'Processing Payment...' : 'Subscribe to Pro'}
+            {loadingGoPlus ? 'Connecting Sandbox...' : 'Subscribe to Go+'}
           </button>
         </div>
-
-        {/* Go+ Tier */}
-        <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '8px', border: '1px solid #333' }}>
-          <h2>Go+</h2>
-          <h3 style={{ fontSize: '2rem', margin: '20px 0' }}>$9.99<span style={{ fontSize: '1rem', color: '#888' }}>/mo</span></h3>
-          <ul style={{ listStyle: 'none', padding: 0, textAlign: 'left', margin: '0 auto 30px auto', maxWidth: '200px' }}>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; Everything in Pro</li>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; Offline Listening</li>
-            <li style={{ padding: '10px 0', borderBottom: '1px solid #333' }}>&#10003; High Quality Audio</li>
-            <li style={{ padding: '10px 0' }}>&#10003; Priority Support</li>
-          </ul>
-          <button 
-            data-testid="upgrade-go-btn"
-            onClick={() => handleCheckout('Go+')}
-            disabled={isProcessing}
-            style={{ width: '100%', padding: '15px', backgroundColor: 'transparent', color: 'white', border: '1px solid white', borderRadius: '4px', cursor: isProcessing ? 'wait' : 'pointer', fontWeight: 'bold' }}
-          >
-            {isProcessing ? 'Processing Payment...' : 'Subscribe to Go+'}
-          </button>
-        </div>
-
       </div>
     </div>
   );

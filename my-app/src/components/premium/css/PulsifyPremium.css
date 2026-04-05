@@ -1,0 +1,126 @@
+.pulsify-premium-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333;
+}
+
+.pulsify-premium-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.pulsify-premium-header h1 {
+  font-size: 32px;
+  font-weight: 400;
+  margin-bottom: 15px;
+}
+
+.pulsify-premium-header p {
+  color: #666;
+  font-size: 18px;
+}
+
+.pulsify-premium-error {
+  color: #e22134;
+  background-color: #ffdce0;
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: 4px;
+}
+
+.pulsify-pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.pulsify-pricing-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 40px;
+  text-align: center;
+  background-color: #fff;
+  position: relative;
+}
+
+.pulsify-pricing-featured {
+  border: 2px solid #f50;
+  box-shadow: 0 4px 15px rgba(255, 85, 0, 0.1);
+}
+
+.pulsify-featured-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f50;
+  color: white;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 12px;
+  letter-spacing: 1px;
+}
+
+.pulsify-pricing-card h2 {
+  font-size: 24px;
+  font-weight: 400;
+  margin-bottom: 20px;
+}
+
+.pulsify-price {
+  font-size: 40px;
+  font-weight: 300;
+  margin-bottom: 30px;
+}
+
+.pulsify-price span {
+  font-size: 16px;
+  color: #999;
+}
+
+.pulsify-perk-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px 0;
+  text-align: left;
+}
+
+.pulsify-perk-list li {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #333;
+  padding-left: 24px;
+  position: relative;
+}
+
+.pulsify-perk-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #f50;
+}
+
+.pulsify-btn-premium {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background-color: #f50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pulsify-btn-premium:hover {
+  background-color: #d14000;
+}
+
+.pulsify-btn-premium:disabled {
+  background-color: #ffbba2;
+  cursor: not-allowed;
+}
