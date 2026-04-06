@@ -17,6 +17,9 @@ import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
 import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
 
+import FollowingPage from "@/social/pages/FollowingPage";
+import FollowersPage from "@/social/pages/FollowersPage";
+import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
 const AppRoutes = () => {
   return (
     <NotificationProvider>
@@ -40,6 +43,11 @@ const AppRoutes = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/trackpage" element={<TrackPage />} />
 
+            <Route path="/following" element={<FollowingPage />} />
+            <Route path="/following/:userId" element={<FollowingPage />} />
+            <Route path="/followers" element={<FollowersPage />} />
+            <Route path="/followers/:userId" element={<FollowersPage />} />
+            <Route path="/blocked" element={<BlockedUsersPage />} />
             {/* Discovery / Notifications pages */}
             <Route path="/feed" element={<DiscoveryFeedPage />} />
             <Route path="/search" element={<SearchHubPage />} />

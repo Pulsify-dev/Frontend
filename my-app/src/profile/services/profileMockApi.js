@@ -53,10 +53,14 @@ export async function updateMyProfileMock(payload) {
 
 export async function uploadAvatarMock(file) {
   await wait(300);
-  return URL.createObjectURL(file);
+  const url = URL.createObjectURL(file);
+  mockProfile = { ...mockProfile, avatarUrl: url }; // keep in sync
+  return url;
 }
 
 export async function uploadCoverMock(file) {
   await wait(300);
-  return URL.createObjectURL(file);
+  const url = URL.createObjectURL(file);
+  mockProfile = { ...mockProfile, coverUrl: url }; // keep in sync
+  return url;
 }

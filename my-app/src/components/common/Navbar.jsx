@@ -11,7 +11,9 @@ const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Feed", path: "/feed" },
-    { name: "Library", path: "/library" },
+    { name: "Library", path: "/playlists" },
+    { name: "Trending", path: "/trending" },
+    { name: "Discover", path: "/discover" },
   ];
 
   const isActiveLink = (path) => {
@@ -67,16 +69,21 @@ const Navbar = () => {
           </button>
         </form>
 
+        <Link to="/premium" className="auth-nav-pro">
+          Try Artist Pro
+        </Link>
+        <Link to="/upload" className="auth-nav-upload">
+          Upload
+        </Link>
+        <Link to="/profile" className="auth-nav-profile">
+          Profile
+        </Link>
         <Link to="/login" className="auth-nav-signin">
           Sign in
         </Link>
         <Link to="/register" className="auth-nav-register">
           Create account
         </Link>
-
-        <a href="#" className="auth-nav-upload">
-          Upload
-        </a>
 
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -124,7 +131,20 @@ const Navbar = () => {
           ))}
 
           <hr className="auth-mobile-divider" />
-
+          <Link
+            to="/upload"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="auth-mobile-link"
+          >
+            Upload
+          </Link>
+          <Link
+            to="/profile"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="auth-mobile-link"
+          >
+            Profile
+          </Link>
           <Link
             to="/login"
             onClick={() => setIsMobileMenuOpen(false)}
