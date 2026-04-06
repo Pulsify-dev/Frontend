@@ -1,43 +1,27 @@
 /* ── Mock Data ─────────────────────────────────────── */
 
 const AVATARS = [
-  "https://i.pravatar.cc/150?u=user1",
-  "https://i.pravatar.cc/150?u=user2",
-  "https://i.pravatar.cc/150?u=user3",
   "https://i.pravatar.cc/150?u=user5",
-  "https://i.pravatar.cc/150?u=user6",
   "https://i.pravatar.cc/150?u=user7",
-  "https://i.pravatar.cc/150?u=user8",
-  "https://i.pravatar.cc/150?u=user9",
   "https://i.pravatar.cc/150?u=user10",
-  "https://i.pravatar.cc/150?u=user11",
   "https://i.pravatar.cc/150?u=user12",
 ];
 
 const NAMES = [
-  "Hajer Hassan",
   "Podcast Eh El Moshkela",
   "Omar Khaled",
-  "Sarah Ahmed",
   "Nour El-Din",
-  "Youssef Tarek",
   "Lina Mostafa",
-  "Kareem Adel",
-  "Dina Samir",
   "Ali Mahmoud",
   "Rania Fawzy",
   "Moustafa Nabil",
 ];
 
 const BIOS = [
-  "Music producer & beatmaker",
   "Podcast host | 5K+ followers",
   "Lo-fi hip hop artist from Cairo",
-  "Singer-songwriter | New EP out now",
   "DJ & electronic music lover",
-  "Audio engineer | Sound designer",
   "Indie artist | Folk & acoustic",
-  "Rapper & lyricist",
   "Music blogger | Reviewing daily",
   "Ambient soundscapes creator",
   "Classical pianist gone digital",

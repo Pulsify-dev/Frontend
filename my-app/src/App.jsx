@@ -29,6 +29,7 @@ const AppRoutes = () => {
         <>
           <Routes>
             <Route element={<MainLayout />}>
+            </Route>
               {/* Auth */}
               <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
@@ -66,7 +67,6 @@ const AppRoutes = () => {
               <Route path="/feed" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
-            </Route>
           </Routes>
 
           <PulsifyPlayerBar />
