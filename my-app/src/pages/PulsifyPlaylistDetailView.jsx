@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyTrackRow } from '../components/playlists/PulsifyTrackRow';
+import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 
 export const PulsifyPlaylistDetailView = () => {
   const { playlistId } = useParams();
@@ -10,6 +11,8 @@ export const PulsifyPlaylistDetailView = () => {
   const [fetchError, setFetchError] = useState(null);
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
+  const navigate = useNavigate();
+  const { isPulsifyPremiumActive } = useContext(PulsifyAuthVaultContext) || { isPulsifyPremiumActive: false };
 
   useEffect(() => {
     let isMounted = true;
@@ -68,6 +71,45 @@ export const PulsifyPlaylistDetailView = () => {
     }
   };
 
+  const handleRemoveTrack = async (indexToRemove) => {
+    const newTracks = [...playlistDetail.tracks];
+    newTracks.splice(indexToRemove, 1);
+    setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
+    try {
+      const trackIds = newTracks.map(t => t.id);
+      await PulsifyPlaylistService.reorderTracks(playlistId, trackIds);
+    } catch (err) {
+      alert('Failed to sync trace removal.');
+    }
+  };
+
+  const handleDeleteSet = async () => {
+    if (!window.confirm('permanently delete this set?')) return;
+    try {
+      await PulsifyPlaylistService.deletePlaylist(playlistId);
+      navigate('/playlists');
+    } catch (err) {
+      alert('Delete failed.');
+    }
+  };
+
+  const handleTogglePrivacy = () => {
+    setPlaylistDetail(prev => ({
+      ...prev,
+      is_private: !prev.is_private
+    }));
+    alert('Playlist privacy conceptually toggled.');
+  };
+
+  const handleOfflineDownload = () => {
+    if (!isPulsifyPremiumActive) {
+      alert('Offline Listening is a Premium Perk. Please upgrade to Go+ to download sets.');
+      navigate('/premium');
+      return;
+    }
+    alert('Starting offline cache download... (Mock Premium Perk Enforced)');
+  };
+
   if (isLoading) return <div className="pulsify-util-msg">Loading...</div>;
   if (fetchError) return <div className="pulsify-util-msg pulsify-err-msg">Error: {fetchError}</div>;
   if (!playlistDetail) return <div className="pulsify-util-msg">Playlist not found.</div>;
@@ -85,9 +127,10 @@ export const PulsifyPlaylistDetailView = () => {
           height="200" 
           style={{ objectFit: 'cover' }}
         />
-        <div>
-          <div className="pulsify-badge-row">
-            {playlistDetail.is_private && <span className="pulsify-badge-secret">Secret Stash</span>}
+        <div style={{ width: '100%' }}>
+          <div className="pulsify-badge-row" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+            {playlistDetail.is_private ? <span className="pulsify-badge-secret">Secret Stash</span> : <span style={{ color: '#999', fontSize: '12px' }}>Public Set</span>}
+            <button onClick={handleTogglePrivacy} style={{ background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer', fontSize: '12px' }}>Toggle Privacy</button>
           </div>
           <h1 style={{ fontSize: '28px', fontWeight: '400', margin: '0 0 10px 0' }}>{playlistDetail.title}</h1>
           <p style={{ margin: '0 0 15px 0', color: '#666' }}>{playlistDetail.description}</p>
@@ -95,9 +138,17 @@ export const PulsifyPlaylistDetailView = () => {
             <span>Created by: {playlistDetail.creator_username || 'You'}</span> &bull; 
             <span> {playlistDetail.tracks ? playlistDetail.tracks.length : 0} Tracks</span>
           </div>
-          <button onClick={copyEmbedCode} className="pulsify-btn pulsify-btn-brand">
-            Share & Embed
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={copyEmbedCode} className="pulsify-btn pulsify-btn-outline">
+              Share & Embed
+            </button>
+            <button onClick={handleOfflineDownload} className="pulsify-btn pulsify-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              ↓ Offline Download
+            </button>
+            <button onClick={handleDeleteSet} className="pulsify-btn pulsify-btn-outline" style={{ color: 'red', borderColor: 'rgba(255,0,0,0.3)', marginLeft: 'auto' }}>
+              Delete Set
+            </button>
+          </div>
         </div>
       </div>
       <div>
@@ -110,6 +161,7 @@ export const PulsifyPlaylistDetailView = () => {
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              onRemoveTrack={handleRemoveTrack}
             />
           ))
         ) : (

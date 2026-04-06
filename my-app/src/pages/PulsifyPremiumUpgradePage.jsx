@@ -12,6 +12,15 @@ export const PulsifyPremiumUpgradePage = () => {
       if (planType === 'pro') setLoadingPro(true);
       if (planType === 'goplus') setLoadingGoPlus(true);
       
+      if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
+        setTimeout(() => {
+          setErrMessage('✅ MOCK MODE: Redirecting to Stripe Sandbox...');
+          setLoadingPro(false);
+          setLoadingGoPlus(false);
+        }, 1500);
+        return;
+      }
+
       const response = await pulsifyAxiosInstance.post('/subscriptions/checkout', { plan: planType });
       const checkoutUrl = response.data.checkout_url || response.data.url;
       

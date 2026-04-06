@@ -11,6 +11,10 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
     let isMounted = true;
     const verifyPremiumStatus = async () => {
       if (!activeSessionToken) return;
+      if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
+        if (isMounted) setIsPulsifyPremiumActive(false);
+        return;
+      }
       try {
         const { data } = await pulsifyAxiosInstance.get('/subscriptions/me');
         if (isMounted && data.is_premium) {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import mockData from '../mock/track.json';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://www.pulsify.page/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 const useMock = String(import.meta.env.VITE_USE_MOCKS) === 'true';
 
 export const pulsifyAxiosInstance = axios.create({

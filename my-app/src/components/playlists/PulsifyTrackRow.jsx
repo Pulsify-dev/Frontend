@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop, onDragEnd }) => {
+export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop, onDragEnd, onRemoveTrack }) => {
   if (!track) return null;
 
   return (
@@ -30,9 +30,18 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
       <div style={{ marginRight: '20px' }}>
         {track.is_explicit ? <span style={{ color: '#f50', fontSize: '10px', border: '1px solid #f50', padding: '2px 4px', borderRadius: '2px' }}>E</span> : null}
       </div>
-      <div style={{ color: '#999', fontSize: '12px' }}>
+      <div style={{ color: '#999', fontSize: '12px', marginRight: '15px' }}>
         {Math.floor((track.duration_seconds || 0) / 60)}:{((track.duration_seconds || 0) % 60).toString().padStart(2, '0')}
       </div>
+      {onRemoveTrack && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onRemoveTrack(index); }}
+          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '16px', padding: '0 5px' }}
+          title="Remove track from set"
+        >
+          &times;
+        </button>
+      )}
     </div>
   );
 };
