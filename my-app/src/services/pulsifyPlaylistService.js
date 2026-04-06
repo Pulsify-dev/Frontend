@@ -4,8 +4,26 @@ export const PulsifyPlaylistService = {
   async retrieveAllPlaylists(userId = 'me') {
     if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
       return [
-        { id: '1', title: 'Summer Lo-Fi Mix', is_private: false, track_count: 5 },
-        { id: '2', title: 'Gym Hardstyle', is_private: true, track_count: 12 }
+        {
+          id: '1', title: 'Summer Lo-Fi Mix', is_private: false, track_count: 5,
+          creator_username: 'i Omz',
+          tracks: [
+            { id: 'sl1', title: 'lofi chill beat' },
+            { id: 'sl2', title: 'rainy afternoon' },
+            { id: 'sl3', title: 'cafe study mix' },
+            { id: 'sl4', title: 'moonlight jazz' },
+            { id: 'sl5', title: 'midnight drive' }
+          ]
+        },
+        {
+          id: '2', title: 'Gym Hardstyle', is_private: true, track_count: 3,
+          creator_username: 'i Omz',
+          tracks: [
+            { id: 't1', title: 'Hardstyle Track A' },
+            { id: 't2', title: 'Hardstyle Track B' },
+            { id: 't3', title: 'Hardstyle Track C' }
+          ]
+        }
       ];
     }
     const { data } = await pulsifyAxiosInstance.get(`/users/${userId}/playlists`);
