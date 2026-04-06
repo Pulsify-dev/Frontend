@@ -24,20 +24,20 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
         transition: 'background-color 0.12s ease'
       }}
     >
+      <img
+        src={track.cover_art_url || 'https://placehold.co/28x28/252525/555?text=♫'}
+        alt={track.title}
+        width="28"
+        height="28"
+        style={{ marginRight: '8px', flexShrink: 0, borderRadius: '2px' }}
+      />
+
       <div style={{ width: '28px', textAlign: 'center', marginRight: '10px', flexShrink: 0 }}>
         {hovered
           ? <span style={{ color: '#f50', fontSize: '12px', cursor: 'pointer' }}>▶</span>
           : <span style={{ color: '#555', fontSize: '13px' }}>{index + 1}</span>
         }
       </div>
-
-      <img
-        src={track.cover_art_url || 'https://placehold.co/28x28/252525/555?text=♫'}
-        alt={track.title}
-        width="28"
-        height="28"
-        style={{ marginRight: '10px', flexShrink: 0, borderRadius: '2px' }}
-      />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontSize: '13px', color: '#ddd', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>

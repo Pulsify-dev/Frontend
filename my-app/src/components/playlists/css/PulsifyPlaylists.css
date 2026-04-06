@@ -3,8 +3,8 @@
   margin: 0 auto;
   padding: 30px;
   font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: #333;
-  background-color: #f2f2f2;
+  color: #ccc;
+  background-color: #111;
   min-height: 100vh;
 }
 
@@ -12,15 +12,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #222;
   padding-bottom: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 0;
 }
 
 .pulsify-header-bar h2 {
   font-size: 24px;
   font-weight: 400;
   margin: 0;
+  color: #fff;
 }
 
 .pulsify-action-group {
@@ -38,6 +39,11 @@
   border: 1px solid transparent;
   display: inline-block;
   white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.pulsify-btn:hover {
+  opacity: 0.85;
 }
 
 .pulsify-btn-dark {
@@ -51,28 +57,32 @@
 }
 
 .pulsify-btn-outline {
-  background-color: #fff;
-  border-color: #e5e5e5;
-  color: #333;
+  background-color: transparent;
+  border-color: #333;
+  color: #999;
 }
 
 .pulsify-grid-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .pulsify-playlist-card {
-  background: transparent;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  border-bottom: 1px solid #1e1e1e;
+  padding: 24px 0;
+  gap: 20px;
 }
 
 .pulsify-artwork-wrapper {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background-color: #e5e5e5;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  background-color: #1a1a1a;
+  overflow: hidden;
 }
 
 .pulsify-artwork {
@@ -88,49 +98,173 @@
   transform: translate(-50%, -50%);
   background-color: #f50;
   color: white;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.1s ease-in-out;
+  transition: opacity 0.12s ease;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .pulsify-artwork-wrapper:hover .pulsify-play-overlay {
   opacity: 1;
 }
 
-.pulsify-card-meta {
-  padding-top: 10px;
+.pulsify-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.pulsify-card-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0 0 4px 0;
-  color: #333;
+.pulsify-card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.pulsify-card-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #333;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.12s;
+  padding: 0;
+}
+
+.pulsify-card-play-btn:hover {
+  background-color: #444;
+}
+
+.pulsify-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pulsify-card-artist {
+  font-size: 12px;
+  color: #999;
+}
+
+.pulsify-card-artist:hover {
+  color: #ccc;
+}
+
+.pulsify-card-name {
+  font-size: 15px;
+  font-weight: 400;
+  color: #fff;
+  text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pulsify-card-subtitle {
-  font-size: 12px;
-  color: #999;
-  margin: 0 0 8px 0;
+.pulsify-card-name:hover {
+  color: #f50;
 }
 
-.pulsify-badge-row {
+.pulsify-card-time {
+  margin-left: auto;
+  font-size: 11px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.pulsify-card-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 60px;
+  margin: 8px 0 12px;
+  overflow: hidden;
+}
+
+.pulsify-card-waveform-bar {
+  width: 2px;
+  flex-shrink: 0;
+  border-radius: 1px 1px 0 0;
+}
+
+.pulsify-card-tracklist {
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pulsify-card-track-entry {
   display: flex;
   align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.pulsify-card-track-entry:hover .pulsify-card-track-title {
+  color: #fff;
+}
+
+.pulsify-card-track-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.pulsify-card-track-idx {
+  font-size: 12px;
+  color: #555;
+  width: 14px;
+  text-align: right;
+}
+
+.pulsify-card-track-dot {
+  font-size: 12px;
+  color: #444;
+}
+
+.pulsify-card-track-title {
+  font-size: 13px;
+  color: #ccc;
+  transition: color 0.1s;
+}
+
+.pulsify-card-view-all {
+  font-size: 12px;
+  color: #555;
+  text-decoration: none;
+  padding-top: 4px;
+}
+
+.pulsify-card-view-all:hover {
+  color: #f50;
+}
+
+.pulsify-card-badges {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .pulsify-badge-secret {
-  background-color: #e5e5e5;
+  background-color: #333;
   color: #999;
   font-size: 10px;
   padding: 2px 6px;
@@ -140,17 +274,39 @@
 
 .pulsify-track-count {
   font-size: 11px;
-  color: #999;
+  color: #555;
 }
 
 .pulsify-card-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.pulsify-card-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 0.12s, color 0.12s;
+  text-decoration: none;
+}
+
+.pulsify-card-action-btn:hover {
+  border-color: #666;
+  color: #fff;
 }
 
 .pulsify-util-msg {
   font-family: "Inter", sans-serif;
-  color: #999;
+  color: #666;
   padding: 40px;
   text-align: center;
 }
@@ -158,7 +314,7 @@
 .pulsify-modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(242, 242, 242, 0.95);
+  background-color: rgba(17, 17, 17, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -166,11 +322,12 @@
 }
 
 .pulsify-modal-content {
-  background-color: #fff;
+  background-color: #1a1a1a;
   padding: 25px;
   width: 450px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-  border: 1px solid #e5e5e5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  border: 1px solid #333;
+  color: #ccc;
 }
 
 .pulsify-form-group {
@@ -181,16 +338,23 @@
   display: block;
   font-size: 12px;
   margin-bottom: 6px;
-  color: #333;
+  color: #999;
 }
 
 .pulsify-input {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #333;
   border-radius: 3px;
   font-family: inherit;
   box-sizing: border-box;
+  background-color: #222;
+  color: #ccc;
+}
+
+.pulsify-input:focus {
+  border-color: #f50;
+  outline: none;
 }
 
 .pulsify-checkbox-group label {
@@ -199,6 +363,7 @@
   gap: 8px;
   font-size: 13px;
   cursor: pointer;
+  color: #999;
 }
 
 .pulsify-modal-actions {

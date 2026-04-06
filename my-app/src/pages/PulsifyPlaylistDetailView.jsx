@@ -107,7 +107,7 @@ export const PulsifyPlaylistDetailView = () => {
         <div style={{
           display: 'flex', position: 'relative', overflow: 'hidden',
           background: 'linear-gradient(135deg, #7a5a80 0%, #3e2d44 50%, #2a1e30 100%)',
-          height: '280px'
+          height: '340px'
         }}>
           <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
 
@@ -175,7 +175,7 @@ export const PulsifyPlaylistDetailView = () => {
         </div>
 
         {/* ─── ACTION BUTTONS ─── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '10px 24px', borderBottom: '1px solid #222', backgroundColor: '#111' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', borderBottom: '1px solid #222', backgroundColor: '#111' }}>
           <CircleBtn label="Share" onClick={copyEmbedCode}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           </CircleBtn>
@@ -215,8 +215,9 @@ export const PulsifyPlaylistDetailView = () => {
             <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '2px' }}>
               {playlistDetail.creator_username || 'You'}
             </div>
-            <div style={{ fontSize: '11px', color: '#555' }}>
-              ♫ {trackCount}
+            <div style={{ fontSize: '11px', color: '#f50', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#f50"><rect x="3" y="14" width="3" height="7" rx="1"/><rect x="8" y="10" width="3" height="11" rx="1"/><rect x="13" y="6" width="3" height="15" rx="1"/><rect x="18" y="2" width="3" height="19" rx="1"/></svg>
+              {trackCount}
             </div>
           </div>
 
@@ -249,13 +250,13 @@ const CircleBtn = ({ children, onClick, label, danger }) => (
   <button
     onClick={onClick}
     style={{
-      width: label ? 'auto' : '32px', height: '32px',
-      borderRadius: '50%', border: '1px solid #333',
+      width: label ? 'auto' : '36px', height: '36px',
+      borderRadius: label ? '3px' : '4px',
+      border: '1px solid #333',
       backgroundColor: '#1a1a1a', color: danger ? '#c44' : '#999',
       cursor: 'pointer', display: 'flex', alignItems: 'center',
       justifyContent: 'center', gap: '5px',
       padding: label ? '0 12px' : '0',
-      borderRadius: label ? '3px' : '50%',
       transition: 'border-color 0.15s, color 0.15s',
       fontSize: '11px'
     }}
