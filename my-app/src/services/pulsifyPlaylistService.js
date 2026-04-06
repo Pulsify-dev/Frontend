@@ -15,7 +15,10 @@ export const PulsifyPlaylistService = {
   async retrievePlaylistById(playlistId, secretToken = null) {
     if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
       return {
-        playlist: { id: playlistId, title: 'Gym Hardstyle', is_private: true },
+        id: playlistId, 
+        title: 'Gym Hardstyle', 
+        is_private: true,
+        creator_username: 'i Omz',
         tracks: [
           { id: 't1', title: 'Hardstyle Track A', artist_name: 'ZYZZ' },
           { id: 't2', title: 'Hardstyle Track B', artist_name: 'TEVVEZ' },

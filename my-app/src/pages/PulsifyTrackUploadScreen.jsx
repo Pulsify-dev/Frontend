@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
+import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import '../components/upload/css/PulsifyUploads.css';
 
 export const PulsifyTrackUploadScreen = () => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // Mock Paywall State (Free Tier User with 3 uploads already)
-  const [isPremium, setIsPremium] = useState(false);
-  const [uploadCount, setUploadCount] = useState(1);
+  // Mock Paywall State Integration
+  const { isPulsifyPremiumActive } = useContext(PulsifyAuthVaultContext) || { isPulsifyPremiumActive: false };
+  const uploadCount = String(import.meta.env.VITE_USE_MOCKS) === 'true' ? 3 : 0; // Pre-load limit for mock testing
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ export const PulsifyTrackUploadScreen = () => {
     e.stopPropagation();
     setDragActive(false);
 
-    if (!isPremium && uploadCount >= 3) {
+    if (!isPulsifyPremiumActive && uploadCount >= 3) {
       alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
       return;
     }
@@ -40,7 +41,7 @@ export const PulsifyTrackUploadScreen = () => {
   const handleChange = (e) => {
     e.preventDefault();
 
-    if (!isPremium && uploadCount >= 3) {
+    if (!isPulsifyPremiumActive && uploadCount >= 3) {
       alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
       return;
     }
@@ -112,7 +113,7 @@ export const PulsifyTrackUploadScreen = () => {
         </div>
       </form>
 
-      {!isPremium && uploadCount >= 3 && (
+      {!isPulsifyPremiumActive && uploadCount >= 3 && (
         <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'rgba(226, 33, 52, 0.1)', border: '1px solid #e22134', borderRadius: '4px', textAlign: 'center' }}>
           <p style={{ color: '#e22134', margin: '0 0 10px 0', fontWeight: 'bold' }}>Upload Limit Reached (3/3)</p>
           <p style={{ color: '#aaa', margin: '0 0 15px 0', fontSize: '14px' }}>Free tier allows a maximum of 3 tracks.</p>

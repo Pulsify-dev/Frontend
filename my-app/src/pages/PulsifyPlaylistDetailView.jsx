@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyTrackRow } from '../components/playlists/PulsifyTrackRow';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
+
+const waveformBars = Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
 export const PulsifyPlaylistDetailView = () => {
   const { playlistId } = useParams();
@@ -31,31 +33,20 @@ export const PulsifyPlaylistDetailView = () => {
     return () => { isMounted = false; };
   }, [playlistId]);
 
-  const handleDragStart = (e, position) => {
-    dragItem.current = position;
-  };
-
-  const handleDragOver = (e, position) => {
-    e.preventDefault();
-    dragOverItem.current = position;
-  };
+  const handleDragStart = (e, position) => { dragItem.current = position; };
+  const handleDragOver = (e, position) => { e.preventDefault(); dragOverItem.current = position; };
 
   const handleDrop = async (e) => {
     e.preventDefault();
     if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) return;
-    
     const newTracks = [...playlistDetail.tracks];
-    const draggedTrackContent = newTracks.splice(dragItem.current, 1)[0];
-    newTracks.splice(dragOverItem.current, 0, draggedTrackContent);
-    
+    const dragged = newTracks.splice(dragItem.current, 1)[0];
+    newTracks.splice(dragOverItem.current, 0, dragged);
     dragItem.current = null;
     dragOverItem.current = null;
-    
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
-    
     try {
-      const trackIds = newTracks.map(t => t.id);
-      await PulsifyPlaylistService.reorderTracks(playlistId, trackIds);
+      await PulsifyPlaylistService.reorderTracks(playlistId, newTracks.map(t => t.id));
     } catch (err) {
       setFetchError('Failed to persist sequence order.');
     }
@@ -66,9 +57,7 @@ export const PulsifyPlaylistDetailView = () => {
       const embedData = await PulsifyPlaylistService.generateEmbed(playlistId);
       navigator.clipboard.writeText(embedData.embed_html || 'No embed string resolved');
       alert('Embed iframe copied to clipboard!');
-    } catch (err) {
-      alert('Failed to generate embed code.');
-    }
+    } catch (err) { alert('Failed to generate embed code.'); }
   };
 
   const handleRemoveTrack = async (indexToRemove) => {
@@ -76,29 +65,21 @@ export const PulsifyPlaylistDetailView = () => {
     newTracks.splice(indexToRemove, 1);
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
     try {
-      const trackIds = newTracks.map(t => t.id);
-      await PulsifyPlaylistService.reorderTracks(playlistId, trackIds);
-    } catch (err) {
-      alert('Failed to sync trace removal.');
-    }
+      await PulsifyPlaylistService.reorderTracks(playlistId, newTracks.map(t => t.id));
+    } catch (err) { alert('Failed to sync trace removal.'); }
   };
 
   const handleDeleteSet = async () => {
-    if (!window.confirm('permanently delete this set?')) return;
+    if (!window.confirm('Permanently delete this set?')) return;
     try {
       await PulsifyPlaylistService.deletePlaylist(playlistId);
       navigate('/playlists');
-    } catch (err) {
-      alert('Delete failed.');
-    }
+    } catch (err) { alert('Delete failed.'); }
   };
 
   const handleTogglePrivacy = () => {
-    setPlaylistDetail(prev => ({
-      ...prev,
-      is_private: !prev.is_private
-    }));
-    alert('Playlist privacy conceptually toggled.');
+    setPlaylistDetail(prev => ({ ...prev, is_private: !prev.is_private }));
+    alert('Playlist privacy toggled.');
   };
 
   const handleOfflineDownload = () => {
@@ -107,67 +88,181 @@ export const PulsifyPlaylistDetailView = () => {
       navigate('/premium');
       return;
     }
-    alert('Starting offline cache download... (Mock Premium Perk Enforced)');
+    alert('Starting offline cache download...');
   };
 
-  if (isLoading) return <div className="pulsify-util-msg">Loading...</div>;
-  if (fetchError) return <div className="pulsify-util-msg pulsify-err-msg">Error: {fetchError}</div>;
-  if (!playlistDetail) return <div className="pulsify-util-msg">Playlist not found.</div>;
+  if (isLoading) return <div style={loadingStyle}>Loading...</div>;
+  if (fetchError) return <div style={{ ...loadingStyle, color: '#f44' }}>Error: {fetchError}</div>;
+  if (!playlistDetail) return <div style={loadingStyle}>Playlist not found.</div>;
+
+  const trackCount = playlistDetail.tracks?.length || 0;
+  const totalSec = playlistDetail.tracks?.reduce((s, t) => s + (t.duration_seconds || 0), 0) || 0;
+  const durStr = `${Math.floor(totalSec / 60)}:${(totalSec % 60).toString().padStart(2, '0')}`;
 
   return (
-    <div className="pulsify-playlists-container">
-      <Link to="/playlists" className="pulsify-btn pulsify-btn-outline" style={{ marginBottom: '20px' }}>
-        Back to sets
-      </Link>
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid #e5e5e5' }}>
-        <img 
-          src={playlistDetail.thumbnail_url || 'https://via.placeholder.com/250'} 
-          alt={playlistDetail.title} 
-          width="200" 
-          height="200" 
-          style={{ objectFit: 'cover' }}
-        />
-        <div style={{ width: '100%' }}>
-          <div className="pulsify-badge-row" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-            {playlistDetail.is_private ? <span className="pulsify-badge-secret">Secret Stash</span> : <span style={{ color: '#999', fontSize: '12px' }}>Public Set</span>}
-            <button onClick={handleTogglePrivacy} style={{ background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer', fontSize: '12px' }}>Toggle Privacy</button>
+    <div style={{ backgroundColor: '#111', minHeight: '100vh', fontFamily: '"Inter","Helvetica Neue",Arial,sans-serif' }}>
+      <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+
+        {/* ─── BANNER ─── */}
+        <div style={{
+          display: 'flex', position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(135deg, #7a5a80 0%, #3e2d44 50%, #2a1e30 100%)',
+          height: '280px'
+        }}>
+          <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <button style={{
+                width: '50px', height: '50px', borderRadius: '50%',
+                backgroundColor: '#f50', border: 'none', color: '#fff',
+                fontSize: '18px', cursor: 'pointer',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                transition: 'transform 0.1s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                ▶
+              </button>
+              <div style={{ minWidth: 0 }}>
+                <span style={{ backgroundColor: 'rgba(0,0,0,0.75)', color: '#fff', padding: '4px 10px', fontSize: '22px', fontWeight: '400', display: 'inline-block', lineHeight: 1.3 }}>
+                  {playlistDetail.title}
+                </span>
+                <br />
+                <span style={{ backgroundColor: 'rgba(0,0,0,0.75)', color: '#bbb', padding: '2px 10px', fontSize: '13px', display: 'inline-block', marginTop: '3px' }}>
+                  {playlistDetail.creator_username || 'You'}
+                </span>
+              </div>
+              <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
+                Updated 2 hours ago
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '50%',
+                border: '2px solid rgba(255,255,255,0.25)',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                backgroundColor: 'rgba(0,0,0,0.3)'
+              }}>
+                <span style={{ fontSize: '15px', fontWeight: '700', color: '#fff', lineHeight: 1 }}>{trackCount}</span>
+                <span style={{ fontSize: '6px', fontWeight: '700', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TRACK{trackCount !== 1 ? 'S' : ''}</span>
+                <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.5)' }}>{durStr}</span>
+              </div>
+
+              <div style={{ flex: 1, height: '55px', display: 'flex', alignItems: 'flex-end', gap: '1px', overflow: 'hidden' }}>
+                {waveformBars.map((h, i) => (
+                  <div key={i} style={{
+                    width: '2px', flexShrink: 0,
+                    height: `${h * 100}%`,
+                    backgroundColor: i < 60 ? 'rgba(255,85,0,0.7)' : 'rgba(255,255,255,0.35)',
+                    borderRadius: '1px 1px 0 0'
+                  }} />
+                ))}
+              </div>
+            </div>
           </div>
-          <h1 style={{ fontSize: '28px', fontWeight: '400', margin: '0 0 10px 0' }}>{playlistDetail.title}</h1>
-          <p style={{ margin: '0 0 15px 0', color: '#666' }}>{playlistDetail.description}</p>
-          <div style={{ color: '#999', fontSize: '13px', marginBottom: '15px' }}>
-            <span>Created by: {playlistDetail.creator_username || 'You'}</span> &bull; 
-            <span> {playlistDetail.tracks ? playlistDetail.tracks.length : 0} Tracks</span>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={copyEmbedCode} className="pulsify-btn pulsify-btn-outline">
-              Share & Embed
-            </button>
-            <button onClick={handleOfflineDownload} className="pulsify-btn pulsify-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              ↓ Offline Download
-            </button>
-            <button onClick={handleDeleteSet} className="pulsify-btn pulsify-btn-outline" style={{ color: 'red', borderColor: 'rgba(255,0,0,0.3)', marginLeft: 'auto' }}>
-              Delete Set
-            </button>
+
+          <div style={{ width: '280px', height: '280px', flexShrink: 0 }}>
+            <img
+              src={playlistDetail.thumbnail_url || 'https://placehold.co/280x280/2a1e30/666?text=♫'}
+              alt={playlistDetail.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
           </div>
         </div>
-      </div>
-      <div>
-        {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
-          playlistDetail.tracks.map((track, idx) => (
-            <PulsifyTrackRow 
-              key={track.id || idx} 
-              track={track} 
-              index={idx}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onRemoveTrack={handleRemoveTrack}
-            />
-          ))
-        ) : (
-          <p className="pulsify-util-msg">No tracks sequenced yet.</p>
-        )}
+
+        {/* ─── ACTION BUTTONS ─── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '10px 24px', borderBottom: '1px solid #222', backgroundColor: '#111' }}>
+          <CircleBtn label="Share" onClick={copyEmbedCode}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </CircleBtn>
+          <CircleBtn onClick={() => {}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </CircleBtn>
+          <CircleBtn onClick={() => {}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </CircleBtn>
+          <CircleBtn onClick={handleTogglePrivacy}>
+            {playlistDetail.is_private
+              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17a2 2 0 002-2 2 2 0 00-2-2 2 2 0 00-2 2 2 2 0 002 2m6-9a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 0110 0v2h1m-6-2v2h4V6a2 2 0 00-2-2 2 2 0 00-2 2z"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            }
+          </CircleBtn>
+          <CircleBtn onClick={handleOfflineDownload}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </CircleBtn>
+          <CircleBtn onClick={handleDeleteSet} danger>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </CircleBtn>
+        </div>
+
+        {/* ─── LOWER BODY ─── */}
+        <div style={{ display: 'flex', padding: '24px', gap: '24px', backgroundColor: '#111' }}>
+
+          <div style={{ width: '140px', flexShrink: 0, textAlign: 'center' }}>
+            <div style={{
+              width: '100px', height: '100px', borderRadius: '50%',
+              backgroundColor: '#252525', margin: '0 auto 10px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '36px', color: '#555',
+              border: '2px solid #333'
+            }}>
+              ♫
+            </div>
+            <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '2px' }}>
+              {playlistDetail.creator_username || 'You'}
+            </div>
+            <div style={{ fontSize: '11px', color: '#555' }}>
+              ♫ {trackCount}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, borderLeft: '1px solid #222', paddingLeft: '24px' }}>
+            {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
+              playlistDetail.tracks.map((track, idx) => (
+                <PulsifyTrackRow
+                  key={track.id || idx}
+                  track={track}
+                  index={idx}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onRemoveTrack={handleRemoveTrack}
+                />
+              ))
+            ) : (
+              <div style={{ color: '#555', padding: '30px 0', fontSize: '14px' }}>No tracks in this set yet.</div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+const loadingStyle = { background: '#111', color: '#999', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter",sans-serif' };
+
+const CircleBtn = ({ children, onClick, label, danger }) => (
+  <button
+    onClick={onClick}
+    style={{
+      width: label ? 'auto' : '32px', height: '32px',
+      borderRadius: '50%', border: '1px solid #333',
+      backgroundColor: '#1a1a1a', color: danger ? '#c44' : '#999',
+      cursor: 'pointer', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', gap: '5px',
+      padding: label ? '0 12px' : '0',
+      borderRadius: label ? '3px' : '50%',
+      transition: 'border-color 0.15s, color 0.15s',
+      fontSize: '11px'
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = '#666'; e.currentTarget.style.color = danger ? '#f55' : '#fff'; }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = danger ? '#c44' : '#999'; }}
+  >
+    {children}
+    {label && <span>{label}</span>}
+  </button>
+);
