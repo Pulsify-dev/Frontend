@@ -1,10 +1,15 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
+import "./App.css";
+
+// Module 1 – Auth (Seif Allah Alaa)
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
-import "./App.css";
+import Unauthorized from "@/pages/Unauthorized";
+import Home from "@/pages/Home";
+import { ProtectedRoute, ArtistRoute } from "@/components/auth";
 
 // Module 2 – Profile (Ahmad Hisham)
 import ProfilePage from "@/profile/pages/ProfilePage";
@@ -43,14 +48,23 @@ const AppRoutes = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
             </Route>
 
             {/* App pages – full navbar */}
             <Route element={<MainLayout />}>
               <Route path="/" element={<DiscoveryFeedPage />} />
+              <Route path="/home" element={<Home />} />
 
-              {/* Profile - Module 2 */}
-              <Route path="/profile" element={<ProfilePage />} />
+              {/* Profile - Module 2 (Protected) */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/profile/:userId" element={<ProfilePage />} />
 
               {/* Social Graph - Module 3 */}
@@ -127,8 +141,25 @@ const AppRoutes = () => {
                 element={<PulsifyPlaylistDetailView />}
               />
 
-              {/* Upload - Module 4 */}
-              <Route path="/upload" element={<PulsifyTrackUploadScreen />} />
+              {/* Library (Protected) */}
+              <Route
+                path="/library"
+                element={
+                  <ProtectedRoute>
+                    <PulsifyPlaylistsView />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Upload - Module 4 (Artist Only) */}
+              <Route
+                path="/upload"
+                element={
+                  <ArtistRoute>
+                    <PulsifyTrackUploadScreen />
+                  </ArtistRoute>
+                }
+              />
 
               {/* Premium - Module 12 */}
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />

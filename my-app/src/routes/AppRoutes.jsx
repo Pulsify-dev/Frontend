@@ -1,15 +1,13 @@
-/**
- * App Routes Configuration
- * Simplified routes for page demos
- */
-
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
+import AuthLayout from "@/layouts/AuthLayout";
 
-// Auth
+// Auth (Seif)
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import VerifyEmail from "@/pages/VerifyEmail";
 
 // Module pages
 import { HomeFeedPage } from "@/pages/HomeFeedPage";
@@ -33,12 +31,18 @@ import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route element={<MainLayout />}>
-        {/* Auth */}
-        <Route path="/" element={<Login />} />
+      {/* Auth pages */}
+      <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+      </Route>
+
+      {/* App pages */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<DiscoveryFeedPage />} />
 
         {/* Profile - Module 2 */}
         <Route path="/profile" element={<ProfilePage />} />
@@ -53,14 +57,8 @@ const AppRoutes = () => {
 
         {/* Feed - Module 8 */}
         <Route path="/feed" element={<HomeFeedPage />} />
-
-        {/* Discovery - Module 8 */}
         <Route path="/discover" element={<DiscoveryFeedPage />} />
-
-        {/* Search - Module 8 */}
         <Route path="/search" element={<SearchHubPage />} />
-
-        {/* Trending - Module 8 */}
         <Route path="/trending" element={<TrendingChartsPage />} />
 
         {/* Track - Module 4/5 */}
