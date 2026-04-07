@@ -53,3 +53,10 @@ export const recordPlay = async (trackId) => {
   const { data } = await apiClient.post(`/tracks/${trackId}/play`);
   return data;
 };
+
+// Resource Resolver: resolve a permalink URL into a resource object
+export const resolveUrl = async (permalink) => {
+  const safeUrl = encodeURIComponent(permalink);
+  const { data } = await apiClient.get(`/resolve?url=${safeUrl}`);
+  return data;
+};

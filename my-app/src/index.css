@@ -1,53 +1,38 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
-
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DESIGN TOKENS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* Pulsify Global Style — SoundCloud-accurate palette */
 :root {
-  --sc-bg: #0f0f0f;
-  --sc-panel: #181818;
-  --sc-border: #2a2a2a;
-  --sc-text: #e8e8e8;
-  --sc-title: #ffffff;
-  --sc-muted: #888888;
-  --sc-orange: #ff5500;
-  --sc-orange-soft: rgba(255, 85, 0, 0.15);
-  --sc-tag-bg: #222222;
-
-  --display: "DM Sans", sans-serif;
-
-  /* Discovery / Notifications tokens */
-  --app-bg: #09090b;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-bg-hover: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --accent-primary: #8b5cf6;
-  --accent-glow: rgba(139, 92, 246, 0.4);
-  --text-main: #f4f4f5;
-  --text-muted: #a1a1aa;
+  --sc-bg-primary: #111;
+  --sc-bg-secondary: #1a1a1a;
+  --sc-bg-surface: #222;
+  --sc-bg-elevated: #2a2a2a;
+  --sc-border: #333;
+  --sc-border-light: #444;
+  --sc-accent: #f50;
+  --sc-accent-hover: #e64a00;
+  --sc-text-primary: #fff;
+  --sc-text-secondary: #999;
+  --sc-text-muted: #666;
+  --sc-link: #f50;
+  --sc-like-red: #f44;
+  --sc-repost-green: #3bc;
+  --sc-navbar-height: 46px;
+  --sc-player-height: 48px;
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   BASE RESET
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 body {
-  font-family: "DM Sans", sans-serif;
-  background: var(--sc-bg);
-  color: var(--sc-text);
+  font-family:
+    Interstate, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Garuda,
+    Verdana, Tahoma, sans-serif;
+  background-color: var(--sc-bg-primary);
+  color: var(--sc-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-#root {
-  min-height: 100vh;
+  line-height: 1.4;
 }
 
 a {
@@ -55,99 +40,70 @@ a {
   color: inherit;
 }
 
-:focus-visible {
-  outline: 2px solid var(--sc-orange);
-  outline-offset: 2px;
+a:hover {
+  color: var(--sc-text-primary);
 }
 
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Utility button styles */
+.sc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 400;
+  border: 1px solid var(--sc-border-light);
+  background: transparent;
+  color: var(--sc-text-secondary);
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+  height: 26px;
+}
+
+.sc-btn:hover {
+  border-color: var(--sc-text-secondary);
+  color: var(--sc-text-primary);
+}
+
+.sc-btn-primary {
+  background: var(--sc-accent);
+  color: #fff;
+  border-color: var(--sc-accent);
+}
+
+.sc-btn-primary:hover {
+  background: var(--sc-accent-hover);
+  border-color: var(--sc-accent-hover);
+}
+
+.sc-btn.active {
+  color: var(--sc-accent);
+  border-color: var(--sc-accent);
+}
+
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
-  height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--sc-bg-primary);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--sc-border);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--sc-muted);
-}
-
-input,
-button,
-textarea,
-select {
-  font-family: inherit;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DISCOVERY / NOTIFICATIONS GLOBALS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-.pulsify-glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-}
-
-.pulsify-btn-primary {
-  background: var(--accent-primary);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 15px var(--accent-glow);
-}
-
-.pulsify-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 20px var(--accent-primary);
-  filter: brightness(1.1);
-}
-
-.pulsify-app-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.pulsify-navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--glass-border);
-  background: rgba(9, 9, 11, 0.8);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.pulsify-nav-links {
-  display: flex;
-  gap: 24px;
-}
-
-.pulsify-main-content {
-  flex: 1;
-  padding: 32px;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+  background: var(--sc-border-light);
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

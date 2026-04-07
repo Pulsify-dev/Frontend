@@ -1,39 +1,182 @@
-.pulsify-feed-container {
-  max-width: 800px;
-  margin: 0 auto;
+/* ====== SoundCloud Stream Page ====== */
+
+.sc-stream-page {
+  width: 100%;
 }
 
-.feed-header {
-  margin-bottom: 32px;
+.sc-stream-content {
+  display: flex;
+  gap: 30px;
 }
 
-.feed-header h2 {
-  font-size: 28px;
-  margin: 0 0 8px 0;
-  /* Premium textual gradient */
-  background: linear-gradient(90deg, #fff, var(--text-muted));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
+.sc-stream-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.subtitle {
-  color: var(--text-muted);
-  margin: 0;
-  font-size: 15px;
+.sc-page-heading {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--sc-text-primary);
+  margin: 0 0 4px 0;
 }
 
-.feed-loader {
+.sc-page-subtitle {
+  font-size: 13px;
+  color: var(--sc-text-muted);
+  margin: 0 0 24px 0;
+}
+
+.sc-track-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loader */
+.sc-loader {
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.sc-loader-bar {
+  width: 200px;
+  height: 3px;
+  background: var(--sc-border);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sc-loader-bar::after {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 100%;
+  background: var(--sc-accent);
+  border-radius: 3px;
+  animation: scSlide 1.2s infinite ease-in-out;
+}
+
+@keyframes scSlide {
+  0% { left: -60px; }
+  100% { left: 200px; }
+}
+
+/* Empty State */
+.sc-empty-state {
   text-align: center;
-  padding: 60px;
-  color: var(--accent-primary);
-  font-weight: 500;
-  opacity: 0.8;
-  animation: feedPulse 1.5s infinite ease-in-out;
+  padding: 60px 20px;
+  color: var(--sc-text-muted);
 }
 
-@keyframes feedPulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
+.sc-empty-state h3 {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--sc-text-primary);
+  margin-bottom: 8px;
+}
+
+.sc-empty-state p {
+  font-size: 14px;
+}
+
+/* ====== Right Sidebar ====== */
+.sc-stream-sidebar {
+  width: 300px;
+  min-width: 300px;
+}
+
+.sc-sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sc-sidebar-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--sc-text-secondary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sc-border);
+}
+
+.sc-follow-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.sc-suggest-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--sc-bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.sc-suggest-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-suggest-name {
+  font-size: 13px;
+  color: var(--sc-text-primary);
+}
+
+.sc-suggest-name:hover {
+  color: var(--sc-accent);
+  cursor: pointer;
+}
+
+.sc-suggest-followers {
+  font-size: 11px;
+  color: var(--sc-text-muted);
+}
+
+/* Sidebar Footer */
+.sc-sidebar-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--sc-border);
+}
+
+.sc-footer-links-row {
+  font-size: 11px;
+  color: var(--sc-text-muted);
+  margin-bottom: 4px;
+}
+
+.sc-footer-links-row a {
+  color: var(--sc-text-muted);
+}
+
+.sc-footer-links-row a:hover {
+  color: var(--sc-text-secondary);
+}
+
+.sc-footer-lang {
+  font-size: 11px;
+  color: var(--sc-text-muted);
+  margin-top: 8px;
+}
+
+.sc-footer-lang a {
+  color: var(--sc-link);
+}
+
+@media (max-width: 900px) {
+  .sc-stream-content {
+    flex-direction: column;
+  }
+  .sc-stream-sidebar {
+    width: 100%;
+    min-width: 0;
+  }
 }
