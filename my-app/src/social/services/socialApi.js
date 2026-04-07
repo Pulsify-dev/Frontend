@@ -8,7 +8,12 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/v1";
 
 function getAuthHeaders() {
-  const token = localStorage.getItem("accessToken");
+  const token =
+    localStorage.getItem("pulsify_access_token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("pulsify_jwt_token") ||
+    localStorage.getItem("pulsify_token");
+
   return {
     Authorization: `Bearer ${token}`,
   };
@@ -38,7 +43,7 @@ export async function unfollowUserApi(userId) {
 
 export async function getFollowersApi(userId, page = 1, limit = 12) {
   const res = await fetch(
-    `${API_BASE_URL}/users/${userId}/followers?page=${page}&limit=${limit}`
+    `${API_BASE_URL}/users/${userId}/followers?page=${page}&limit=${limit}`,
   );
   if (!res.ok) throw new Error("Failed to fetch followers");
   const data = await res.json();
@@ -50,7 +55,7 @@ export async function getFollowersApi(userId, page = 1, limit = 12) {
 
 export async function getFollowingApi(userId, page = 1, limit = 12) {
   const res = await fetch(
-    `${API_BASE_URL}/users/${userId}/following?page=${page}&limit=${limit}`
+    `${API_BASE_URL}/users/${userId}/following?page=${page}&limit=${limit}`,
   );
   if (!res.ok) throw new Error("Failed to fetch following");
   const data = await res.json();
@@ -109,7 +114,7 @@ export async function updateBlockReasonApi(userId, reason) {
 export async function getBlockedUsersApi(page = 1, limit = 12) {
   const res = await fetch(
     `${API_BASE_URL}/users/me/blocked?page=${page}&limit=${limit}`,
-    { headers: { ...getAuthHeaders() } }
+    { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch blocked users");
   const data = await res.json();
@@ -133,10 +138,9 @@ export async function getRelationshipApi(userId) {
 /* ── Suggested Users ───────────────────────────────── */
 
 export async function getSuggestedUsersApi(limit = 6) {
-  const res = await fetch(
-    `${API_BASE_URL}/users/suggested?limit=${limit}`,
-    { headers: { ...getAuthHeaders() } }
-  );
+  const res = await fetch(`${API_BASE_URL}/users/suggested?limit=${limit}`, {
+    headers: { ...getAuthHeaders() },
+  });
   if (!res.ok) throw new Error("Failed to fetch suggested users");
   const data = await res.json();
   return (data.data || []).map(mapUserDtoToUser);
@@ -147,7 +151,7 @@ export async function getSuggestedUsersApi(limit = 6) {
 export async function getMutualFollowersApi(userId, limit = 6) {
   const res = await fetch(
     `${API_BASE_URL}/users/${userId}/mutual-followers?limit=${limit}`,
-    { headers: { ...getAuthHeaders() } }
+    { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch mutual followers");
   const data = await res.json();

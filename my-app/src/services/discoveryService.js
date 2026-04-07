@@ -1,9 +1,19 @@
-import axios from 'axios';
-import { envConfig } from '../config/environment';
+import axios from "axios";
+import { envConfig } from "../config/environment";
 
 const apiClient = axios.create({
   baseURL: envConfig.apiUrl,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { "Content-Type": "application/json" },
+});
+apiClient.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("pulsify_access_token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("pulsify_jwt_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // Adapter to convert backend snake_case to frontend camelCase
@@ -13,23 +23,23 @@ const adaptTrack = (track) => ({
   artist: {
     id: track.artist?.id,
     name: track.artist?.name,
-    avatarUrl: track.artist?.avatar_url || track.artist?.avatarUrl
+    avatarUrl: track.artist?.avatar_url || track.artist?.avatarUrl,
   },
   plays: track.plays,
   likes: track.likes,
   reposts: track.reposts,
   coverArt: track.cover_art || track.coverArt,
   durationSeconds: track.duration_seconds || track.durationSeconds,
-  uploadedAt: track.uploaded_at || track.uploadedAt
+  uploadedAt: track.uploaded_at || track.uploadedAt,
 });
 
 export const fetchFeed = async () => {
-  const { data } = await apiClient.get('/discovery/feed');
+  const { data } = await apiClient.get("/discovery/feed");
   return Array.isArray(data) ? data.map(adaptTrack) : [];
 };
 
 export const fetchTrending = async () => {
-  const { data } = await apiClient.get('/discovery/trending');
+  const { data } = await apiClient.get("/discovery/trending");
   return Array.isArray(data) ? data.map(adaptTrack) : [];
 };
 

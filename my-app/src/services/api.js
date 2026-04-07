@@ -12,7 +12,10 @@ const getAuthToken = () => {
     return import.meta.env.VITE_AUTH_TOKEN ?? "";
 
   return (
+    window.localStorage.getItem("pulsify_access_token") ??
     window.localStorage.getItem("pulsify_token") ??
+    window.localStorage.getItem("accessToken") ??
+    window.localStorage.getItem("pulsify_jwt_token") ??
     import.meta.env.VITE_AUTH_TOKEN ??
     ""
   );

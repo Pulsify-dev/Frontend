@@ -7,7 +7,11 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/v1";
 
 function getAuthHeaders() {
-  const token = localStorage.getItem("accessToken");
+  const token =
+    localStorage.getItem("pulsify_access_token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("pulsify_jwt_token") ||
+    localStorage.getItem("pulsify_token");
 
   return {
     Authorization: `Bearer ${token}`,
