@@ -1,29 +1,36 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
-import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
-import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
-import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
-import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
-import TrackPage from "@/pages/TrackPage";
+import "./App.css";
+
+// Module 2 – Profile (Ahmad Hisham)
 import ProfilePage from "@/profile/pages/ProfilePage";
 
-// Module 3 – Social Graph
+// Module 3 – Social Graph (Ahmad Hisham)
 import FollowingPage from "@/social/pages/FollowingPage";
 import FollowersPage from "@/social/pages/FollowersPage";
 import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
 
-// Module 8/10 – Discovery, Notifications (Ahmed Ali)
+// Module 4/5/6 – Tracks, Playback & Engagement (Mayar Ayman)
+import AppHeader from "@/components/AppHeader";
+import TrackPage from "@/pages/TrackPage";
+
+// Module 7 + 12 – Playlists & Premium (Omar Nasser)
+import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
+import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
+import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
+import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
+
+// Module 8/10 – Discovery & Notifications (Ahmed Ali)
 import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
 import PulsifyPlayerBar from "./components/common/PulsifyPlayerBar";
 import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
 import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
-import "./App.css";
 
 const AppRoutes = () => {
   return (
@@ -46,12 +53,72 @@ const AppRoutes = () => {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:userId" element={<ProfilePage />} />
 
-              {/* Module 3 – Social Graph */}
+              {/* Social Graph - Module 3 */}
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/following/:userId" element={<FollowingPage />} />
               <Route path="/followers" element={<FollowersPage />} />
               <Route path="/followers/:userId" element={<FollowersPage />} />
               <Route path="/blocked" element={<BlockedUsersPage />} />
+
+              {/* Tracks & Engagement - Module 4/5/6 */}
+              <Route
+                path="/trackpage"
+                element={<Navigate to="/tracks/trk-2026-014" replace />}
+              />
+              <Route
+                path="/tracks/:trackId"
+                element={
+                  <>
+                    <AppHeader />
+                    <TrackPage view="overview" />
+                  </>
+                }
+              />
+              <Route
+                path="/tracks/:trackId/comments"
+                element={
+                  <>
+                    <AppHeader />
+                    <TrackPage view="comments" />
+                  </>
+                }
+              />
+              <Route
+                path="/tracks/:trackId/related"
+                element={
+                  <>
+                    <AppHeader />
+                    <TrackPage view="related" />
+                  </>
+                }
+              />
+              <Route
+                path="/tracks/:trackId/playlists"
+                element={
+                  <>
+                    <AppHeader />
+                    <TrackPage view="playlists" />
+                  </>
+                }
+              />
+              <Route
+                path="/tracks/:trackId/likes"
+                element={
+                  <>
+                    <AppHeader />
+                    <TrackPage view="likes" />
+                  </>
+                }
+              />
+              <Route
+                path="/tracks/:trackId/reposts"
+                element={
+                  <>
+                    <AppHeader />
+                    <TrackPage view="reposts" />
+                  </>
+                }
+              />
 
               {/* Playlists - Module 7 */}
               <Route path="/playlists" element={<PulsifyPlaylistsView />} />
@@ -63,13 +130,10 @@ const AppRoutes = () => {
               {/* Upload - Module 4 */}
               <Route path="/upload" element={<PulsifyTrackUploadScreen />} />
 
-              {/* Track - Module 4/5 */}
-              <Route path="/trackpage" element={<TrackPage />} />
-
               {/* Premium - Module 12 */}
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
 
-              {/* Discovery / Notifications - Module 8/10 */}
+              {/* Discovery & Notifications - Module 8/10 */}
               <Route path="/feed" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />

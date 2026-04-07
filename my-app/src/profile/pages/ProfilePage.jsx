@@ -17,7 +17,7 @@ export default function ProfilePage() {
         setIsLoading(true);
         const data = await profileService.getMyProfile();
         setProfile(data);
-      } catch (error) {
+      } catch {
         setErrorMessage("Failed to load profile.");
       } finally {
         setIsLoading(false);
@@ -40,7 +40,7 @@ export default function ProfilePage() {
     try {
       const avatarUrl = await profileService.uploadAvatar(file);
       setProfile((current) => (current ? { ...current, avatarUrl } : current));
-    } catch (error) {
+    } catch {
       setErrorMessage("Failed to upload avatar.");
     }
   }
@@ -49,7 +49,7 @@ export default function ProfilePage() {
     try {
       const coverUrl = await profileService.uploadCover(file);
       setProfile((current) => (current ? { ...current, coverUrl } : current));
-    } catch (error) {
+    } catch {
       setErrorMessage("Failed to upload cover photo.");
     }
   }

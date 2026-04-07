@@ -3,8 +3,63 @@ import { Link } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 
 export const PulsifyTrackUploadScreen = () => {
+<<<<<<< HEAD
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
   const isProUser = subscriptionTier === 'PRO';
+=======
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  
+  // Mock Paywall State (Free Tier User with 3 uploads already)
+  const [isPremium] = useState(false);
+  const [uploadCount] = useState(3);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (!isPremium && uploadCount >= 3) {
+      alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
+      return;
+    }
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const files = Array.from(e.dataTransfer.files);
+      setUploadedFiles(files);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+
+    if (!isPremium && uploadCount >= 3) {
+      alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
+      return;
+    }
+
+    if (e.target.files && e.target.files[0]) {
+      const files = Array.from(e.target.files);
+      setUploadedFiles(files);
+    }
+  };
+
+  const handleMetadataSubmit = (data) => {
+    console.log('Metadata Saved for', data.file.name, data);
+    // Simulating save logic
+    alert(`Track "${data.title}" has been saved and is now ${data.isPublic ? 'Public' : 'Private'}!`);
+  };
+>>>>>>> origin/playback
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#111', fontFamily: '"Inter", "Helvetica Neue", sans-serif' }}>
