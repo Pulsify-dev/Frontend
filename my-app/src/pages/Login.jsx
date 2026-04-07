@@ -1,6 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { mockLogin, mockOAuthLogin } from "@/mocks/mockService";
+import { useState, useRef } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
+import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 function LoadingSpinner() {
   return (
@@ -26,6 +30,7 @@ function LoadingSpinner() {
   );
 }
 
+// OAuth icons - kept in code but hidden in UI
 function FacebookIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -67,51 +72,106 @@ function AppleIcon() {
 
 const Login = () => {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState(null);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
 
-  const handleContinue = async (e) => {
+  // Redirect if already logged in
+  if (isAuthenticated) {
+    const from = location.state?.from?.pathname || "/home";
+    navigate(from, { replace: true });
+    return null;
+  }
+
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    const nextEmail = email.trim();
-    if (!nextEmail) {
+
+    // Validate email
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setError("Please enter your email address");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError("Please enter a valid email address");
       return;
     }
+
+    // Validate password
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
+
+    // Show CAPTCHA after failed attempts
+    if (showCaptcha && !captchaToken) {
+      setError("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result = await mockLogin(nextEmail);
-      setSuccess(result.message);
-      setTimeout(() => console.log("Logged in as:", result.user), 1500);
+      const result = await authService.login(trimmedEmail, password);
+      
+      setSuccess("Login successful! Redirecting...");
+      
+      // Store user in auth context
+      login(result.user, result.access_token, result.refresh_token);
+      
+      // Reset failed attempts
+      setFailedAttempts(0);
+      
+      // Redirect after short delay
+      setTimeout(() => {
+        const from = location.state?.from?.pathname || "/home";
+        navigate(from, { replace: true });
+      }, 1000);
     } catch (err) {
-      setError(err?.message || "Unable to sign in. Please try again.");
+      const newFailedAttempts = failedAttempts + 1;
+      setFailedAttempts(newFailedAttempts);
+      
+      // Show CAPTCHA after 2 failed attempts
+      if (newFailedAttempts >= 2 && RECAPTCHA_SITE_KEY) {
+        setShowCaptcha(true);
+      }
+      
+      // Reset CAPTCHA
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      setCaptchaToken(null);
+      
+      setError(err?.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // OAuth handlers - kept for future use
   const handleOAuthLogin = async (provider) => {
-    setError("");
-    setSuccess("");
-    setLoadingProvider(provider);
-    try {
-      const result = await mockOAuthLogin(provider);
-      setSuccess(result.message);
-      setTimeout(() => console.log("OAuth logged in as:", result.user), 1500);
-    } catch (err) {
-      setError(err?.message || `Unable to sign in with ${provider}.`);
-    } finally {
-      setLoadingProvider(null);
-    }
+    // OAuth not yet implemented on backend
+    console.log(`OAuth login with ${provider} - not yet implemented`);
   };
+
+  const isFormValid = email.trim() && password && (!showCaptcha || captchaToken);
 
   return (
     <div className="auth-page">
@@ -119,10 +179,9 @@ const Login = () => {
       <div className="auth-bg-blob auth-bg-blob--bl" />
 
       <div className="auth-card">
-        <h1 className="auth-title">Sign in or create an account</h1>
+        <h1 className="auth-title">Sign in to Pulsify</h1>
         <p className="auth-subtitle">
-          By clicking on any of the 'Continue' buttons below, you agree to
-          SoundCloud's{" "}
+          By signing in, you agree to Pulsify's{" "}
           <a href="#" className="auth-link">
             Terms of Use
           </a>{" "}
@@ -153,91 +212,104 @@ const Login = () => {
         )}
         {error && <div className="auth-alert auth-alert--error">{error}</div>}
 
-        <div className="auth-oauth-group">
+        {/* OAuth buttons - hidden until backend supports it */}
+        <div className="auth-oauth-group auth-oauth-hidden">
           <button
             className="auth-oauth-btn auth-oauth-btn--facebook"
             onClick={() => handleOAuthLogin("facebook")}
-            disabled={loadingProvider !== null}
+            disabled={isLoading}
+            type="button"
           >
-            {loadingProvider === "facebook" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <FacebookIcon /> Continue with Facebook
-              </>
-            )}
+            <FacebookIcon /> Continue with Facebook
           </button>
           <button
             className="auth-oauth-btn auth-oauth-btn--google"
             onClick={() => handleOAuthLogin("google")}
-            disabled={loadingProvider !== null}
+            disabled={isLoading}
+            type="button"
           >
-            {loadingProvider === "google" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <GoogleIcon /> Continue with Google
-              </>
-            )}
+            <GoogleIcon /> Continue with Google
           </button>
           <button
             className="auth-oauth-btn auth-oauth-btn--apple"
             onClick={() => handleOAuthLogin("apple")}
-            disabled={loadingProvider !== null}
+            disabled={isLoading}
+            type="button"
           >
-            {loadingProvider === "apple" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <AppleIcon /> Continue with Apple
-              </>
-            )}
+            <AppleIcon /> Continue with Apple
           </button>
         </div>
 
-        <div className="auth-divider">
+        {/* Divider - hidden when OAuth is hidden */}
+        <div className="auth-divider auth-oauth-hidden">
           <span>or</span>
         </div>
 
-        <form onSubmit={handleContinue}>
-          <div className="auth-field">
-            <input
-              type="email"
-              placeholder="Your email address or profile URL"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              className="auth-input"
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="auth-fields">
+            <div className="auth-field">
+              <input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                className="auth-input"
+                autoComplete="email"
+              />
+            </div>
+            <div className="auth-field">
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                className="auth-input"
+                autoComplete="current-password"
+              />
+            </div>
           </div>
+
+          {/* reCAPTCHA - shown after failed attempts */}
+          {showCaptcha && RECAPTCHA_SITE_KEY && (
+            <div className="auth-captcha">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+                onExpired={handleCaptchaExpired}
+              />
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={!email.trim() || isLoading}
-            className={`auth-submit-btn${!email.trim() || isLoading ? " disabled" : ""}`}
+            disabled={!isFormValid || isLoading}
+            className={`auth-submit-btn${!isFormValid || isLoading ? " disabled" : ""}`}
           >
             {isLoading ? (
               <>
                 <LoadingSpinner /> Signing in...
               </>
             ) : (
-              "Continue"
+              "Sign in"
             )}
           </button>
         </form>
 
         <div className="auth-footer-row">
-          <a href="#" className="auth-link">
-            Need help?
-          </a>
-          <a
-            href="#"
-            className="auth-link"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/register");
-            }}
-          >
+          <Link to="/forgot-password" className="auth-link">
+            Forgot your password?
+          </Link>
+          <Link to="/register" className="auth-link">
             Create account
+          </Link>
+        </div>
+
+        <div className="auth-help-row">
+          <a href="#" className="auth-link auth-link--muted">
+            Need help?
           </a>
         </div>
       </div>
