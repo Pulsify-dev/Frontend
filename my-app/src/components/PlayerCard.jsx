@@ -1,169 +1,138 @@
-const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
-const formatCount = (value) => new Intl.NumberFormat('en-US').format(value ?? 0)
+const formatCount = (value) => {
+  const numericValue = Number(value) || 0
+
+  if (numericValue >= 1000000) {
+    return `${(numericValue / 1000000).toFixed(numericValue >= 10000000 ? 0 : 1)}M`
+  }
+
+  if (numericValue >= 1000) {
+    return `${Math.round(numericValue / 100) / 10}K`
+  }
+
+  return `${numericValue}`
+}
 
 function PlayerCard({
   track,
-  comments,
-  duration,
-  isPlaying,
+  commentCount,
   currentTime,
-  onTogglePlay,
-  onSeek,
-  volume,
-  onVolume,
-  progress,
-  playbackState,
-  previewDurationSeconds,
   message,
+  onAddComment,
   onLikeToggle,
   onRepostToggle,
-  onOpenLikers,
-  onOpenReposters,
+  onShare,
+  onCopyLink,
+  view,
 }) {
-  const waveform = track.waveform?.length
-    ? track.waveform
-    : Array.from({ length: 60 }, (_, index) => 0.2 + ((index % 5) + 1) / 10)
+  const [text, setText] = useState('')
+  const [attachTimestamp, setAttachTimestamp] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  const previewLimit =
-    playbackState === 'Preview' && duration
-      ? (previewDurationSeconds / duration) * 100
-      : null
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    const trimmedText = text.trim()
+    if (!trimmedText) {
+      setError('Write a comment first.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setError('')
+
+    try {
+      await onAddComment({
+        text: trimmedText,
+        timestamp_ms: attachTimestamp ? Math.floor(currentTime * 1000) : null,
+      })
+      setText('')
+    } catch {
+      setError('Comment could not be posted.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <section className="module-card player-card" id="stream">
-      <div className="section-heading">
-        <div>
-          <h2>High-Fidelity Streaming</h2>
-          <p>Play, seek, gate previews, and keep social engagement in one surface.</p>
-        </div>
-        <div className="playback-summary">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      <div className="waveform-shell">
-        <div className="waveform-grid" aria-label="Waveform preview">
-          {waveform.map((point, index) => {
-            const barTime = duration
-              ? (index / Math.max(waveform.length - 1, 1)) * duration
-              : 0
-            const isActive = barTime <= currentTime
-
-            return (
-              <button
-                key={`${index}-${point}`}
-                className={`waveform-bar ${isActive ? 'is-active' : ''}`}
-                type="button"
-                style={{ '--bar-height': `${Math.max(point * 100, 16)}%` }}
-                onClick={() => onSeek(barTime)}
-                aria-label={`Seek to ${formatTime(barTime)}`}
-              />
-            )
-          })}
-
-          {comments
-            .filter((comment) => typeof comment.timestamp_ms === 'number')
-            .map((comment) => (
-              <button
-                key={comment.id}
-                className="comment-marker"
-                type="button"
-                style={{
-                  left: `${(comment.timestamp_ms / 1000 / Math.max(duration, 1)) * 100}%`,
-                }}
-                onClick={() => onSeek(comment.timestamp_ms / 1000)}
-                aria-label={`Jump to comment from ${comment.user.name}`}
-                title={`${comment.user.name}: ${comment.text}`}
-              />
-            ))}
-
-          {previewLimit ? (
-            <div
-              className="preview-limit"
-              style={{ left: `${Math.min(previewLimit, 100)}%` }}
-            />
-          ) : null}
+    <section className="social-panel">
+      <form className="social-comment-bar" onSubmit={handleSubmit}>
+        <div className="comment-avatar-shell" aria-hidden="true">
+          <span />
         </div>
 
-        <div className="range-row">
-          <span>{formatTime(currentTime)}</span>
+        <label className="comment-input-shell">
+          <span className="sr-only">Write a comment</span>
           <input
-            type="range"
-            min="0"
-            max={duration || 0}
-            value={Math.min(currentTime, duration || 0)}
-            onChange={(event) => onSeek(Number(event.target.value))}
+            type="text"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="Write a comment"
           />
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
+        </label>
 
-      <div className="transport-row">
-        <div className="transport-cluster">
-          <button
-            className="primary-action"
-            type="button"
-            onClick={onTogglePlay}
-            disabled={playbackState === 'Blocked'}
-          >
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-          <button type="button" onClick={() => onSeek(Math.max(currentTime - 10, 0))}>
-            -10s
-          </button>
-          <button
-            type="button"
-            onClick={() => onSeek(Math.min(currentTime + 10, duration))}
-          >
-            +10s
-          </button>
-        </div>
+        <button className="comment-submit" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Sending' : 'Send'}
+        </button>
+      </form>
 
-        <div className="engagement-actions">
+      <div className="track-actions-row">
+        <div className="track-actions">
           <button
-            className={track.viewerHasLiked ? 'is-active' : ''}
+            className={`action-square ${track.viewerHasLiked ? 'is-active' : ''}`}
             type="button"
             onClick={onLikeToggle}
           >
-            {track.viewerHasLiked ? 'Liked' : 'Like'} {formatCount(track.likeCount)}
+            Like
           </button>
           <button
-            className={track.viewerHasReposted ? 'is-active' : ''}
+            className={`action-square ${track.viewerHasReposted ? 'is-active' : ''}`}
             type="button"
             onClick={onRepostToggle}
           >
-            {track.viewerHasReposted ? 'Reposted' : 'Repost'}{' '}
-            {formatCount(track.repostCount)}
+            Repost
           </button>
-          <button type="button" onClick={onOpenLikers}>
-            Favoriters
+          <button className="action-square" type="button" onClick={onShare}>
+            Share
           </button>
-          <button type="button" onClick={onOpenReposters}>
-            Reposters
+          <button className="action-square" type="button" onClick={onCopyLink}>
+            Copy
           </button>
+          <button className="action-square" type="button">
+            Queue
+          </button>
+          <Link
+            className={`action-link ${view === 'comments' ? 'is-current' : ''}`}
+            to={`/tracks/${track.id}/comments`}
+          >
+            Comments
+          </Link>
+        </div>
+
+        <div className="track-stat-row">
+          <span>{formatCount(track.playCount)} plays</span>
+          <span>{formatCount(track.likeCount)} likes</span>
+          <span>{formatCount(track.repostCount)} reposts</span>
+          <span>{formatCount(commentCount)} comments</span>
         </div>
       </div>
 
-      <div className="volume-row">
-        <label htmlFor="player-volume">Volume</label>
-        <input
-          id="player-volume"
-          type="range"
-          min="0"
-          max="100"
-          value={volume}
-          onChange={(event) => onVolume(Number(event.target.value))}
-        />
-        <span>{progress.toFixed(0)}% played</span>
-      </div>
+      <div className="comment-helper-row">
+        <label className="timestamp-option">
+          <input
+            type="checkbox"
+            checked={attachTimestamp}
+            onChange={(event) => setAttachTimestamp(event.target.checked)}
+          />
+          <span>Attach current timestamp</span>
+        </label>
 
-      {message ? <p className="panel-notice">{message}</p> : null}
+        {message ? <p className="panel-notice">{message}</p> : null}
+        {error ? <p className="panel-notice panel-notice-error">{error}</p> : null}
+      </div>
     </section>
   )
 }

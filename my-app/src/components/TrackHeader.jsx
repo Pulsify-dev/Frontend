@@ -1,89 +1,122 @@
-const formatCount = (value) => new Intl.NumberFormat('en-US').format(value ?? 0)
+import { Link } from 'react-router-dom'
 
-const formatDate = (value) =>
-  new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(value))
+const formatRelativeDate = (value) => {
+  const then = new Date(value)
+  const now = new Date()
+  const diffMs = then.getTime() - now.getTime()
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
-const stateCopy = {
-  Playable: 'Full stream available now',
-  Preview: 'Preview mode only',
-  Blocked: 'Playback blocked',
+  if (Math.abs(diffDays) < 30) {
+    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+      diffDays,
+      'day',
+    )
+  }
+
+  const diffMonths = Math.round(diffDays / 30)
+  if (Math.abs(diffMonths) < 12) {
+    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+      diffMonths,
+      'month',
+    )
+  }
+
+  return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+    Math.round(diffDays / 365),
+    'year',
+  )
+}
+
+const formatTime = (seconds) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
 function TrackHeader({
   track,
+  comments,
   isPlaying,
   onTogglePlay,
-  playbackState,
-  previewDurationSeconds,
+  onSeek,
+  currentTime,
+  duration,
 }) {
-  return (
-    <section className="hero-card">
-      <div className="hero-copy">
-        <div className="hero-pills">
-          <span className="tag">Playback & Social</span>
-          <span className={`state-pill state-${playbackState.toLowerCase()}`}>
-            {stateCopy[playbackState] ?? playbackState}
-          </span>
-        </div>
+  const waveform = track.waveform?.length
+    ? track.waveform
+    : Array.from({ length: 140 }, (_, index) => 0.22 + ((index % 7) + 1) / 12)
 
-        <div className="hero-title-row">
+  const pinnedComments = comments
+    .filter((comment) => typeof comment.timestamp_ms === 'number')
+    .slice(0, 16)
+
+  return (
+    <section className="track-hero">
+      <div className="track-hero-main">
+        <div className="track-hero-head">
           <button
-            className="hero-play"
+            className={`hero-play ${isPlaying ? 'is-playing' : ''}`}
             type="button"
             onClick={onTogglePlay}
-            disabled={playbackState === 'Blocked'}
+            aria-label={isPlaying ? 'Pause track' : 'Play track'}
           >
-            {isPlaying ? 'Pause' : 'Play'}
+            <span />
           </button>
 
-          <div>
+          <div className="track-hero-copy">
+            <span className="track-type-pill">{track.typeLabel}</span>
             <h1>{track.title}</h1>
-            <div className="hero-meta">
-              <img
-                className="artist-avatar"
-                src={track.artistAvatar}
-                alt={track.artist}
-              />
-              <div>
-                <p className="artist-line">{track.artist}</p>
-                <p className="subline">
-                  {track.artistHandle} • {track.genre} • {track.location}
-                </p>
-              </div>
-            </div>
+            <Link className="track-artist-chip" to="/profile">
+              {track.artist}
+            </Link>
+          </div>
+
+          <span className="track-hero-age">{formatRelativeDate(track.postedAt)}</span>
+        </div>
+
+        <div className="track-waveform-card">
+          <div className="track-waveform" aria-label="Track waveform">
+            {waveform.map((point, index) => {
+              const barTime = duration
+                ? (index / Math.max(waveform.length - 1, 1)) * duration
+                : 0
+              const isActive = barTime <= currentTime
+
+              return (
+                <button
+                  key={`${track.id}-${index}`}
+                  className={`track-wave ${isActive ? 'is-active' : ''}`}
+                  type="button"
+                  style={{ '--wave-height': `${Math.max(point * 100, 12)}%` }}
+                  onClick={() => onSeek(barTime)}
+                  aria-label={`Seek to ${formatTime(barTime)}`}
+                />
+              )
+            })}
+
+            {pinnedComments.map((comment, index) => (
+              <button
+                key={comment.id}
+                className="track-comment-badge"
+                type="button"
+                style={{
+                  left: `${(comment.timestamp_ms / 1000 / Math.max(duration, 1)) * 100}%`,
+                  '--comment-offset': `${(index % 4) * 3}px`,
+                }}
+                onClick={() => onSeek(comment.timestamp_ms / 1000)}
+                aria-label={`Jump to comment from ${comment.user.name}`}
+                title={`${comment.user.name}: ${comment.text}`}
+              >
+                <img src={comment.user.avatar} alt={comment.user.name} />
+              </button>
+            ))}
+
+            <span className="track-duration-badge">{formatTime(duration)}</span>
           </div>
         </div>
-
-        <p className="hero-description">{track.description}</p>
-
-        <div className="hero-stats">
-          <span>{formatCount(track.playCount)} plays</span>
-          <span>{formatCount(track.likeCount)} likes</span>
-          <span>{formatCount(track.repostCount)} reposts</span>
-          <span>{track.commentCount} comments</span>
-          <span>Posted {formatDate(track.postedAt)}</span>
-        </div>
-
-        {playbackState === 'Preview' ? (
-          <p className="hero-note">
-            Preview stops after {Math.floor(previewDurationSeconds)} seconds based
-            on listener access.
-          </p>
-        ) : null}
-
-        {playbackState === 'Blocked' ? (
-          <p className="hero-note hero-note-warning">
-            This track is currently blocked because of region or subscription
-            access rules.
-          </p>
-        ) : null}
       </div>
 
-      <div className="hero-artwork">
+      <div className="track-hero-art">
         <img src={track.cover} alt={track.title} />
       </div>
     </section>

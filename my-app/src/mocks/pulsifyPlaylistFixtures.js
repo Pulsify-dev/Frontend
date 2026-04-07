@@ -2,8 +2,8 @@ export const mockPulsifyPlaylistsResponse = [
   {
     playlist_id: 'pl_98x72abc',
     creator_id: 'usr_owner123',
-    playlist_name: 'Late Night Coding Vibes',
-    playlist_description: 'chill beats for coding',
+    playlist_name: 'Cairo After Midnight',
+    playlist_description: 'late-night records, Arabic cuts, and dark synth edges',
     is_public: true,
     thumbnail_url: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=300&q=80',
     total_duration: 3600,
@@ -46,10 +46,10 @@ export const mockPulsifyPlaylistsResponse = [
   {
     playlist_id: 'pl_44y89xyz',
     creator_id: 'usr_owner123',
-    playlist_name: 'Workout Hype 2026',
-    playlist_description: 'gym playlist for workout',
+    playlist_name: 'Arabic Chill Finds',
+    playlist_description: 'warm vocals, floating pads, and repost-worthy picks',
     is_public: false,
-    thumbnail_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=300&q=80',
+    thumbnail_url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=300&q=80',
     total_duration: 1200,
     track_count: 1,
     created_at: '2026-02-15T08:00:00Z',
@@ -64,6 +64,40 @@ export const mockPulsifyPlaylistsResponse = [
         play_count: 50400,
         is_explicit: true,
         added_at: '2026-02-16T09:00:00Z'
+      }
+    ]
+  },
+  {
+    playlist_id: 'pl_77m20qwe',
+    creator_id: 'usr_owner123',
+    playlist_name: 'car',
+    playlist_description: 'small playlist for quick rides and repeat hooks',
+    is_public: true,
+    thumbnail_url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=300&q=80',
+    total_duration: 1840,
+    track_count: 4,
+    created_at: '2026-03-08T18:00:00Z',
+    updated_at: '2026-03-19T20:10:00Z',
+    tracks: [
+      {
+        track_id: 'tr_3001',
+        track_title: 'Velvet Static',
+        artist_name: 'Mina Selim',
+        cover_art_url: 'https://images.unsplash.com/photo-1496293455970-f8581aae0e3b?auto=format&fit=crop&w=150&q=80',
+        duration_seconds: 229,
+        play_count: 690000,
+        is_explicit: false,
+        added_at: '2026-03-10T11:00:00Z'
+      },
+      {
+        track_id: 'tr_3002',
+        track_title: 'Desert Skyline (Live Take)',
+        artist_name: 'Mayar Ayman',
+        cover_art_url: 'https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=150&q=80',
+        duration_seconds: 248,
+        play_count: 3410000,
+        is_explicit: false,
+        added_at: '2026-03-11T09:30:00Z'
       }
     ]
   }

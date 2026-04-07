@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import Comments from '../components/Comments'
 import EngagementListModal from '../components/EngagementListModal'
 import HistoryPanel from '../components/HistoryPanel'
@@ -7,16 +7,17 @@ import LoadingState from '../components/LoadingState'
 import PlayerCard from '../components/PlayerCard'
 import PlayerDock from '../components/PlayerDock'
 import TrackHeader from '../components/TrackHeader'
+import { trackExperienceMockData } from '../mock/trackExperienceData'
 import {
   createComment,
   getComments,
+  getFanLeaderboard,
   getLikers,
-  getListeningHistory,
-  getRecentlyPlayed,
+  getRelatedTracks,
   getReposters,
   getStreamUrl,
   getTrack,
-  getWaveform,
+  getTrackPlaylists,
   registerPlay,
   toggleLike,
   toggleRepost,
@@ -24,15 +25,67 @@ import {
 import '../App.css'
 
 const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? 'trk-2026-014'
+const mockTrackOrder = Object.keys(trackExperienceMockData.tracks)
 
-const sortComments = (items) =>
+const buildTrackPath = (targetTrackId, view) => {
+  if (view === 'overview') {
+    return `/tracks/${targetTrackId}`
+  }
+
+  return `/tracks/${targetTrackId}/${view}`
+}
+
+const sortCommentsByTimeline = (items) =>
   [...items].sort((left, right) => {
     const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER
     const rightTime = right.timestamp_ms ?? Number.MAX_SAFE_INTEGER
     return leftTime - rightTime
   })
 
-function TrackPage() {
+const getSectionConfig = (view, track, relatedTracks, playlists, likers, reposters) => {
+  if (!track) return null
+
+  if (view === 'related') {
+    return {
+      title: 'Related tracks',
+      description: `Tracks that sit naturally next to ${track.title}.`,
+      variant: 'tracks',
+      items: relatedTracks,
+    }
+  }
+
+  if (view === 'playlists') {
+    return {
+      title: 'In playlists',
+      description: 'Curated playlists where this track already appears.',
+      variant: 'playlists',
+      items: playlists,
+    }
+  }
+
+  if (view === 'likes') {
+    return {
+      title: 'Likes',
+      description: 'Listeners who favorited this track.',
+      variant: 'users',
+      items: likers,
+    }
+  }
+
+  if (view === 'reposts') {
+    return {
+      title: 'Reposts',
+      description: 'Listeners who pushed this track into their feed.',
+      variant: 'users',
+      items: reposters,
+    }
+  }
+
+  return null
+}
+
+function TrackPage({ view = 'overview' }) {
+  const navigate = useNavigate()
   const { trackId: routeTrackId } = useParams()
   const trackId = routeTrackId ?? DEFAULT_TRACK_ID
   const audioRef = useRef(null)
@@ -41,11 +94,11 @@ function TrackPage() {
   const [track, setTrack] = useState(null)
   const [streamInfo, setStreamInfo] = useState(null)
   const [comments, setComments] = useState([])
-  const [recentlyPlayed, setRecentlyPlayed] = useState([])
-  const [listeningHistory, setListeningHistory] = useState([])
+  const [relatedTracks, setRelatedTracks] = useState([])
+  const [playlists, setPlaylists] = useState([])
+  const [fanLeaderboard, setFanLeaderboard] = useState([])
   const [likers, setLikers] = useState([])
   const [reposters, setReposters] = useState([])
-  const [activeList, setActiveList] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isPlaying, setIsPlaying] = useState(false)
@@ -53,34 +106,27 @@ function TrackPage() {
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(70)
   const [playerMessage, setPlayerMessage] = useState('')
-  const [isDockExpanded, setIsDockExpanded] = useState(false)
 
   const playbackState = streamInfo?.playback_state ?? track?.playbackState ?? 'Playable'
   const previewDurationSeconds =
     streamInfo?.preview_duration_seconds ?? track?.previewDurationSeconds ?? 0
 
-  const progress = useMemo(() => {
-    if (!duration) return 0
-    return (currentTime / duration) * 100
-  }, [currentTime, duration])
+  const visibleComments = useMemo(
+    () => (view === 'overview' ? comments.slice(0, 6) : comments),
+    [comments, view],
+  )
 
-  const activeUsers = activeList === 'likers' ? likers : reposters
-  const activeTitle = activeList === 'likers' ? 'Favoriters' : 'Reposters'
+  const sectionConfig = useMemo(
+    () => getSectionConfig(view, track, relatedTracks, playlists, likers, reposters),
+    [view, track, relatedTracks, playlists, likers, reposters],
+  )
 
-  const refreshActivity = async () => {
-    const [recentResult, historyResult] = await Promise.allSettled([
-      getRecentlyPlayed(),
-      getListeningHistory(),
-    ])
+  const currentTrackIndex = useMemo(() => mockTrackOrder.indexOf(trackId), [trackId])
 
-    if (recentResult.status === 'fulfilled') {
-      setRecentlyPlayed(recentResult.value)
-    }
-
-    if (historyResult.status === 'fulfilled') {
-      setListeningHistory(historyResult.value)
-    }
-  }
+  useEffect(() => {
+    if (!audioRef.current) return
+    audioRef.current.volume = volume / 100
+  }, [volume])
 
   useEffect(() => {
     let isMounted = true
@@ -91,18 +137,17 @@ function TrackPage() {
       setPlayerMessage('')
       setCurrentTime(0)
       setIsPlaying(false)
-      setIsDockExpanded(false)
       sessionReportedRef.current = false
 
       const results = await Promise.allSettled([
         getTrack(trackId),
-        getWaveform(trackId),
         getStreamUrl(trackId),
         getComments(trackId),
-        getRecentlyPlayed(),
-        getListeningHistory(),
         getLikers(trackId),
         getReposters(trackId),
+        getRelatedTracks(trackId),
+        getTrackPlaylists(trackId),
+        getFanLeaderboard(trackId),
       ])
 
       if (!isMounted) return
@@ -114,34 +159,28 @@ function TrackPage() {
         return
       }
 
-      const baseTrack = trackResult.value
-      const waveformResult = results[1]
-      const mergedTrack = {
-        ...baseTrack,
-        waveform:
-          waveformResult.status === 'fulfilled' && waveformResult.value.length
-            ? waveformResult.value
-            : baseTrack.waveform,
-      }
-
-      setTrack(mergedTrack)
-      setDuration(mergedTrack.duration ?? 0)
+      const nextTrack = trackResult.value
+      setTrack(nextTrack)
+      setDuration(nextTrack.duration ?? 0)
       setStreamInfo(
-        results[2].status === 'fulfilled'
-          ? results[2].value
+        results[1].status === 'fulfilled'
+          ? results[1].value
           : {
-              url: mergedTrack.audioUrl,
-              playback_state: mergedTrack.playbackState,
-              preview_duration_seconds: mergedTrack.previewDurationSeconds,
+              url: nextTrack.audioUrl,
+              playback_state: nextTrack.playbackState,
+              preview_duration_seconds: nextTrack.previewDurationSeconds,
             },
       )
       setComments(
-        results[3].status === 'fulfilled' ? sortComments(results[3].value) : [],
+        results[2].status === 'fulfilled'
+          ? sortCommentsByTimeline(results[2].value)
+          : [],
       )
-      setRecentlyPlayed(results[4].status === 'fulfilled' ? results[4].value : [])
-      setListeningHistory(results[5].status === 'fulfilled' ? results[5].value : [])
-      setLikers(results[6].status === 'fulfilled' ? results[6].value : [])
-      setReposters(results[7].status === 'fulfilled' ? results[7].value : [])
+      setLikers(results[3].status === 'fulfilled' ? results[3].value : [])
+      setReposters(results[4].status === 'fulfilled' ? results[4].value : [])
+      setRelatedTracks(results[5].status === 'fulfilled' ? results[5].value : [])
+      setPlaylists(results[6].status === 'fulfilled' ? results[6].value : [])
+      setFanLeaderboard(results[7].status === 'fulfilled' ? results[7].value : [])
       setIsLoading(false)
     }
 
@@ -152,10 +191,30 @@ function TrackPage() {
     }
   }, [trackId])
 
-  useEffect(() => {
-    if (!audioRef.current) return
-    audioRef.current.volume = volume / 100
-  }, [volume])
+  const submitPlayEvent = async () => {
+    const playedMs = Math.round((audioRef.current?.currentTime ?? currentTime) * 1000)
+
+    if (!track || playedMs < 5000 || sessionReportedRef.current) {
+      return
+    }
+
+    sessionReportedRef.current = true
+
+    try {
+      await registerPlay(track.id, { duration_played_ms: playedMs })
+      setTrack((currentTrack) =>
+        currentTrack
+          ? {
+              ...currentTrack,
+              playCount: currentTrack.playCount + 1,
+            }
+          : currentTrack,
+      )
+    } catch (registerError) {
+      sessionReportedRef.current = false
+      console.error(registerError)
+    }
+  }
 
   const handleSeek = (nextValue) => {
     if (!audioRef.current) return
@@ -172,32 +231,6 @@ function TrackPage() {
 
     audioRef.current.currentTime = targetTime
     setCurrentTime(targetTime)
-  }
-
-  const submitPlayEvent = async () => {
-    const playedMs = Math.round((audioRef.current?.currentTime ?? currentTime) * 1000)
-
-    if (!track || playedMs < 5000 || sessionReportedRef.current) {
-      return
-    }
-
-    sessionReportedRef.current = true
-
-    try {
-      await registerPlay(track.id, { duration_played_ms: playedMs })
-      await refreshActivity()
-      setTrack((currentTrack) =>
-        currentTrack
-          ? {
-              ...currentTrack,
-              playCount: currentTrack.playCount + 1,
-            }
-          : currentTrack,
-      )
-    } catch (registerError) {
-      sessionReportedRef.current = false
-      console.error(registerError)
-    }
   }
 
   const handleTogglePlay = async () => {
@@ -252,9 +285,7 @@ function TrackPage() {
       audioRef.current.pause()
       setCurrentTime(previewDurationSeconds)
       setIsPlaying(false)
-      setPlayerMessage(
-        `Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`
-      )
+      setPlayerMessage(`Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`)
       return
     }
 
@@ -331,11 +362,84 @@ function TrackPage() {
     if (!track) return
 
     const comment = await createComment(track.id, payload)
-    setComments((currentComments) => sortComments([...currentComments, comment]))
+    setComments((currentComments) => sortCommentsByTimeline([...currentComments, comment]))
     setTrack((currentTrack) => ({
       ...currentTrack,
       commentCount: currentTrack.commentCount + 1,
     }))
+  }
+
+  const copyShareLink = async (url, successMessage) => {
+    if (!navigator?.clipboard?.writeText) {
+      setPlayerMessage('Copy is not supported in this browser.')
+      return false
+    }
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setPlayerMessage(successMessage)
+      return true
+    } catch (copyError) {
+      setPlayerMessage('Could not copy the track link.')
+      console.error(copyError)
+      return false
+    }
+  }
+
+  const handleShare = async () => {
+    if (!track || typeof window === 'undefined') return
+
+    const shareUrl = window.location.href
+
+    if (navigator?.share) {
+      try {
+        await navigator.share({
+          title: `${track.title} - ${track.artist}`,
+          text: `Listen to ${track.title} by ${track.artist}`,
+          url: shareUrl,
+        })
+        setPlayerMessage('Share sheet opened.')
+        return
+      } catch (shareError) {
+        if (shareError?.name === 'AbortError') {
+          return
+        }
+      }
+    }
+
+    await copyShareLink(shareUrl, 'Track link copied.')
+  }
+
+  const handleCopyLink = async () => {
+    if (typeof window === 'undefined') return
+    await copyShareLink(window.location.href, 'Track link copied.')
+  }
+
+  const handlePreviousTrack = async () => {
+    if (!mockTrackOrder.length) return
+
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause()
+      setIsPlaying(false)
+    }
+
+    const safeIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0
+    const previousIndex =
+      (safeIndex - 1 + mockTrackOrder.length) % mockTrackOrder.length
+    navigate(buildTrackPath(mockTrackOrder[previousIndex], view))
+  }
+
+  const handleNextTrack = async () => {
+    if (!mockTrackOrder.length) return
+
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause()
+      setIsPlaying(false)
+    }
+
+    const safeIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0
+    const nextIndex = (safeIndex + 1) % mockTrackOrder.length
+    navigate(buildTrackPath(mockTrackOrder[nextIndex], view))
   }
 
   if (isLoading) {
@@ -359,54 +463,63 @@ function TrackPage() {
       <main className="page">
         <TrackHeader
           track={track}
+          comments={comments}
           isPlaying={isPlaying}
           onTogglePlay={handleTogglePlay}
-          playbackState={playbackState}
-          previewDurationSeconds={previewDurationSeconds}
+          onSeek={handleSeek}
+          currentTime={currentTime}
+          duration={duration}
         />
 
         <div className="content-grid">
           <div className="content-column">
             <PlayerCard
               track={track}
-              comments={comments}
-              duration={duration}
-              isPlaying={isPlaying}
+              commentCount={comments.length}
               currentTime={currentTime}
-              onTogglePlay={handleTogglePlay}
-              onSeek={handleSeek}
-              volume={volume}
-              onVolume={setVolume}
-              progress={progress}
-              playbackState={playbackState}
-              previewDurationSeconds={previewDurationSeconds}
               message={playerMessage}
+              onAddComment={handleAddComment}
               onLikeToggle={handleLikeToggle}
               onRepostToggle={handleRepostToggle}
-              onOpenLikers={() => setActiveList('likers')}
-              onOpenReposters={() => setActiveList('reposters')}
+              onShare={handleShare}
+              onCopyLink={handleCopyLink}
+              view={view}
             />
 
-            <Comments
-              comments={comments}
-              currentTime={currentTime}
-              onAddComment={handleAddComment}
-              onJumpToTime={handleSeek}
-            />
+            {sectionConfig ? (
+              <EngagementListModal
+                title={sectionConfig.title}
+                description={sectionConfig.description}
+                variant={sectionConfig.variant}
+                items={sectionConfig.items}
+              />
+            ) : (
+              <Comments
+                comments={visibleComments}
+                totalCount={comments.length}
+                onJumpToTime={handleSeek}
+                mode={view === 'comments' ? 'page' : 'overview'}
+              />
+            )}
           </div>
 
           <HistoryPanel
             track={track}
-            recentlyPlayed={recentlyPlayed}
-            listeningHistory={listeningHistory}
-            playbackState={playbackState}
+            currentView={view}
+            fanLeaderboard={fanLeaderboard}
+            relatedTracks={relatedTracks}
+            playlists={playlists}
+            likers={likers}
+            reposters={reposters}
+            isPlaying={isPlaying}
+            onLikeToggle={handleLikeToggle}
+            onTogglePlay={handleTogglePlay}
           />
         </div>
       </main>
 
       <PlayerDock
         track={track}
-        comments={comments}
         isPlaying={isPlaying}
         currentTime={currentTime}
         duration={duration}
@@ -415,19 +528,9 @@ function TrackPage() {
         onSeek={handleSeek}
         onVolume={setVolume}
         playbackState={playbackState}
-        isExpanded={isDockExpanded}
-        onToggleExpanded={setIsDockExpanded}
-        onLikeToggle={handleLikeToggle}
-        onRepostToggle={handleRepostToggle}
+        onPreviousTrack={handlePreviousTrack}
+        onNextTrack={handleNextTrack}
       />
-
-      {activeList ? (
-        <EngagementListModal
-          title={activeTitle}
-          users={activeUsers}
-          onClose={() => setActiveList(null)}
-        />
-      ) : null}
 
       <audio
         ref={audioRef}

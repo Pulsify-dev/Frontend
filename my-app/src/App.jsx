@@ -30,7 +30,52 @@ function App() {
           element={
             <>
               <AppHeader />
-              <TrackPage />
+              <TrackPage view="overview" />
+            </>
+          }
+        />
+        <Route
+          path="/tracks/:trackId/comments"
+          element={
+            <>
+              <AppHeader />
+              <TrackPage view="comments" />
+            </>
+          }
+        />
+        <Route
+          path="/tracks/:trackId/related"
+          element={
+            <>
+              <AppHeader />
+              <TrackPage view="related" />
+            </>
+          }
+        />
+        <Route
+          path="/tracks/:trackId/playlists"
+          element={
+            <>
+              <AppHeader />
+              <TrackPage view="playlists" />
+            </>
+          }
+        />
+        <Route
+          path="/tracks/:trackId/likes"
+          element={
+            <>
+              <AppHeader />
+              <TrackPage view="likes" />
+            </>
+          }
+        />
+        <Route
+          path="/tracks/:trackId/reposts"
+          element={
+            <>
+              <AppHeader />
+              <TrackPage view="reposts" />
             </>
           }
         />

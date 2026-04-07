@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
@@ -6,110 +6,92 @@ const formatTime = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-const formatDate = (value) =>
-  new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
+const formatRelativeDate = (value) => {
+  const then = new Date(value)
+  const now = new Date()
+  const diffHours = Math.round((then.getTime() - now.getTime()) / (1000 * 60 * 60))
 
-function Comments({ comments, currentTime, onAddComment, onJumpToTime }) {
-  const [text, setText] = useState('')
-  const [attachTimestamp, setAttachTimestamp] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    const trimmedText = text.trim()
-    if (!trimmedText) {
-      setError('Write a comment first.')
-      return
-    }
-
-    if (trimmedText.length > 300) {
-      setError('Comments must be 300 characters or less.')
-      return
-    }
-
-    setError('')
-    setIsSubmitting(true)
-
-    try {
-      await onAddComment({
-        text: trimmedText,
-        timestamp_ms: attachTimestamp ? Math.floor(currentTime * 1000) : null,
-      })
-      setText('')
-    } catch {
-      setError('Comment could not be posted.')
-    } finally {
-      setIsSubmitting(false)
-    }
+  if (Math.abs(diffHours) < 24) {
+    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+      diffHours,
+      'hour',
+    )
   }
 
+  return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+    Math.round(diffHours / 24),
+    'day',
+  )
+}
+
+function Comments({ comments, totalCount = comments.length, onJumpToTime, mode = 'overview' }) {
+  const [sortOrder, setSortOrder] = useState(mode === 'page' ? 'newest' : 'timeline')
+
+  const sortedComments = useMemo(() => {
+    const nextComments = [...comments]
+
+    if (sortOrder === 'newest') {
+      return nextComments.sort(
+        (left, right) => new Date(right.created_at) - new Date(left.created_at),
+      )
+    }
+
+    return nextComments.sort((left, right) => {
+      const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER
+      const rightTime = right.timestamp_ms ?? Number.MAX_SAFE_INTEGER
+      return leftTime - rightTime
+    })
+  }, [comments, sortOrder])
+
   return (
-    <section className="module-card comments-card" id="comments">
-      <div className="section-heading">
-        <div>
-          <h2>Timestamped Comments</h2>
-          <p>Drop feedback on an exact second in the waveform or leave a general note.</p>
-        </div>
-        <span className="count-badge">{comments.length} total</span>
+    <section className={`comments-panel ${mode === 'page' ? 'is-page' : ''}`}>
+      <div className="comments-panel-head">
+        <h2>{totalCount} comments</h2>
+        <label className="sort-select">
+          <span>Sorted by:</span>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
+            <option value="newest">Newest</option>
+            <option value="timeline">Timeline</option>
+          </select>
+        </label>
       </div>
 
-      <form className="comment-form" onSubmit={handleSubmit}>
-        <textarea
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="Share a moment, mix note, or reaction..."
-          rows="4"
-        />
-
-        <div className="comment-form-row">
-          <label className="timestamp-toggle">
-            <input
-              type="checkbox"
-              checked={attachTimestamp}
-              onChange={(event) => setAttachTimestamp(event.target.checked)}
-            />
-            <span>Attach current timestamp ({formatTime(currentTime)})</span>
-          </label>
-          <button className="primary-action" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Posting...' : 'Post comment'}
-          </button>
-        </div>
-
-        {error ? <p className="panel-notice panel-notice-error">{error}</p> : null}
-      </form>
-
       <div className="comment-thread">
-        {comments.map((comment) => (
-          <article className="comment-item" key={comment.id}>
+        {sortedComments.map((comment) => (
+          <article className="comment-row" key={comment.id}>
             <img src={comment.user.avatar} alt={comment.user.name} />
-            <div className="comment-body">
+            <div className="comment-content">
               <div className="comment-meta">
                 <strong>{comment.user.name}</strong>
-                <span>{comment.user.handle}</span>
-                <span>{formatDate(comment.created_at)}</span>
-              </div>
-              <p>{comment.text}</p>
-              {typeof comment.timestamp_ms === 'number' ? (
-                <button
-                  className="timestamp-chip"
-                  type="button"
-                  onClick={() => onJumpToTime(comment.timestamp_ms / 1000)}
-                >
-                  {formatTime(comment.timestamp_ms / 1000)}
-                </button>
-              ) : (
-                <span className="timestamp-chip timestamp-chip-muted">
-                  General comment
+                <span>
+                  {typeof comment.timestamp_ms === 'number'
+                    ? `at ${formatTime(comment.timestamp_ms / 1000)}`
+                    : 'general comment'}
                 </span>
-              )}
+                <span>{formatRelativeDate(comment.created_at)}</span>
+              </div>
+
+              <p>{comment.text}</p>
+
+              <div className="comment-actions">
+                <button className="comment-link" type="button">
+                  Reply
+                </button>
+                {typeof comment.timestamp_ms === 'number' ? (
+                  <button
+                    className="comment-link"
+                    type="button"
+                    onClick={() => onJumpToTime(comment.timestamp_ms / 1000)}
+                  >
+                    Jump to {formatTime(comment.timestamp_ms / 1000)}
+                  </button>
+                ) : null}
+              </div>
             </div>
+
+            <button className="comment-count-pill" type="button">
+              0
+            </button>
           </article>
         ))}
       </div>

@@ -1,19 +1,21 @@
-import mockData from '../mock/track.json'
+import { trackExperienceMockData } from '../mock/trackExperienceData'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 const useMock = String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === 'true'
 
-const viewerUser = {
-  id: 'usr-viewer',
-  name: 'You',
-  handle: '@you',
-  avatar:
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
-}
-
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
 const formatIsoNow = () => new Date().toISOString()
+
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return import.meta.env.VITE_AUTH_TOKEN ?? ''
+
+  return (
+    window.localStorage.getItem('pulsify_token') ??
+    import.meta.env.VITE_AUTH_TOKEN ??
+    ''
+  )
+}
 
 const normalizeUser = (user = {}) => ({
   id: user.id ?? `user-${Math.random().toString(16).slice(2, 10)}`,
@@ -33,6 +35,13 @@ const normalizeComment = (comment = {}) => ({
   created_at: comment.created_at ?? formatIsoNow(),
   user: normalizeUser(comment.user),
 })
+
+const createWaveform = (seed) =>
+  Array.from({ length: 140 }, (_, index) => {
+    const primary = (Math.sin((index + seed) * 0.43) + 1) / 2
+    const secondary = (Math.cos((index + seed) * 0.19) + 1) / 2
+    return Number((0.16 + primary * 0.5 + secondary * 0.14).toFixed(3))
+  })
 
 const normalizeTrack = (track = {}) => ({
   id: track.id ?? 'trk-2026-014',
@@ -58,7 +67,45 @@ const normalizeTrack = (track = {}) => ({
   viewerHasReposted: Boolean(track.viewerHasReposted),
   playbackState: track.playbackState ?? 'Playable',
   previewDurationSeconds: track.previewDurationSeconds ?? 0,
-  waveform: Array.isArray(track.waveform) ? track.waveform : [],
+  waveform:
+    Array.isArray(track.waveform) && track.waveform.length
+      ? track.waveform
+      : createWaveform((track.id ?? 'track').length),
+  typeLabel: track.typeLabel ?? 'Music',
+})
+
+const normalizeTrackCard = (track = {}) => {
+  const normalizedTrack = normalizeTrack(track)
+
+  return {
+    id: normalizedTrack.id,
+    title: normalizedTrack.title,
+    artist: normalizedTrack.artist,
+    artistHandle: normalizedTrack.artistHandle,
+    cover: normalizedTrack.cover,
+    duration: normalizedTrack.duration,
+    playCount: normalizedTrack.playCount,
+    likeCount: normalizedTrack.likeCount,
+    repostCount: normalizedTrack.repostCount,
+    commentCount: normalizedTrack.commentCount,
+    postedAt: normalizedTrack.postedAt,
+    typeLabel: normalizedTrack.typeLabel,
+  }
+}
+
+const normalizePlaylist = (playlist = {}) => ({
+  id: playlist.id ?? playlist.playlistId ?? `playlist-${Math.random().toString(16).slice(2, 8)}`,
+  title: playlist.title ?? playlist.playlistName ?? 'Untitled playlist',
+  creatorName: playlist.creatorName ?? playlist.creatorId ?? 'Unknown curator',
+  creatorHandle: playlist.creatorHandle ?? '@playlist',
+  cover: playlist.cover ?? playlist.thumbnailUrl ?? '',
+  likes: playlist.likes ?? playlist.likeCount ?? 0,
+  trackCount: playlist.trackCount ?? 0,
+})
+
+const normalizeFanEntry = (entry = {}) => ({
+  ...normalizeUser(entry),
+  plays: entry.plays ?? entry.playCount ?? 0,
 })
 
 const unwrapCollection = (payload) => {
@@ -70,42 +117,9 @@ const unwrapCollection = (payload) => {
   if (Array.isArray(payload?.tracks)) return payload.tracks
   if (Array.isArray(payload?.users)) return payload.users
   if (Array.isArray(payload?.history)) return payload.history
+  if (Array.isArray(payload?.playlists)) return payload.playlists
+  if (Array.isArray(payload?.fans)) return payload.fans
   return []
-}
-
-const createTrackSummary = (track, overrides = {}) => ({
-  id: track.id,
-  title: track.title,
-  artist: track.artist,
-  cover: track.cover,
-  duration: track.duration,
-  played_at: overrides.played_at ?? formatIsoNow(),
-  duration_played_ms: overrides.duration_played_ms ?? track.duration * 1000,
-})
-
-const createMockStore = () => {
-  const baseTrack = normalizeTrack(mockData.track)
-
-  return {
-    viewer: clone(viewerUser),
-    track: baseTrack,
-    comments: (mockData.comments ?? mockData.track.comments ?? []).map(normalizeComment),
-    likers: (mockData.likers ?? []).map(normalizeUser),
-    reposters: (mockData.reposters ?? []).map(normalizeUser),
-    recentlyPlayed: clone(mockData.recentlyPlayed ?? []),
-    history: clone(mockData.history ?? []),
-  }
-}
-
-let mockStore = createMockStore()
-
-const getAuthToken = () => {
-  if (typeof window === 'undefined') return import.meta.env.VITE_AUTH_TOKEN ?? ''
-  return (
-    window.localStorage.getItem('pulsify_token') ??
-    import.meta.env.VITE_AUTH_TOKEN ??
-    ''
-  )
 }
 
 const request = async (path, { method = 'GET', body, auth = true } = {}) => {
@@ -145,39 +159,148 @@ const request = async (path, { method = 'GET', body, auth = true } = {}) => {
   return response.json()
 }
 
-const syncDerivedCounts = () => {
-  mockStore.track.likeCount = mockStore.likers.length
-  mockStore.track.repostCount = mockStore.reposters.length
-  mockStore.track.commentCount = mockStore.comments.length
+const createTrackSummary = (track, overrides = {}) => ({
+  id: track.id,
+  title: track.title,
+  artist: track.artist,
+  cover: track.cover,
+  duration: track.duration,
+  played_at: overrides.played_at ?? formatIsoNow(),
+  duration_played_ms: overrides.duration_played_ms ?? track.duration * 1000,
+})
+
+const buildSeedUsers = () => {
+  const userMap = new Map()
+
+  const writeUser = (user) => {
+    const normalized = normalizeUser(user)
+    userMap.set(normalized.id, normalized)
+  }
+
+  writeUser(trackExperienceMockData.viewer)
+
+  Object.values(trackExperienceMockData.engagement).forEach((entry) => {
+    ;(entry.comments ?? []).forEach((comment) => writeUser(comment.user))
+    ;(entry.likers ?? []).forEach(writeUser)
+    ;(entry.reposters ?? []).forEach(writeUser)
+    ;(entry.fans ?? []).forEach(writeUser)
+  })
+
+  return [...userMap.values()]
 }
 
-const recordMockPlay = (durationPlayedMs) => {
-  const playedAt = formatIsoNow()
-  mockStore.track.playCount += 1
+const seedUsers = buildSeedUsers()
 
-  const historyEntry = createTrackSummary(mockStore.track, {
+const createFallbackEngagement = (trackId, tracks, playlists) => {
+  const allTrackIds = Object.keys(tracks).filter((id) => id !== trackId)
+  const playlistIds = Object.keys(playlists)
+  const rotatedUsers = seedUsers.filter((user) => user.id !== trackExperienceMockData.viewer.id)
+  const pivot = Math.abs(trackId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0))
+
+  const sliceUsers = (start, size) =>
+    Array.from({ length: size }, (_, index) => rotatedUsers[(start + index) % rotatedUsers.length])
+
+  const commentUsers = sliceUsers(pivot % rotatedUsers.length, 4)
+
+  return {
+    comments: [
+      normalizeComment({
+        id: `comment-${trackId}-1`,
+        user: commentUsers[0],
+        text: `This section in ${tracks[trackId].title} really stays with me.`,
+        created_at: '2026-04-02T18:00:00.000Z',
+        timestamp_ms: 24000,
+      }),
+      normalizeComment({
+        id: `comment-${trackId}-2`,
+        user: commentUsers[1],
+        text: 'Mix feels crisp and wide all the way through.',
+        created_at: '2026-04-03T09:40:00.000Z',
+        timestamp_ms: 89000,
+      }),
+      normalizeComment({
+        id: `comment-${trackId}-3`,
+        user: commentUsers[2],
+        text: 'Would absolutely repost this.',
+        created_at: '2026-04-03T20:15:00.000Z',
+      }),
+    ],
+    likers: sliceUsers((pivot + 1) % rotatedUsers.length, 6),
+    reposters: sliceUsers((pivot + 4) % rotatedUsers.length, 4),
+    fans: sliceUsers((pivot + 2) % rotatedUsers.length, 5).map((user, index) => ({
+      ...user,
+      plays: 180 - index * 18,
+    })),
+    relatedTrackIds: allTrackIds.slice(0, 4),
+    playlistIds: playlistIds.slice(0, 3),
+  }
+}
+
+const createMockStore = () => {
+  const baseStore = clone(trackExperienceMockData)
+
+  Object.keys(baseStore.tracks).forEach((trackId) => {
+    if (!baseStore.engagement[trackId]) {
+      baseStore.engagement[trackId] = createFallbackEngagement(
+        trackId,
+        baseStore.tracks,
+        baseStore.playlists,
+      )
+    }
+  })
+
+  return baseStore
+}
+
+let mockStore = createMockStore()
+
+const getMockTrackOrThrow = (trackId) => {
+  const track = mockStore.tracks[trackId]
+
+  if (!track) {
+    throw new Error('Track not found')
+  }
+
+  return track
+}
+
+const getMockEngagementOrCreate = (trackId) => {
+  getMockTrackOrThrow(trackId)
+
+  if (!mockStore.engagement[trackId]) {
+    mockStore.engagement[trackId] = createFallbackEngagement(
+      trackId,
+      mockStore.tracks,
+      mockStore.playlists,
+    )
+  }
+
+  return mockStore.engagement[trackId]
+}
+
+const recordMockPlay = (trackId, durationPlayedMs) => {
+  const track = getMockTrackOrThrow(trackId)
+  const playedAt = formatIsoNow()
+
+  track.playCount += 1
+
+  const historyEntry = createTrackSummary(track, {
     played_at: playedAt,
     duration_played_ms: durationPlayedMs,
   })
 
   mockStore.history = [historyEntry, ...mockStore.history].slice(0, 8)
-
-  const nextRecent = [
-    createTrackSummary(mockStore.track, { played_at: playedAt }),
-    ...mockStore.recentlyPlayed.filter((item) => item.id !== mockStore.track.id),
-  ]
-
-  mockStore.recentlyPlayed = nextRecent.slice(0, 5)
+  mockStore.recentlyPlayed = [
+    createTrackSummary(track, { played_at: playedAt }),
+    ...mockStore.recentlyPlayed.filter((item) => item.id !== trackId),
+  ].slice(0, 5)
 }
 
 export const getTrack = async (trackId) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
-
-    syncDerivedCounts()
-    return clone(mockStore.track)
+    const track = getMockTrackOrThrow(trackId)
+    getMockEngagementOrCreate(trackId)
+    return clone(normalizeTrack(track))
   }
 
   const payload = await request(`/tracks/${trackId}`)
@@ -186,11 +309,7 @@ export const getTrack = async (trackId) => {
 
 export const getWaveform = async (trackId) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
-
-    return clone(mockStore.track.waveform)
+    return clone(getMockTrackOrThrow(trackId).waveform)
   }
 
   const payload = await request(`/tracks/${trackId}/waveform`, { auth: false })
@@ -199,17 +318,14 @@ export const getWaveform = async (trackId) => {
 
 export const getStreamUrl = async (trackId) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
-
+    const track = getMockTrackOrThrow(trackId)
     return {
-      url: mockStore.track.audioUrl,
+      url: track.audioUrl,
       expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      playback_state: mockStore.track.playbackState,
-      preview_duration_seconds: mockStore.track.previewDurationSeconds,
+      playback_state: track.playbackState,
+      preview_duration_seconds: track.previewDurationSeconds,
       message:
-        mockStore.track.playbackState === 'Blocked'
+        track.playbackState === 'Blocked'
           ? 'This track is blocked for your plan or region.'
           : null,
     }
@@ -220,11 +336,8 @@ export const getStreamUrl = async (trackId) => {
 
 export const registerPlay = async (trackId, payload) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
-
-    recordMockPlay(payload.duration_played_ms)
+    getMockTrackOrThrow(trackId)
+    recordMockPlay(trackId, payload.duration_played_ms)
     return { success: true }
   }
 
@@ -254,21 +367,22 @@ export const getListeningHistory = async () => {
 
 export const toggleLike = async (trackId, shouldLike) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
+    const track = getMockTrackOrThrow(trackId)
+    const engagement = getMockEngagementOrCreate(trackId)
 
     if (shouldLike) {
-      mockStore.track.viewerHasLiked = true
-      if (!mockStore.likers.some((user) => user.id === mockStore.viewer.id)) {
-        mockStore.likers = [clone(mockStore.viewer), ...mockStore.likers]
+      track.viewerHasLiked = true
+      if (!engagement.likers.some((user) => user.id === mockStore.viewer.id)) {
+        engagement.likers = [clone(mockStore.viewer), ...engagement.likers]
       }
     } else {
-      mockStore.track.viewerHasLiked = false
-      mockStore.likers = mockStore.likers.filter((user) => user.id !== mockStore.viewer.id)
+      track.viewerHasLiked = false
+      engagement.likers = engagement.likers.filter(
+        (user) => user.id !== mockStore.viewer.id,
+      )
     }
 
-    syncDerivedCounts()
+    track.likeCount = Math.max(track.likeCount + (shouldLike ? 1 : -1), 0)
     return { success: true }
   }
 
@@ -278,7 +392,7 @@ export const toggleLike = async (trackId, shouldLike) => {
 
 export const getLikers = async (trackId) => {
   if (useMock) {
-    return clone(mockStore.likers)
+    return clone(getMockEngagementOrCreate(trackId).likers.map(normalizeUser))
   }
 
   const payload = await request(`/tracks/${trackId}/likers`, { auth: false })
@@ -287,23 +401,22 @@ export const getLikers = async (trackId) => {
 
 export const toggleRepost = async (trackId, shouldRepost) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
+    const track = getMockTrackOrThrow(trackId)
+    const engagement = getMockEngagementOrCreate(trackId)
 
     if (shouldRepost) {
-      mockStore.track.viewerHasReposted = true
-      if (!mockStore.reposters.some((user) => user.id === mockStore.viewer.id)) {
-        mockStore.reposters = [clone(mockStore.viewer), ...mockStore.reposters]
+      track.viewerHasReposted = true
+      if (!engagement.reposters.some((user) => user.id === mockStore.viewer.id)) {
+        engagement.reposters = [clone(mockStore.viewer), ...engagement.reposters]
       }
     } else {
-      mockStore.track.viewerHasReposted = false
-      mockStore.reposters = mockStore.reposters.filter(
+      track.viewerHasReposted = false
+      engagement.reposters = engagement.reposters.filter(
         (user) => user.id !== mockStore.viewer.id,
       )
     }
 
-    syncDerivedCounts()
+    track.repostCount = Math.max(track.repostCount + (shouldRepost ? 1 : -1), 0)
     return { success: true }
   }
 
@@ -313,7 +426,7 @@ export const toggleRepost = async (trackId, shouldRepost) => {
 
 export const getReposters = async (trackId) => {
   if (useMock) {
-    return clone(mockStore.reposters)
+    return clone(getMockEngagementOrCreate(trackId).reposters.map(normalizeUser))
   }
 
   const payload = await request(`/tracks/${trackId}/reposters`, { auth: false })
@@ -322,15 +435,7 @@ export const getReposters = async (trackId) => {
 
 export const getComments = async (trackId) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
-
-    return clone(mockStore.comments).sort((left, right) => {
-      const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER
-      const rightTime = right.timestamp_ms ?? Number.MAX_SAFE_INTEGER
-      return leftTime - rightTime
-    })
+    return clone(getMockEngagementOrCreate(trackId).comments).map(normalizeComment)
   }
 
   const payload = await request(`/tracks/${trackId}/comments`, { auth: false })
@@ -339,9 +444,7 @@ export const getComments = async (trackId) => {
 
 export const createComment = async (trackId, payload) => {
   if (useMock) {
-    if (trackId && trackId !== mockStore.track.id) {
-      throw new Error('Track not found')
-    }
+    const engagement = getMockEngagementOrCreate(trackId)
 
     const comment = normalizeComment({
       id: `comment-${Date.now()}`,
@@ -351,8 +454,8 @@ export const createComment = async (trackId, payload) => {
       user: mockStore.viewer,
     })
 
-    mockStore.comments = [...mockStore.comments, comment]
-    syncDerivedCounts()
+    engagement.comments = [...engagement.comments, comment]
+    getMockTrackOrThrow(trackId).commentCount += 1
     return clone(comment)
   }
 
@@ -362,4 +465,45 @@ export const createComment = async (trackId, payload) => {
   })
 
   return normalizeComment(response)
+}
+
+export const getRelatedTracks = async (trackId) => {
+  if (useMock) {
+    const engagement = getMockEngagementOrCreate(trackId)
+
+    return clone(
+      engagement.relatedTrackIds
+        .map((relatedId) => mockStore.tracks[relatedId])
+        .filter(Boolean)
+        .map(normalizeTrackCard),
+    )
+  }
+
+  const payload = await request(`/tracks/${trackId}/related`, { auth: false })
+  return unwrapCollection(payload).map(normalizeTrackCard)
+}
+
+export const getTrackPlaylists = async (trackId) => {
+  if (useMock) {
+    const engagement = getMockEngagementOrCreate(trackId)
+
+    return clone(
+      engagement.playlistIds
+        .map((playlistId) => mockStore.playlists[playlistId])
+        .filter(Boolean)
+        .map(normalizePlaylist),
+    )
+  }
+
+  const payload = await request(`/tracks/${trackId}/playlists`, { auth: false })
+  return unwrapCollection(payload).map(normalizePlaylist)
+}
+
+export const getFanLeaderboard = async (trackId) => {
+  if (useMock) {
+    return clone(getMockEngagementOrCreate(trackId).fans.map(normalizeFanEntry))
+  }
+
+  const payload = await request(`/tracks/${trackId}/fans`, { auth: false })
+  return unwrapCollection(payload).map(normalizeFanEntry)
 }
