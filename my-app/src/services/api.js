@@ -538,3 +538,23 @@ export const getFanLeaderboard = async (trackId) => {
   const payload = await request(`/tracks/${trackId}/fans`, { auth: false });
   return unwrapCollection(payload).map(normalizeFanEntry);
 };
+
+// -- Axios instance for Omar's playlist/premium modules --
+import axios from "axios";
+
+export const pulsifyAxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "",
+  headers: { "Content-Type": "application/json" },
+});
+
+pulsifyAxiosInstance.interceptors.request.use((config) => {
+  const token =
+    window.localStorage.getItem("pulsify_jwt_token") ??
+    window.localStorage.getItem("pulsify_token") ??
+    window.localStorage.getItem("accessToken") ??
+    "";
+  if (token) {
+    config.headers.Authorization = "Bearer " + token;
+  }
+  return config;
+});
