@@ -76,9 +76,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showCaptcha, setShowCaptcha] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
-  const [failedAttempts, setFailedAttempts] = useState(0);
   const recaptchaRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,8 +119,8 @@ const Login = () => {
       return;
     }
 
-    // Show CAPTCHA after failed attempts
-    if (showCaptcha && !captchaToken) {
+    // Validate CAPTCHA
+    if (RECAPTCHA_SITE_KEY && !captchaToken) {
       setError("Please complete the CAPTCHA verification");
       return;
     }
@@ -136,23 +134,12 @@ const Login = () => {
       // Store user in auth context
       login(result.user, result.access_token, result.refresh_token);
       
-      // Reset failed attempts
-      setFailedAttempts(0);
-      
       // Redirect after short delay
       setTimeout(() => {
         const from = location.state?.from?.pathname || "/home";
         navigate(from, { replace: true });
       }, 1000);
     } catch (err) {
-      const newFailedAttempts = failedAttempts + 1;
-      setFailedAttempts(newFailedAttempts);
-      
-      // Show CAPTCHA after 2 failed attempts
-      if (newFailedAttempts >= 2 && RECAPTCHA_SITE_KEY) {
-        setShowCaptcha(true);
-      }
-      
       // Reset CAPTCHA
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
@@ -171,7 +158,7 @@ const Login = () => {
     console.log(`OAuth login with ${provider} - not yet implemented`);
   };
 
-  const isFormValid = email.trim() && password && (!showCaptcha || captchaToken);
+  const isFormValid = email.trim() && password && (!RECAPTCHA_SITE_KEY || captchaToken);
 
   return (
     <div className="auth-page">
@@ -271,8 +258,8 @@ const Login = () => {
             </div>
           </div>
 
-          {/* reCAPTCHA - shown after failed attempts */}
-          {showCaptcha && RECAPTCHA_SITE_KEY && (
+          {/* reCAPTCHA */}
+          {RECAPTCHA_SITE_KEY && (
             <div className="auth-captcha">
               <ReCAPTCHA
                 ref={recaptchaRef}
