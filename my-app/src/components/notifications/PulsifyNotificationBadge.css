@@ -1,39 +1,57 @@
-.pulsify-notification-wrapper {
+/* ====== SoundCloud Notification Badge ====== */
+
+.sc-notif-wrapper {
   position: relative;
-  display: inline-block;
 }
 
-.pulsify-bell-icon {
-  background: transparent;
+.sc-notif-bell {
+  background: none;
   border: none;
-  color: var(--text-muted);
-  cursor: pointer;
+  color: var(--sc-text-secondary);
+  padding: 4px 8px;
   position: relative;
-  transition: color 0.2s;
-  padding: 8px; /* expanding click target organically */
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
 }
 
-.pulsify-bell-icon:hover {
-  color: var(--accent-primary);
+.sc-notif-bell:hover {
+  color: var(--sc-text-primary);
 }
 
-.pulsify-unread-dot {
+.sc-notif-count {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 5px;
-  font-size: 10px;
-  font-weight: bold;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); /* subtle glow */
-}
-
-.pulsify-dropdown-overlay {
-  position: absolute;
-  top: 45px;
+  top: -2px;
   right: 0;
-  width: 340px;
-  z-index: 100;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--sc-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.sc-notif-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+}
+
+.sc-notif-dropdown {
+  position: absolute;
+  top: calc(var(--sc-navbar-height) + 4px);
+  right: 20px;
+  width: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+  background: var(--sc-bg-secondary);
+  border: 1px solid var(--sc-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 151;
 }

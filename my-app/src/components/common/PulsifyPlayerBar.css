@@ -1,92 +1,146 @@
-.pulsify-player-bar {
+/* ====== SoundCloud Player Bar ====== */
+
+.sc-player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 90px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: var(--sc-player-height);
+  background: #2a2a2a;
+  border-top: 1px solid #383838;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  z-index: 100;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  padding: 0 12px;
+  gap: 12px;
+  z-index: 200;
 }
 
-.player-track-info {
+/* Controls */
+.sc-player-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
-  width: 300px; /* fixed width for layout stability */
+  gap: 4px;
 }
 
-.player-art {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.player-meta h4 {
-  margin: 0 0 4px 0;
-  font-size: 15px;
-  color: var(--text-main);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-
-.player-meta p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.player-controls {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.control-btn {
+.sc-player-btn {
   background: none;
   border: none;
-  color: var(--text-muted);
-  font-size: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: var(--sc-text-secondary);
+  font-size: 14px;
+  padding: 4px 6px;
+  transition: color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.control-btn:hover {
-  color: white;
-  transform: scale(1.1);
+.sc-player-btn:hover {
+  color: var(--sc-text-primary);
 }
 
-.play-pause-btn {
-  width: 48px;
-  height: 48px;
+.sc-player-play {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--text-main);
-  color: var(--bg-main) !important;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+  background: var(--sc-accent);
+  color: #fff !important;
+  font-size: 12px;
 }
 
-.play-pause-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
-}
-
-.player-settings {
-  width: 300px; /* match left side for center alignment */
+/* Progress */
+.sc-player-progress-section {
+  flex: 1;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-player-time {
+  font-size: 11px;
+  color: var(--sc-text-muted);
+  min-width: 32px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-player-progress-track {
+  flex: 1;
+  height: 3px;
+  background: #444;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.sc-player-progress-fill {
+  height: 100%;
+  background: var(--sc-accent);
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+.sc-player-progress-track:hover {
+  height: 5px;
+}
+
+/* Volume */
+.sc-player-volume {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-volume-slider {
+  width: 60px;
+  height: 3px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #444;
+  border-radius: 2px;
+  outline: none;
+}
+
+.sc-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sc-text-primary);
+  cursor: pointer;
+}
+
+/* Track Info */
+.sc-player-trackinfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 200px;
+}
+
+.sc-player-art {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+}
+
+.sc-player-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sc-player-artist {
+  font-size: 10px;
+  color: var(--sc-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-player-title {
+  font-size: 11px;
+  color: var(--sc-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

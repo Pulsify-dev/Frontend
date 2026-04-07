@@ -3,12 +3,12 @@ import serviceLocator from '../utils/serviceLocator';
 import PulsifyTrackRow from '../components/common/PulsifyTrackRow';
 import './TrendingChartsPage.css';
 
-// Container component for generating live top charted tracks
+const GENRE_TABS = ['All music genres', 'Electronic', 'Hip-hop & Rap', 'Pop', 'R&B & Soul', 'Rock', 'Classical'];
+
 const TrendingChartsPage = () => {
   const [trendingData, setTrendingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Track local active states since we are modifying via DI responses
+  const [activeGenre, setActiveGenre] = useState('All music genres');
   const [likedTracks, setLikedTracks] = useState(new Set());
   const [repostedTracks, setRepostedTracks] = useState(new Set());
 
@@ -17,10 +17,7 @@ const TrendingChartsPage = () => {
     const loadCharts = async () => {
       try {
         const data = await serviceLocator.discovery.fetchTrending();
-        if (mounted) {
-          setTrendingData(data);
-          setLoading(false);
-        }
+        if (mounted) { setTrendingData(data); setLoading(false); }
       } catch (error) {
         console.error("DI fetchTrending error:", error);
         if (mounted) setLoading(false);
@@ -33,46 +30,55 @@ const TrendingChartsPage = () => {
   const handleLike = async (trackId) => {
     try {
       if (likedTracks.has(trackId)) {
-        setLikedTracks(prev => { const next = new Set(prev); next.delete(trackId); return next; });
+        setLikedTracks(prev => { const n = new Set(prev); n.delete(trackId); return n; });
       } else {
         await serviceLocator.discovery.likeTrack(trackId);
         setLikedTracks(prev => new Set(prev).add(trackId));
       }
-    } catch (e) {
-      console.error("Failed to like:", e);
-    }
+    } catch (e) { console.error("Like failed:", e); }
   };
 
   const handleRepost = async (trackId) => {
     try {
       if (repostedTracks.has(trackId)) {
-        setRepostedTracks(prev => { const next = new Set(prev); next.delete(trackId); return next; });
+        setRepostedTracks(prev => { const n = new Set(prev); n.delete(trackId); return n; });
       } else {
         await serviceLocator.discovery.repostTrack(trackId);
         setRepostedTracks(prev => new Set(prev).add(trackId));
       }
-    } catch (e) {
-      console.error("Failed to repost:", e);
-    }
+    } catch (e) { console.error("Repost failed:", e); }
   };
 
   return (
-    <div className="pulsify-trending-container" data-testid="trending-charts-page">
-      <header className="trending-header">
-        <h2>Top Charts & Trends</h2>
-        <p className="subtitle">The highest velocity streams globally</p>
-      </header>
+    <div className="sc-charts-page" data-testid="trending-charts-page">
+      <h2 className="sc-page-heading">Charts: Top 50</h2>
+      <p className="sc-page-subtitle">The most played tracks on Pulsify this week</p>
+
+      {/* Genre Tabs */}
+      <div className="sc-genre-tabs">
+        {GENRE_TABS.map(genre => (
+          <button
+            key={genre}
+            className={`sc-genre-tab ${activeGenre === genre ? 'active' : ''}`}
+            onClick={() => setActiveGenre(genre)}
+          >
+            {genre}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
-        <div className="trending-loader">Compiling global metrics...</div>
+        <div className="sc-loader"><div className="sc-loader-bar"></div></div>
       ) : (
-        <div className="trending-list" data-testid="trending-list">
-          {trendingData.map((track) => (
-            <div key={track.trackId} className="trending-rank-wrapper">
-              <div className={`rank-badge rank-${track.rank}`}>#{track.rank}</div>
-              <div className="rank-track-content">
-                <PulsifyTrackRow 
-                  track={track} 
+        <div className="sc-chart-list" data-testid="trending-list">
+          {trendingData.map((track, index) => (
+            <div key={track.trackId} className="sc-chart-entry">
+              <div className="sc-chart-rank">
+                <span className="sc-rank-number">{track.rank || index + 1}</span>
+              </div>
+              <div className="sc-chart-track">
+                <PulsifyTrackRow
+                  track={track}
                   onLike={handleLike}
                   onRepost={handleRepost}
                   isLiked={likedTracks.has(track.trackId)}
