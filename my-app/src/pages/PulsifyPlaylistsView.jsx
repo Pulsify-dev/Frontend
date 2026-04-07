@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
+import { PulsifyCreatePlaylistModal } from '../components/playlists/PulsifyCreatePlaylistModal';
 import { Link } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import '../components/playlists/css/PulsifyPlaylists.css';
@@ -100,10 +101,20 @@ export const PulsifyPlaylistsView = () => {
   const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const { isPulsifyPremiumActive } = useContext(PulsifyAuthVaultContext) || { isPulsifyPremiumActive: false };
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
 
   const totalTracksMocked = pulsifyPlaylists.reduce((acc, pl) => acc + (pl.track_count || pl.tracks?.length || 0), 0);
-  const isUploadLocked = !isPulsifyPremiumActive && totalTracksMocked >= 3;
+  const isUploadLocked = subscriptionTier !== 'PRO' && totalTracksMocked >= 3;
+
+  const handleCreatePlaylist = async (payload) => {
+    try {
+      const newPlaylist = await PulsifyPlaylistService.createPlaylist(payload);
+      setPulsifyPlaylists(prev => [{ ...newPlaylist, tracks: [], track_count: 0, creator_username: 'i Omz' }, ...prev]);
+    } catch (err) {
+      alert('Failed to create playlist: ' + err.message);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -169,6 +180,9 @@ export const PulsifyPlaylistsView = () => {
         <span style={tabStyle(false)}>Reposts</span>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button data-testid="create-playlist-btn" className="pulsify-btn pulsify-btn-dark" style={{ fontSize: '12px', padding: '5px 10px' }} onClick={() => setShowCreateModal(true)}>
+            + Create
+          </button>
           {isUploadLocked ? (
             <button className="pulsify-btn pulsify-btn-outline" onClick={() => alert('Free Tier Limit Reached (3 Tracks). Please upgrade to Pro or Go+ to upload more!')} style={{ color: '#999', borderColor: '#444', cursor: 'not-allowed', fontSize: '12px', padding: '5px 10px' }}>
               🔒 Upload Limit Reached
@@ -179,7 +193,7 @@ export const PulsifyPlaylistsView = () => {
             </Link>
           )}
           <Link data-testid="go-premium-link" to="/premium" className="pulsify-btn pulsify-btn-brand" style={{ fontSize: '12px', padding: '5px 10px' }}>
-            Go Next Pro
+            Go Pro
           </Link>
         </div>
       </div>
@@ -190,11 +204,21 @@ export const PulsifyPlaylistsView = () => {
             <div className="pulsify-util-msg">You have no sets.</div>
           ) : (
             pulsifyPlaylists.map((pl) => (
-              <PulsifyPlaylistCard key={pl.id} playlist={pl} />
+              <PulsifyPlaylistCard 
+                key={pl.id} 
+                playlist={pl} 
+                onDelete={(id) => setPulsifyPlaylists(prev => prev.filter(p => p.id !== id))}
+              />
             ))
           )}
         </div>
       </div>
+
+      <PulsifyCreatePlaylistModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreatePlaylist}
+      />
     </div>
   );
 };

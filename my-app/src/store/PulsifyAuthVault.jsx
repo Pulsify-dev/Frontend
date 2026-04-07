@@ -5,28 +5,39 @@ export const PulsifyAuthVaultContext = createContext();
 
 export const PulsifyAuthVaultProvider = ({ children }) => {
   const [activeSessionToken, setActiveSessionToken] = useState(localStorage.getItem('pulsify_jwt_token') || null);
-  const [isPulsifyPremiumActive, setIsPulsifyPremiumActive] = useState(false);
+  const [subscriptionTier, setSubscriptionTier] = useState(
+    localStorage.getItem('pulsify_mock_tier') || 'FREE'
+  );
 
   useEffect(() => {
     let isMounted = true;
     const verifyPremiumStatus = async () => {
       if (!activeSessionToken) return;
       if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
-        if (isMounted) setIsPulsifyPremiumActive(false);
+        // In mock mode, read from localStorage (set by the Premium page mock checkout)
+        const savedTier = localStorage.getItem('pulsify_mock_tier');
+        if (isMounted && savedTier) setSubscriptionTier(savedTier);
         return;
       }
       try {
         const { data } = await pulsifyAxiosInstance.get('/subscriptions/me');
-        if (isMounted && data.is_premium) {
-          setIsPulsifyPremiumActive(true);
+        if (isMounted && data.tier) {
+          setSubscriptionTier(data.tier);
         }
       } catch (err) {
-        if (isMounted) setIsPulsifyPremiumActive(false);
+        if (isMounted) setSubscriptionTier('FREE');
       }
     };
     verifyPremiumStatus();
     return () => { isMounted = false; };
   }, [activeSessionToken]);
+
+  const handleTierChange = (newTier) => {
+    setSubscriptionTier(newTier);
+    if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
+      localStorage.setItem('pulsify_mock_tier', newTier);
+    }
+  };
 
   const mountSecureSession = (token) => {
     localStorage.setItem('pulsify_jwt_token', token);
@@ -35,15 +46,17 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
 
   const destroySecureSession = () => {
     localStorage.removeItem('pulsify_jwt_token');
+    localStorage.removeItem('pulsify_mock_tier');
     setActiveSessionToken(null);
-    setIsPulsifyPremiumActive(false);
+    setSubscriptionTier('FREE');
   };
 
   return (
     <PulsifyAuthVaultContext.Provider
       value={{
         activeSessionToken,
-        isPulsifyPremiumActive,
+        subscriptionTier,
+        setSubscriptionTierOverride: handleTierChange,
         mountSecureSession,
         destroySecureSession,
       }}

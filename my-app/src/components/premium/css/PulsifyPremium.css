@@ -1,126 +1,273 @@
-.pulsify-premium-container {
+/* ═══════════════════════════════════════════════
+   PULSIFY PREMIUM UPGRADE PAGE
+   Matches SoundCloud's Artist Pro pricing layout
+   ═══════════════════════════════════════════════ */
+
+.pulsify-premium-page {
+  min-height: 100vh;
+  background-color: #111;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #fff;
+}
+
+/* ─── HERO GRADIENT ─── */
+.pulsify-premium-hero {
+  text-align: center;
+  padding: 80px 20px 60px;
+  background: linear-gradient(180deg, #1a1040 0%, #111 100%);
+}
+
+.pulsify-premium-hero h1 {
+  font-size: 32px;
+  font-weight: 300;
+  color: #ccc;
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.pulsify-hero-highlight {
+  color: #fff;
+  font-weight: 600;
+}
+
+.pulsify-premium-hero p {
+  font-size: 16px;
+  color: #777;
+  margin: 0;
+}
+
+.pulsify-premium-toast {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: rgba(255, 85, 0, 0.15);
+  border: 1px solid #f50;
+  border-radius: 4px;
+  color: #f50;
+  font-size: 13px;
+}
+
+.pulsify-toast-success {
+  background-color: rgba(76, 175, 80, 0.15);
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+/* ─── PRICING SECTION ─── */
+.pulsify-pricing-section {
   max-width: 900px;
   margin: 0 auto;
-  padding: 60px 20px;
-  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: #333;
-}
-
-.pulsify-premium-header {
-  text-align: center;
-  margin-bottom: 50px;
-}
-
-.pulsify-premium-header h1 {
-  font-size: 32px;
-  font-weight: 400;
-  margin-bottom: 15px;
-}
-
-.pulsify-premium-header p {
-  color: #666;
-  font-size: 18px;
-}
-
-.pulsify-premium-error {
-  color: #e22134;
-  background-color: #ffdce0;
-  padding: 10px;
-  margin-top: 20px;
-  border-radius: 4px;
+  padding: 0 20px 80px;
 }
 
 .pulsify-pricing-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 24px;
 }
 
+/* ─── CARD BASE ─── */
 .pulsify-pricing-card {
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  padding: 40px;
-  text-align: center;
   background-color: #fff;
+  border-radius: 12px;
+  padding: 36px 32px 32px;
   position: relative;
+  color: #222;
 }
 
 .pulsify-pricing-featured {
-  border: 2px solid #f50;
-  box-shadow: 0 4px 15px rgba(255, 85, 0, 0.1);
+  border: 2px solid #c9a96e;
+  box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.2);
 }
 
+/* ─── MOST POPULAR BADGE ─── */
 .pulsify-featured-badge {
   position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #f50;
-  color: white;
-  padding: 4px 12px;
+  top: -14px;
+  right: 20px;
+  background-color: #c9a96e;
+  color: #fff;
+  padding: 6px 16px;
   font-size: 11px;
-  font-weight: bold;
-  border-radius: 12px;
-  letter-spacing: 1px;
+  font-weight: 700;
+  border-radius: 20px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
-.pulsify-pricing-card h2 {
-  font-size: 24px;
-  font-weight: 400;
-  margin-bottom: 20px;
+/* ─── TIER NAME ─── */
+.pulsify-card-tier-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.pulsify-price {
-  font-size: 40px;
-  font-weight: 300;
-  margin-bottom: 30px;
+.pulsify-tier-icon {
+  font-size: 18px;
+  color: #888;
 }
 
-.pulsify-price span {
-  font-size: 16px;
+.pulsify-tier-gold {
+  color: #c9a96e;
+}
+
+.pulsify-tier-tagline {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 24px;
+  line-height: 1.4;
+}
+
+/* ─── PRICE ─── */
+.pulsify-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.pulsify-price-amount {
+  font-size: 36px;
+  font-weight: 700;
+  color: #111;
+}
+
+.pulsify-price-period {
+  font-size: 14px;
   color: #999;
+}
+
+/* ─── CTA BUTTON ─── */
+.pulsify-btn-subscribe {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  text-align: center;
+}
+
+.pulsify-btn-subscribe:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.pulsify-btn-subscribe:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pulsify-btn-dark {
+  background-color: #111;
+  color: #fff;
+}
+
+/* ─── PERK LIST ─── */
+.pulsify-perks-divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 28px 0;
 }
 
 .pulsify-perk-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 40px 0;
-  text-align: left;
+  margin: 0;
 }
 
 .pulsify-perk-list li {
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
   font-size: 14px;
   color: #333;
-  padding-left: 24px;
-  position: relative;
 }
 
-.pulsify-perk-list li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: #f50;
+.pulsify-perk-list li:last-child {
+  border-bottom: none;
 }
 
-.pulsify-btn-premium {
-  display: block;
-  width: 100%;
-  padding: 14px;
-  background-color: #f50;
-  color: white;
-  border: none;
+.pulsify-perk-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #888;
+}
+
+.pulsify-perk-list li span:first-of-type {
+  flex: 1;
+}
+
+/* ─── BADGES ─── */
+.pulsify-perk-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 3px 10px;
   border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  background-color: #f5f0ff;
+  color: #7c5cbf;
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
 
-.pulsify-btn-premium:hover {
-  background-color: #d14000;
+.pulsify-badge-unlimited {
+  background-color: #f5f0ff;
+  color: #7c5cbf;
 }
 
-.pulsify-btn-premium:disabled {
-  background-color: #ffbba2;
-  cursor: not-allowed;
+/* ─── SEE ALL LINK ─── */
+.pulsify-see-all-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #7c5cbf;
+  text-decoration: none;
+}
+
+.pulsify-see-all-link:hover {
+  text-decoration: underline;
+}
+
+/* ─── CONTINUE FREE ─── */
+.pulsify-free-tier-link {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.pulsify-free-tier-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border: 1px solid #333;
+  border-radius: 50px;
+  color: #999;
+  text-decoration: none;
+  font-size: 14px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.pulsify-free-tier-link a:hover {
+  border-color: #666;
+  color: #fff;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 700px) {
+  .pulsify-pricing-grid {
+    grid-template-columns: 1fr;
+  }
 }

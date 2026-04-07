@@ -1,136 +1,82 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
-import '../components/upload/css/PulsifyUploads.css';
 
 export const PulsifyTrackUploadScreen = () => {
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-
-  // Mock Paywall State Integration
-  const { isPulsifyPremiumActive } = useContext(PulsifyAuthVaultContext) || { isPulsifyPremiumActive: false };
-  const uploadCount = String(import.meta.env.VITE_USE_MOCKS) === 'true' ? 3 : 0; // Pre-load limit for mock testing
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (!isPulsifyPremiumActive && uploadCount >= 3) {
-      alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
-      return;
-    }
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles(files);
-    }
-  };
-
-  const handleChange = (e) => {
-    e.preventDefault();
-
-    if (!isPulsifyPremiumActive && uploadCount >= 3) {
-      alert("You have reached your Free Tier upload limit (3/3 tracks). Upgrade to Pro for unlimited uploads!");
-      return;
-    }
-
-    if (e.target.files && e.target.files[0]) {
-      const files = Array.from(e.target.files);
-      setUploadedFiles(files);
-    }
-  };
-
-  const handleMetadataSubmit = (data) => {
-    console.log('Metadata Saved for', data.file.name, data);
-    // Simulating save logic
-    alert(`Track "${data.title}" has been saved and is now ${data.isPublic ? 'Public' : 'Private'}!`);
-  };
+  const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
+  const isProUser = subscriptionTier === 'PRO';
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Link to="/playlists" style={{ marginBottom: '20px', display: 'inline-block', color: '#f50', textDecoration: 'none' }}>
-        &larr; Back to Sets
-      </Link>
-
-      <h1>Upload to Pulsify</h1>
-
-      <form
-        onDragEnter={handleDrag}
-        onSubmit={(e) => e.preventDefault()}
-        style={{ marginTop: '20px' }}
-      >
-        <div
-          data-testid="upload-dropzone"
-          style={{
-            border: dragActive ? '2px solid #f50' : '2px dashed #666',
-            borderRadius: '8px',
-            padding: '50px',
-            textAlign: 'center',
-            backgroundColor: dragActive ? 'rgba(255,85,0,0.1)' : '#1a1a1a',
-            position: 'relative'
-          }}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <p style={{ color: '#ccc', marginBottom: '15px' }}>
-            Drag and drop your audio files here (MP3, WAV, High-Bitrate)
-          </p>
-          <label
-            data-testid="upload-choose-files-btn"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#f50',
-              color: 'white',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              display: 'inline-block'
-            }}
-          >
-            Choose Files
-            <input
-              data-testid="upload-file-input"
-              type="file"
-              multiple
-              onChange={handleChange}
-              style={{ display: 'none' }}
-              accept=".mp3,.wav,audio/*"
-            />
-          </label>
-        </div>
-      </form>
-
-      {!isPulsifyPremiumActive && uploadCount >= 3 && (
-        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'rgba(226, 33, 52, 0.1)', border: '1px solid #e22134', borderRadius: '4px', textAlign: 'center' }}>
-          <p style={{ color: '#e22134', margin: '0 0 10px 0', fontWeight: 'bold' }}>Upload Limit Reached (3/3)</p>
-          <p style={{ color: '#aaa', margin: '0 0 15px 0', fontSize: '14px' }}>Free tier allows a maximum of 3 tracks.</p>
-          <Link to="/premium" data-testid="upload-upgrade-btn" style={{ padding: '8px 16px', backgroundColor: '#f50', color: 'white', textDecoration: 'none', borderRadius: '4px', display: 'inline-block' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#111', fontFamily: '"Inter", "Helvetica Neue", sans-serif' }}>
+      {/* ─── TOP BAR ─── */}
+      <div style={{ padding: '16px 24px', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Link to="/playlists" style={{ color: '#f50', textDecoration: 'none', fontSize: '14px' }}>
+          ← Back to Sets
+        </Link>
+        {!isProUser && (
+          <Link to="/premium" style={{ color: '#f50', textDecoration: 'none', fontSize: '13px', border: '1px solid #f50', padding: '6px 14px', borderRadius: '4px' }}>
             Upgrade to Pro
           </Link>
-        </div>
-      )}
+        )}
+      </div>
 
-      {uploadedFiles.length > 0 && (
-        <div style={{ marginTop: '30px' }}>
-          <h3>Editing Metadata ({uploadedFiles.length})</h3>
-          {uploadedFiles.map((file, i) => (
-            <PulsifyMetadataForm key={i} file={file} onSubmit={handleMetadataSubmit} />
-          ))}
-        </div>
-      )}
+      {/* ─── UPLOAD AREA ─── */}
+      <div style={{ maxWidth: '800px', margin: '60px auto', padding: '0 24px', textAlign: 'center' }}>
+        
+        {!isProUser ? (
+          /* ─── FREE USER: LOCKED STATE ─── */
+          <div style={{
+            border: '2px solid #e22134',
+            borderRadius: '12px',
+            padding: '60px 40px',
+            backgroundColor: 'rgba(226, 33, 52, 0.05)'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+            <h2 style={{ color: '#e22134', margin: '0 0 12px', fontSize: '22px', fontWeight: 600 }}>Upload Limit Reached (3/3)</h2>
+            <p style={{ color: '#888', margin: '0 0 24px', fontSize: '14px', lineHeight: 1.6 }}>
+              Free tier allows a maximum of 3 tracks.<br />
+              Upgrade to Artist Pro for unlimited uploads.
+            </p>
+            <Link to="/premium" style={{
+              display: 'inline-block', padding: '12px 32px',
+              backgroundColor: '#f50', color: '#fff', textDecoration: 'none',
+              borderRadius: '50px', fontSize: '14px', fontWeight: 600,
+              transition: 'opacity 0.15s'
+            }}>
+              Upgrade to Artist Pro
+            </Link>
+          </div>
+        ) : (
+          /* ─── PRO USER: STATIC UPLOAD PLACEHOLDER ─── */
+          <div style={{
+            border: '2px dashed #333',
+            borderRadius: '12px',
+            padding: '60px 40px',
+            backgroundColor: '#1a1a1a'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.4 }}>☁️</div>
+            <h2 style={{ color: '#fff', margin: '0 0 8px', fontSize: '22px', fontWeight: 600 }}>Upload to Pulsify</h2>
+            <p style={{ color: '#666', margin: '0 0 24px', fontSize: '14px' }}>
+              Drag and drop your audio files here (MP3, WAV, High-Bitrate)
+            </p>
+            <button
+              disabled
+              style={{
+                padding: '12px 32px',
+                backgroundColor: '#333',
+                color: '#666',
+                border: 'none',
+                borderRadius: '50px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'not-allowed'
+              }}
+            >
+              Upload
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

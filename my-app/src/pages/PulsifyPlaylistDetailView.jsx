@@ -14,7 +14,7 @@ export const PulsifyPlaylistDetailView = () => {
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
   const navigate = useNavigate();
-  const { isPulsifyPremiumActive } = useContext(PulsifyAuthVaultContext) || { isPulsifyPremiumActive: false };
+  const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
 
   useEffect(() => {
     let isMounted = true;
@@ -55,7 +55,7 @@ export const PulsifyPlaylistDetailView = () => {
   const copyEmbedCode = async () => {
     try {
       const embedData = await PulsifyPlaylistService.generateEmbed(playlistId);
-      navigator.clipboard.writeText(embedData.embed_html || 'No embed string resolved');
+      navigator.clipboard.writeText(embedData.html || embedData.embed_html || 'No embed string resolved');
       alert('Embed iframe copied to clipboard!');
     } catch (err) { alert('Failed to generate embed code.'); }
   };
@@ -83,8 +83,8 @@ export const PulsifyPlaylistDetailView = () => {
   };
 
   const handleOfflineDownload = () => {
-    if (!isPulsifyPremiumActive) {
-      alert('Offline Listening is a Premium Perk. Please upgrade to Go+ to download sets.');
+    if (subscriptionTier !== 'GO_PLUS') {
+      alert('Offline Listening is a Go+ Perk. Please upgrade to Go+ to download sets.');
       navigate('/premium');
       return;
     }

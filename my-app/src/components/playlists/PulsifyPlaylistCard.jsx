@@ -1,17 +1,43 @@
-import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { PulsifyPlaylistService } from '../../services/pulsifyPlaylistService';
 
 const generateWaveform = () => Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
-export const PulsifyPlaylistCard = ({ playlist }) => {
+export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
   if (!playlist) return null;
 
+  const navigate = useNavigate();
   const waveform = useMemo(() => generateWaveform(), []);
   const trackCount = playlist.track_count || playlist.tracks?.length || 0;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
+  const handleDelete = async () => {
+    setMenuOpen(false);
+    if (!window.confirm(`Delete "${playlist.title}"? This cannot be undone.`)) return;
+    try {
+      await PulsifyPlaylistService.deletePlaylist(playlist.id);
+      if (onDelete) onDelete(playlist.id);
+    } catch (err) {
+      alert('Failed to delete playlist: ' + err.message);
+    }
+  };
 
   return (
     <div className="pulsify-playlist-card">
-      <div className="pulsify-artwork-wrapper">
+      <div className="pulsify-artwork-wrapper" onClick={() => navigate(`/playlists/${playlist.id}`)} style={{ cursor: 'pointer' }}>
         <img
           src={playlist.thumbnail_url || 'https://placehold.co/160x160/1a1a1a/333?text=♫'}
           alt={playlist.title}
@@ -91,9 +117,49 @@ export const PulsifyPlaylistCard = ({ playlist }) => {
           <button className="pulsify-card-action-btn" title="Like">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="More">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-          </button>
+
+          {/* ─── MORE BUTTON WITH DROPDOWN ─── */}
+          <div style={{ position: 'relative' }} ref={menuRef}>
+            <button className="pulsify-card-action-btn" title="More" onClick={() => setMenuOpen(!menuOpen)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+
+            {menuOpen && (
+              <div style={{
+                position: 'absolute', bottom: '42px', right: 0, zIndex: 100,
+                backgroundColor: '#2a2a2a', border: '1px solid #444', borderRadius: '4px',
+                minWidth: '180px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                overflow: 'hidden'
+              }}>
+                <button
+                  onClick={() => { setMenuOpen(false); navigate(`/playlists/${playlist.id}`); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                    padding: '10px 14px', background: 'none', border: 'none',
+                    color: '#ccc', fontSize: '13px', cursor: 'pointer', textAlign: 'left'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M2 12h20"/></svg>
+                  Add to Next up
+                </button>
+                <button
+                  onClick={handleDelete}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                    padding: '10px 14px', background: 'none', border: 'none',
+                    color: '#ccc', fontSize: '13px', cursor: 'pointer', textAlign: 'left'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                  Delete Playlist
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
