@@ -7,10 +7,6 @@ import LoadingState from '../components/LoadingState'
 import PlayerCard from '../components/PlayerCard'
 import PlayerDock from '../components/PlayerDock'
 import TrackHeader from '../components/TrackHeader'
-<<<<<<< HEAD
-import { getTrack } from '../services/api'
-
-=======
 import { trackExperienceMockData } from '../mock/trackExperienceData'
 import {
   createComment,
@@ -27,7 +23,6 @@ import {
   toggleRepost,
 } from '../services/api'
 import '../App.css'
->>>>>>> origin/playback
 
 const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? 'trk-2026-014'
 const mockTrackOrder = Object.keys(trackExperienceMockData.tracks)
