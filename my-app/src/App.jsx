@@ -23,10 +23,10 @@ const AppRoutes = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/home" element={<Home />} />
       </Route>
 
       {/* Public Routes */}
-      <Route path="/home" element={<Home />} />
       <Route path="/playlists" element={<PulsifyPlaylistsView />} />
       <Route path="/playlists/:playlistId" element={<PulsifyPlaylistDetailView />} />
       <Route path="/trackpage" element={<TrackPage />} />
