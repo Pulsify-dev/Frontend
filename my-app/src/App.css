@@ -330,6 +330,64 @@
   padding: 14px 18px 110px;
 }
 
+.auth-token-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1fr);
+  gap: 24px;
+  background: linear-gradient(180deg, #191919 0%, #121212 100%);
+  border: 1px solid #272727;
+  padding: 28px;
+}
+
+.auth-token-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-token-copy h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.auth-token-copy p {
+  color: #b9b9b9;
+  line-height: 1.7;
+  max-width: 48ch;
+}
+
+.auth-token-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-token-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #d5d5d5;
+}
+
+.auth-token-field textarea {
+  min-height: 160px;
+  border: 1px solid #2d2d2d;
+  background: #202020;
+  color: #f3f3f3;
+  padding: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.auth-token-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .track-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
@@ -609,6 +667,11 @@
   color: #ff8c57;
 }
 
+.action-square:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .track-stat-row {
   color: #b2b2b2;
   font-size: 0.92rem;
@@ -695,6 +758,16 @@
   padding-top: 16px;
 }
 
+.comment-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comment-block.is-reply {
+  padding-left: 60px;
+}
+
 .comment-row {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;
@@ -751,9 +824,32 @@
   color: #fff;
 }
 
+.comment-link-danger {
+  color: #ff9a9a;
+}
+
 .comment-count-pill {
   align-self: start;
   min-width: 38px;
+}
+
+.comment-count-pill:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.reply-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 20px;
+  border-left: 1px solid #262626;
+  margin-left: 22px;
+}
+
+.reply-empty {
+  color: #9d9d9d;
+  font-size: 0.92rem;
 }
 
 .section-list-panel {
@@ -1015,10 +1111,11 @@
 /* ====== Responsive ====== */
 @media (max-width: 1100px) {
   .topbar-inner {
-    grid-template-columns: 1fr;
     padding-block: 10px;
   }
 
+  .auth-token-panel,
+  .topbar-inner,
   .content-grid,
   .track-hero,
   .player-dock-main {
