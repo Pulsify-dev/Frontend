@@ -1,6 +1,7 @@
 import { trackExperienceMockData } from "../mock/trackExperienceData";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 const useMock = String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === "true";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -546,12 +547,13 @@ export const getFanLeaderboard = async (trackId) => {
 import axios from "axios";
 
 export const pulsifyAxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
   headers: { "Content-Type": "application/json" },
 });
 
 pulsifyAxiosInstance.interceptors.request.use((config) => {
   const token =
+    window.localStorage.getItem("pulsify_access_token") ??
     window.localStorage.getItem("pulsify_jwt_token") ??
     window.localStorage.getItem("pulsify_token") ??
     window.localStorage.getItem("accessToken") ??

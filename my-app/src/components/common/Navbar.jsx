@@ -11,7 +11,6 @@ const Navbar = () => {
   const { user, isAuthenticated, isArtist, logout } = useAuth();
   const userMenuRef = useRef(null);
 
-  // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -23,13 +22,16 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Home", path: "/home" },
+    { name: "Home", path: "/" },
     { name: "Feed", path: "/feed" },
     { name: "Library", path: "/library" },
+    { name: "Trending", path: "/trending" },
+    { name: "Discover", path: "/discover" },
   ];
 
   const isActiveLink = (path) => {
-    if (path === "/home") return location.pathname === "/home" || location.pathname === "/";
+    if (path === "/")
+      return location.pathname === "/" || location.pathname === "/home";
     return location.pathname.startsWith(path);
   };
 
@@ -49,8 +51,7 @@ const Navbar = () => {
   return (
     <nav className="auth-navbar">
       <div className="auth-navbar-left">
-        <Link to="/home" className="navbar-logo-link">
-
+        <Link to="/" className="navbar-logo-link">
           <span className="navbar-logo-text">Pulsify</span>
         </Link>
         <div className="auth-nav-links">
@@ -92,7 +93,10 @@ const Navbar = () => {
 
         {isAuthenticated ? (
           <>
-            {/* Artist Upload Button */}
+            <Link to="/premium" className="auth-nav-pro">
+              Try Pro
+            </Link>
+
             {isArtist() && (
               <Link to="/upload" className="auth-nav-upload-btn">
                 Upload
@@ -106,7 +110,10 @@ const Navbar = () => {
                 className="auth-user-menu-trigger"
               >
                 <img
-                  src={user?.avatarUrl || "https://i1.sndcdn.com/avatars-default.jpg"}
+                  src={
+                    user?.avatarUrl ||
+                    "https://via.placeholder.com/40/333/ff5500?text=♪"
+                  }
                   alt={user?.displayName}
                   className="auth-user-avatar"
                 />
@@ -128,12 +135,17 @@ const Navbar = () => {
                 <div className="auth-user-dropdown">
                   <div className="auth-user-dropdown-header">
                     <img
-                      src={user?.avatarUrl || "https://i1.sndcdn.com/avatars-default.jpg"}
+                      src={
+                        user?.avatarUrl ||
+                        "https://i1.sndcdn.com/avatars-default.jpg"
+                      }
                       alt={user?.displayName}
                       className="auth-user-dropdown-avatar"
                     />
                     <div className="auth-user-dropdown-info">
-                      <span className="auth-user-dropdown-name">{user?.displayName}</span>
+                      <span className="auth-user-dropdown-name">
+                        {user?.displayName}
+                      </span>
                       <span className="auth-user-dropdown-role">
                         {user?.role === "artist" ? "Artist" : "Listener"}
                       </span>
@@ -145,11 +157,38 @@ const Navbar = () => {
                     className="auth-user-dropdown-item"
                     onClick={() => setIsUserMenuOpen(false)}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                     Profile
+                  </Link>
+                  <Link
+                    to="/following"
+                    className="auth-user-dropdown-item"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="8.5" cy="7" r="4" />
+                      <line x1="20" y1="8" x2="20" y2="14" />
+                      <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                    Following
                   </Link>
                   {isArtist() && (
                     <Link
@@ -157,7 +196,14 @@ const Navbar = () => {
                       className="auth-user-dropdown-item"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <line x1="18" y1="20" x2="18" y2="10" />
                         <line x1="12" y1="20" x2="12" y2="4" />
                         <line x1="6" y1="20" x2="6" y2="14" />
@@ -165,20 +211,19 @@ const Navbar = () => {
                       Stats
                     </Link>
                   )}
-                  <Link
-                    to="/settings"
-                    className="auth-user-dropdown-item"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                    </svg>
-                    Settings
-                  </Link>
                   <div className="auth-user-dropdown-divider" />
-                  <button onClick={handleLogout} className="auth-user-dropdown-item auth-user-dropdown-logout">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <button
+                    onClick={handleLogout}
+                    className="auth-user-dropdown-item auth-user-dropdown-logout"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                       <polyline points="16 17 21 12 16 7" />
                       <line x1="21" y1="12" x2="9" y2="12" />
@@ -191,6 +236,9 @@ const Navbar = () => {
           </>
         ) : (
           <>
+            <Link to="/premium" className="auth-nav-pro">
+              Try Pro
+            </Link>
             <Link to="/login" className="auth-nav-signin">
               Sign in
             </Link>
@@ -255,6 +303,13 @@ const Navbar = () => {
                 className="auth-mobile-link"
               >
                 Profile
+              </Link>
+              <Link
+                to="/following"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="auth-mobile-link"
+              >
+                Following
               </Link>
               {isArtist() && (
                 <Link

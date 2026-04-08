@@ -22,7 +22,8 @@ export default function BlockedUsersPage() {
   async function loadData() {
     try {
       setIsLoading(true);
-      const myId = localStorage.getItem("userId") || "me";
+      const stored = localStorage.getItem("pulsify_user");
+      const myId = stored ? JSON.parse(stored).id : "me";
       const [blockedRes, countsRes] = await Promise.all([
         socialService.getBlockedUsers(1, 50),
         socialService.getSocialCounts(myId),
@@ -40,7 +41,7 @@ export default function BlockedUsersPage() {
     await socialService.unblockUser(userId);
     setUsers((prev) => prev.filter((u) => u.id !== userId));
     setCounts((prev) =>
-      prev ? { ...prev, blockedCount: prev.blockedCount - 1 } : prev
+      prev ? { ...prev, blockedCount: prev.blockedCount - 1 } : prev,
     );
   }
 
@@ -52,7 +53,7 @@ export default function BlockedUsersPage() {
   async function handleUpdateReason(userId, reason) {
     await socialService.updateBlockReason(userId, reason);
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, reason } : u))
+      prev.map((u) => (u.id === userId ? { ...u, reason } : u)),
     );
   }
 
@@ -73,11 +74,20 @@ export default function BlockedUsersPage() {
             {isLoading ? (
               <div className="sc-blocked-list">
                 {[1, 2].map((i) => (
-                  <div key={i} className="sc-blocked-row sc-blocked-row--skeleton">
+                  <div
+                    key={i}
+                    className="sc-blocked-row sc-blocked-row--skeleton"
+                  >
                     <div className="sc-blocked-row__avatar-wrap sc-skeleton-pulse" />
                     <div className="sc-blocked-row__info">
-                      <div className="sc-skeleton-line sc-skeleton-pulse" style={{ width: "40%" }} />
-                      <div className="sc-skeleton-line sc-skeleton-pulse" style={{ width: "25%" }} />
+                      <div
+                        className="sc-skeleton-line sc-skeleton-pulse"
+                        style={{ width: "40%" }}
+                      />
+                      <div
+                        className="sc-skeleton-line sc-skeleton-pulse"
+                        style={{ width: "25%" }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -85,7 +95,9 @@ export default function BlockedUsersPage() {
             ) : error ? (
               <div className="sc-social-empty">
                 <p>{error}</p>
-                <button className="sc-social-retry" onClick={loadData}>Try again</button>
+                <button className="sc-social-retry" onClick={loadData}>
+                  Try again
+                </button>
               </div>
             ) : users.length === 0 ? (
               <div className="sc-social-empty">

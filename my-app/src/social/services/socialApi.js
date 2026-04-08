@@ -5,14 +5,14 @@ import {
 } from "../adapters/socialAdapter";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/v1";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 function getAuthHeaders() {
   const token =
     localStorage.getItem("pulsify_access_token") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("pulsify_jwt_token") ||
-    localStorage.getItem("pulsify_token");
+    localStorage.getItem("pulsify_jwt_token");
+
+  if (!token) return {};
 
   return {
     Authorization: `Bearer ${token}`,
@@ -47,9 +47,14 @@ export async function getFollowersApi(userId, page = 1, limit = 12) {
   );
   if (!res.ok) throw new Error("Failed to fetch followers");
   const data = await res.json();
+  const inner = data.data || {};
   return {
-    users: (data.data || []).map(mapUserDtoToUser),
-    pagination: data.pagination || { page, limit, total: 0 },
+    users: (inner.followers || inner.data || []).map(mapUserDtoToUser),
+    pagination: {
+      page: inner.page || page,
+      limit: inner.limit || limit,
+      total: inner.total || 0,
+    },
   };
 }
 
@@ -59,16 +64,23 @@ export async function getFollowingApi(userId, page = 1, limit = 12) {
   );
   if (!res.ok) throw new Error("Failed to fetch following");
   const data = await res.json();
+  const inner = data.data || {};
   return {
-    users: (data.data || []).map(mapUserDtoToUser),
-    pagination: data.pagination || { page, limit, total: 0 },
+    users: (inner.following || inner.data || []).map(mapUserDtoToUser),
+    pagination: {
+      page: inner.page || page,
+      limit: inner.limit || limit,
+      total: inner.total || 0,
+    },
   };
 }
 
 /* ── Social Counts ─────────────────────────────────── */
 
 export async function getSocialCountsApi(userId) {
-  const res = await fetch(`${API_BASE_URL}/users/${userId}/social-counts`);
+  const res = await fetch(`${API_BASE_URL}/users/${userId}/social-counts`, {
+    headers: { ...getAuthHeaders() },
+  });
   if (!res.ok) throw new Error("Failed to fetch social counts");
   const data = await res.json();
   return mapSocialCountsDto(data.data);
@@ -113,14 +125,19 @@ export async function updateBlockReasonApi(userId, reason) {
 
 export async function getBlockedUsersApi(page = 1, limit = 12) {
   const res = await fetch(
-    `${API_BASE_URL}/users/me/blocked?page=${page}&limit=${limit}`,
+    `${API_BASE_URL}/users/me/blockers?page=${page}&limit=${limit}`,
     { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch blocked users");
   const data = await res.json();
+  const inner = data.data || {};
   return {
-    users: (data.data || []).map(mapBlockedUserDto),
-    pagination: data.pagination || { page, limit, total: 0 },
+    users: (inner.blocked_users || inner.data || []).map(mapBlockedUserDto),
+    pagination: {
+      page: inner.page || page,
+      limit: inner.limit || limit,
+      total: inner.total || 0,
+    },
   };
 }
 
@@ -132,18 +149,29 @@ export async function getRelationshipApi(userId) {
   });
   if (!res.ok) throw new Error("Failed to fetch relationship");
   const data = await res.json();
-  return data.data; // { is_following, is_followed_by, is_blocked }
+  const inner = data.data || {};
+  return {
+    isFollowing: inner.is_following || false,
+    isFollowedBy: inner.is_followed_by || false,
+    isBlocked: inner.is_blocked || false,
+  };
 }
 
 /* ── Suggested Users ───────────────────────────────── */
 
 export async function getSuggestedUsersApi(limit = 6) {
-  const res = await fetch(`${API_BASE_URL}/users/suggested?limit=${limit}`, {
+  const res = await fetch(`${API_BASE_URL}/users/me/suggested?limit=${limit}`, {
     headers: { ...getAuthHeaders() },
   });
   if (!res.ok) throw new Error("Failed to fetch suggested users");
   const data = await res.json();
-  return (data.data || []).map(mapUserDtoToUser);
+  const inner = data.data || {};
+  const users = Array.isArray(inner.users)
+    ? inner.users
+    : Array.isArray(inner.data)
+      ? inner.data
+      : [];
+  return users.map(mapUserDtoToUser);
 }
 
 /* ── Mutual Followers ──────────────────────────────── */

@@ -4,14 +4,14 @@ import {
 } from "../adapters/profileAdapter";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/v1";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 function getAuthHeaders() {
   const token =
     localStorage.getItem("pulsify_access_token") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("pulsify_jwt_token") ||
-    localStorage.getItem("pulsify_token");
+    localStorage.getItem("pulsify_jwt_token");
+
+  if (!token) return {};
 
   return {
     Authorization: `Bearer ${token}`,

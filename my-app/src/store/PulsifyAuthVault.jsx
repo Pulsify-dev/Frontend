@@ -5,9 +5,7 @@ export const PulsifyAuthVaultContext = createContext();
 
 export const PulsifyAuthVaultProvider = ({ children }) => {
   const [activeSessionToken, setActiveSessionToken] = useState(
-    localStorage.getItem("pulsify_jwt_token") ||
-      localStorage.getItem("pulsify_jwt_token") ||
-      null,
+    localStorage.getItem("pulsify_access_token") || null,
   );
   const [subscriptionTier, setSubscriptionTier] = useState(
     localStorage.getItem("pulsify_mock_tier") || "FREE",
@@ -46,13 +44,15 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
   };
 
   const mountSecureSession = (token) => {
-    localStorage.setItem("pulsify_jwt_token", token);
+    localStorage.setItem("pulsify_access_token", token);
     setActiveSessionToken(token);
   };
 
   const destroySecureSession = () => {
-    localStorage.removeItem("pulsify_jwt_token");
+    localStorage.removeItem("pulsify_access_token");
+    localStorage.removeItem("pulsify_refresh_token");
     localStorage.removeItem("pulsify_mock_tier");
+    localStorage.removeItem("pulsify_user");
     setActiveSessionToken(null);
     setSubscriptionTier("FREE");
   };

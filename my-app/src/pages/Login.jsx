@@ -1,8 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  getSocialToken,
+  getAvailableProviders,
+} from "@/services/socialAuthHelper";
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
@@ -30,7 +34,6 @@ function LoadingSpinner() {
   );
 }
 
-// OAuth icons - kept in code but hidden in UI
 function FacebookIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -76,6 +79,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState("");
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -84,12 +88,15 @@ const Login = () => {
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
 
+  const availableProviders = getAvailableProviders();
+
   // Redirect if already logged in
-  if (isAuthenticated) {
-    const from = location.state?.from?.pathname || "/home";
-    navigate(from, { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || "/home";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const handleCaptchaChange = (token) => {
     setCaptchaToken(token);
@@ -104,7 +111,6 @@ const Login = () => {
     setError("");
     setSuccess("");
 
-    // Validate email
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
       setError("Please enter your email address");
@@ -114,14 +120,10 @@ const Login = () => {
       setError("Please enter a valid email address");
       return;
     }
-
-    // Validate password
     if (!password) {
       setError("Please enter your password");
       return;
     }
-
-    // Show CAPTCHA after failed attempts
     if (showCaptcha && !captchaToken) {
       setError("Please complete the CAPTCHA verification");
       return;
@@ -130,16 +132,11 @@ const Login = () => {
     setIsLoading(true);
     try {
       const result = await authService.login(trimmedEmail, password);
-      
+
       setSuccess("Login successful! Redirecting...");
-      
-      // Store user in auth context
       login(result.user, result.access_token, result.refresh_token);
-      
-      // Reset failed attempts
       setFailedAttempts(0);
-      
-      // Redirect after short delay
+
       setTimeout(() => {
         const from = location.state?.from?.pathname || "/home";
         navigate(from, { replace: true });
@@ -147,31 +144,58 @@ const Login = () => {
     } catch (err) {
       const newFailedAttempts = failedAttempts + 1;
       setFailedAttempts(newFailedAttempts);
-      
-      // Show CAPTCHA after 2 failed attempts
+
       if (newFailedAttempts >= 2 && RECAPTCHA_SITE_KEY) {
         setShowCaptcha(true);
       }
-      
-      // Reset CAPTCHA
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
       }
       setCaptchaToken(null);
-      
+
       setError(err?.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // OAuth handlers - kept for future use
+  /**
+   * Social login handler
+   * 1. Get token from provider SDK (opens popup)
+   * 2. Send token to backend POST /auth/social/:provider
+   * 3. Backend returns access_token + refresh_token + user
+   * 4. Log the user in via AuthContext
+   */
   const handleOAuthLogin = async (provider) => {
-    // OAuth not yet implemented on backend
-    console.log(`OAuth login with ${provider} - not yet implemented`);
+    setError("");
+    setSuccess("");
+    setOauthLoading(provider);
+
+    try {
+      // Step 1: Get provider token via SDK popup
+      const providerToken = await getSocialToken(provider);
+
+      // Step 2: Send to backend
+      const result = await authService.socialLogin(provider, providerToken);
+
+      // Step 3: Login via AuthContext
+      setSuccess(`Signed in with ${provider}! Redirecting...`);
+      login(result.user, result.access_token, result.refresh_token);
+
+      setTimeout(() => {
+        const from = location.state?.from?.pathname || "/home";
+        navigate(from, { replace: true });
+      }, 1000);
+    } catch (err) {
+      setError(err?.message || `${provider} login failed. Please try again.`);
+    } finally {
+      setOauthLoading("");
+    }
   };
 
-  const isFormValid = email.trim() && password && (!showCaptcha || captchaToken);
+  const isFormValid =
+    email.trim() && password && (!showCaptcha || captchaToken);
+  const anyLoading = isLoading || !!oauthLoading;
 
   return (
     <div className="auth-page">
@@ -212,38 +236,71 @@ const Login = () => {
         )}
         {error && <div className="auth-alert auth-alert--error">{error}</div>}
 
-        {/* OAuth buttons - hidden until backend supports it */}
-        <div className="auth-oauth-group auth-oauth-hidden">
-          <button
-            className="auth-oauth-btn auth-oauth-btn--facebook"
-            onClick={() => handleOAuthLogin("facebook")}
-            disabled={isLoading}
-            type="button"
-          >
-            <FacebookIcon /> Continue with Facebook
-          </button>
-          <button
-            className="auth-oauth-btn auth-oauth-btn--google"
-            onClick={() => handleOAuthLogin("google")}
-            disabled={isLoading}
-            type="button"
-          >
-            <GoogleIcon /> Continue with Google
-          </button>
-          <button
-            className="auth-oauth-btn auth-oauth-btn--apple"
-            onClick={() => handleOAuthLogin("apple")}
-            disabled={isLoading}
-            type="button"
-          >
-            <AppleIcon /> Continue with Apple
-          </button>
-        </div>
+        {/* OAuth buttons — shown if any provider is configured */}
+        {availableProviders.length > 0 && (
+          <>
+            <div className="auth-oauth-group">
+              {availableProviders.includes("facebook") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--facebook"
+                  onClick={() => handleOAuthLogin("facebook")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "facebook" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <FacebookIcon /> Continue with Facebook
+                    </>
+                  )}
+                </button>
+              )}
+              {availableProviders.includes("google") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--google"
+                  onClick={() => handleOAuthLogin("google")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "google" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <GoogleIcon /> Continue with Google
+                    </>
+                  )}
+                </button>
+              )}
+              {availableProviders.includes("apple") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--apple"
+                  onClick={() => handleOAuthLogin("apple")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "apple" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <AppleIcon /> Continue with Apple
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
 
-        {/* Divider - hidden when OAuth is hidden */}
-        <div className="auth-divider auth-oauth-hidden">
-          <span>or</span>
-        </div>
+            <div className="auth-divider">
+              <span>or</span>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="auth-fields">
@@ -253,7 +310,7 @@ const Login = () => {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={anyLoading}
                 className="auth-input"
                 autoComplete="email"
               />
@@ -264,14 +321,13 @@ const Login = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
+                disabled={anyLoading}
                 className="auth-input"
                 autoComplete="current-password"
               />
             </div>
           </div>
 
-          {/* reCAPTCHA - shown after failed attempts */}
           {showCaptcha && RECAPTCHA_SITE_KEY && (
             <div className="auth-captcha">
               <ReCAPTCHA
@@ -285,8 +341,8 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={!isFormValid || isLoading}
-            className={`auth-submit-btn${!isFormValid || isLoading ? " disabled" : ""}`}
+            disabled={!isFormValid || anyLoading}
+            className={`auth-submit-btn${!isFormValid || anyLoading ? " disabled" : ""}`}
           >
             {isLoading ? (
               <>

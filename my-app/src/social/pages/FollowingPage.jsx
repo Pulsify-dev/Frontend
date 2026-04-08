@@ -26,7 +26,8 @@ export default function FollowingPage() {
   async function loadData() {
     try {
       setIsLoading(true);
-      const myId = localStorage.getItem("userId") || "me";
+      const stored = localStorage.getItem("pulsify_user");
+      const myId = stored ? JSON.parse(stored).id : "me";
       const [followingRes, countsRes] = await Promise.all([
         socialService.getFollowing(myId, page, 24),
         socialService.getSocialCounts(myId),
@@ -44,7 +45,9 @@ export default function FollowingPage() {
   function handleFollowToggle(userId, nowFollowing) {
     if (!nowFollowing) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
-      setCounts((prev) => prev ? { ...prev, followingCount: prev.followingCount - 1 } : prev);
+      setCounts((prev) =>
+        prev ? { ...prev, followingCount: prev.followingCount - 1 } : prev,
+      );
     }
   }
 
@@ -63,7 +66,7 @@ export default function FollowingPage() {
             followingCount: prev.followingCount - 1,
             blockedCount: prev.blockedCount + 1,
           }
-        : prev
+        : prev,
     );
   }
 
@@ -73,7 +76,7 @@ export default function FollowingPage() {
     return users.filter(
       (u) =>
         u.displayName.toLowerCase().includes(q) ||
-        u.username.toLowerCase().includes(q)
+        u.username.toLowerCase().includes(q),
     );
   }, [users, filter]);
 
@@ -99,15 +102,23 @@ export default function FollowingPage() {
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="sc-user-card sc-user-card--skeleton">
                     <div className="sc-user-card__avatar-wrap sc-skeleton-pulse" />
-                    <div className="sc-skeleton-line sc-skeleton-pulse" style={{ width: "70%" }} />
-                    <div className="sc-skeleton-line sc-skeleton-pulse" style={{ width: "50%" }} />
+                    <div
+                      className="sc-skeleton-line sc-skeleton-pulse"
+                      style={{ width: "70%" }}
+                    />
+                    <div
+                      className="sc-skeleton-line sc-skeleton-pulse"
+                      style={{ width: "50%" }}
+                    />
                   </div>
                 ))}
               </div>
             ) : error ? (
               <div className="sc-social-empty">
                 <p>{error}</p>
-                <button className="sc-social-retry" onClick={loadData}>Try again</button>
+                <button className="sc-social-retry" onClick={loadData}>
+                  Try again
+                </button>
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="sc-social-empty">
@@ -120,7 +131,8 @@ export default function FollowingPage() {
                     </svg>
                     <p>You're not following anyone yet</p>
                     <p className="sc-social-empty__sub">
-                      Follow artists and creators to see their latest tracks here.
+                      Follow artists and creators to see their latest tracks
+                      here.
                     </p>
                   </>
                 )}

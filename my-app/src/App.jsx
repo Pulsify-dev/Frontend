@@ -20,7 +20,6 @@ import FollowersPage from "@/social/pages/FollowersPage";
 import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
 
 // Module 4/5/6 – Tracks, Playback & Engagement (Mayar Ayman)
-import AppHeader from "@/components/AppHeader";
 import TrackPage from "@/pages/TrackPage";
 
 // Module 7 + 12 – Playlists & Premium (Omar Nasser)
@@ -81,57 +80,27 @@ const AppRoutes = () => {
               />
               <Route
                 path="/tracks/:trackId"
-                element={
-                  <>
-                    <AppHeader />
-                    <TrackPage view="overview" />
-                  </>
-                }
+                element={<TrackPage view="overview" />}
               />
               <Route
                 path="/tracks/:trackId/comments"
-                element={
-                  <>
-                    <AppHeader />
-                    <TrackPage view="comments" />
-                  </>
-                }
+                element={<TrackPage view="comments" />}
               />
               <Route
                 path="/tracks/:trackId/related"
-                element={
-                  <>
-                    <AppHeader />
-                    <TrackPage view="related" />
-                  </>
-                }
+                element={<TrackPage view="related" />}
               />
               <Route
                 path="/tracks/:trackId/playlists"
-                element={
-                  <>
-                    <AppHeader />
-                    <TrackPage view="playlists" />
-                  </>
-                }
+                element={<TrackPage view="playlists" />}
               />
               <Route
                 path="/tracks/:trackId/likes"
-                element={
-                  <>
-                    <AppHeader />
-                    <TrackPage view="likes" />
-                  </>
-                }
+                element={<TrackPage view="likes" />}
               />
               <Route
                 path="/tracks/:trackId/reposts"
-                element={
-                  <>
-                    <AppHeader />
-                    <TrackPage view="reposts" />
-                  </>
-                }
+                element={<TrackPage view="reposts" />}
               />
 
               {/* Playlists - Module 7 */}
@@ -166,6 +135,7 @@ const AppRoutes = () => {
 
               {/* Discovery & Notifications - Module 8/10 */}
               <Route path="/feed" element={<DiscoveryFeedPage />} />
+              <Route path="/discover" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
             </Route>

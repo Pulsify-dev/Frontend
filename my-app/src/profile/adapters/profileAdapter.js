@@ -1,6 +1,6 @@
 export function mapProfileDtoToProfile(dto) {
   return {
-    id: dto.id,
+    id: dto._id || dto.id,
     username: dto.username,
     displayName: dto.display_name,
     bio: dto.bio,

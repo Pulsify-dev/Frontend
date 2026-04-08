@@ -27,6 +27,11 @@ import {
   getSuggestedUsersMock,
   getMutualFollowersMock,
 } from "./socialMockApi";
+console.log(
+  "SOCIAL MOCKS CHECK:",
+  import.meta.env.VITE_USE_MOCKS,
+  typeof import.meta.env.VITE_USE_MOCKS,
+);
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
 
@@ -42,5 +47,7 @@ export const socialService = {
   getBlockedUsers: USE_MOCKS ? getBlockedUsersMock : getBlockedUsersApi,
   getRelationship: USE_MOCKS ? getRelationshipMock : getRelationshipApi,
   getSuggestedUsers: USE_MOCKS ? getSuggestedUsersMock : getSuggestedUsersApi,
-  getMutualFollowers: USE_MOCKS ? getMutualFollowersMock : getMutualFollowersApi,
+  getMutualFollowers: USE_MOCKS
+    ? getMutualFollowersMock
+    : getMutualFollowersApi,
 };

@@ -24,9 +24,8 @@ export const NotificationProvider = ({ children }) => {
   // Initial fetch + polling interval (simulates push notifications)
   useEffect(() => {
     const token =
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("pulsify_jwt_token") ||
-      localStorage.getItem("pulsify_token");
+      localStorage.getItem("pulsify_access_token") ||
+      localStorage.getItem("pulsify_jwt_token");
 
     if (!token) return;
 
