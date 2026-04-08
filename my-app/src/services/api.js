@@ -3,66 +3,66 @@ import { trackExperienceMockData } from "../mock/trackExperienceData";
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 const useMock = String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === "true";
+const allowMockFallback =
+  String(import.meta.env.VITE_USE_MOCK_API).toLowerCase() !== "false";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const formatIsoNow = () => new Date().toISOString();
 
 const readStoredJson = (key) => {
-  if (typeof window === 'undefined') return null
+  if (typeof window === "undefined") return null;
 
-  const rawValue = window.localStorage.getItem(key)
-  if (!rawValue) return null
+  const rawValue = window.localStorage.getItem(key);
+  if (!rawValue) return null;
 
   try {
-    return JSON.parse(rawValue)
+    return JSON.parse(rawValue);
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 const normalizePlaybackState = (value) => {
-  const normalizedValue = String(value ?? '').toLowerCase()
+  const normalizedValue = String(value ?? "").toLowerCase();
 
-  if (normalizedValue === 'blocked') return 'Blocked'
-  if (normalizedValue === 'preview') return 'Preview'
-  return 'Playable'
-}
+  if (normalizedValue === "blocked") return "Blocked";
+  if (normalizedValue === "preview") return "Preview";
+  return "Playable";
+};
 
 export const getStoredViewerIdentity = () => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return {
-      userId: '',
-      username: '',
-      displayName: '',
-    }
+      userId: "",
+      username: "",
+      displayName: "",
+    };
   }
 
   const storedUser =
-    readStoredJson('user') ??
-    readStoredJson('currentUser') ??
-    readStoredJson('profile') ??
-    {}
+    readStoredJson("user") ??
+    readStoredJson("currentUser") ??
+    readStoredJson("profile") ??
+    {};
 
   return {
     userId:
-      window.localStorage.getItem('userId') ??
-      window.localStorage.getItem('user_id') ??
+      window.localStorage.getItem("userId") ??
+      window.localStorage.getItem("user_id") ??
       storedUser.id ??
       storedUser.user_id ??
-      '',
+      "",
     username:
-      window.localStorage.getItem('username') ??
-      storedUser.username ??
-      '',
+      window.localStorage.getItem("username") ?? storedUser.username ?? "",
     displayName:
-      window.localStorage.getItem('display_name') ??
-      window.localStorage.getItem('displayName') ??
+      window.localStorage.getItem("display_name") ??
+      window.localStorage.getItem("displayName") ??
       storedUser.display_name ??
       storedUser.displayName ??
-      '',
-  }
-}
+      "",
+  };
+};
 
 const getAuthToken = () => {
   if (typeof window === "undefined")
@@ -78,49 +78,49 @@ const getAuthToken = () => {
   );
 };
 
-export const hasAuthToken = () => Boolean(getAuthToken())
+export const hasAuthToken = () => Boolean(getAuthToken());
 
-export const readAuthToken = () => getAuthToken()
+export const readAuthToken = () => getAuthToken();
 
 export const saveAuthToken = (token) => {
-  if (typeof window === 'undefined') return
+  if (typeof window === "undefined") return;
 
-  const normalizedToken = String(token ?? '').trim()
-  if (!normalizedToken) return
+  const normalizedToken = String(token ?? "").trim();
+  if (!normalizedToken) return;
 
-  window.localStorage.setItem('accessToken', normalizedToken)
-  window.localStorage.setItem('pulsify_token', normalizedToken)
-}
+  window.localStorage.setItem("accessToken", normalizedToken);
+  window.localStorage.setItem("pulsify_token", normalizedToken);
+};
 
 export const clearAuthToken = () => {
-  if (typeof window === 'undefined') return
+  if (typeof window === "undefined") return;
 
-  window.localStorage.removeItem('accessToken')
-  window.localStorage.removeItem('pulsify_token')
-}
+  window.localStorage.removeItem("accessToken");
+  window.localStorage.removeItem("pulsify_token");
+};
 
 const shouldUseMockFallback = (error) => {
-  if (useMock || !allowMockFallback) return false
+  if (useMock || !allowMockFallback) return false;
 
-  return error?.status === 401 || error?.name === 'TypeError'
-}
+  return error?.status === 401 || error?.name === "TypeError";
+};
 
 const withMockFallback = async (requester, fallback) => {
   if (!useMock && allowMockFallback && !hasAuthToken()) {
-    return fallback()
+    return fallback();
   }
 
   try {
-    return await requester()
+    return await requester();
   } catch (error) {
     if (shouldUseMockFallback(error)) {
-      console.warn('Falling back to mock track data.', error)
-      return fallback()
+      console.warn("Falling back to mock track data.", error);
+      return fallback();
     }
 
-    throw error
+    throw error;
   }
-}
+};
 
 const normalizeUser = (user = {}) => ({
   id: user.id ?? `user-${Math.random().toString(16).slice(2, 10)}`,
@@ -430,16 +430,18 @@ export const getWaveform = async (trackId) => {
   if (useMock) {
     return clone(getMockTrackOrThrow(trackId).waveform);
   }
-}
+};
 
 const getMockLikers = (trackId) =>
-  clone(getMockEngagementOrCreate(trackId).likers.map(normalizeUser))
+  clone(getMockEngagementOrCreate(trackId).likers.map(normalizeUser));
 
 const getMockReposters = (trackId) =>
-  clone(getMockEngagementOrCreate(trackId).reposters.map(normalizeUser))
+  clone(getMockEngagementOrCreate(trackId).reposters.map(normalizeUser));
 
 const getMockComments = (trackId, limit = 20) => {
-  const items = clone(getMockEngagementOrCreate(trackId).comments).map(normalizeComment)
+  const items = clone(getMockEngagementOrCreate(trackId).comments).map(
+    normalizeComment,
+  );
   return {
     comments: items,
     totalCount: items.length,
@@ -449,8 +451,8 @@ const getMockComments = (trackId, limit = 20) => {
       total: items.length,
       pages: Math.ceil(items.length / Math.max(limit, 1)),
     },
-  }
-}
+  };
+};
 
 const getMockCommentReplies = (limit = 20) => ({
   replies: [],
@@ -461,45 +463,32 @@ const getMockCommentReplies = (limit = 20) => ({
     total: 0,
     pages: 0,
   },
-})
+});
 
 const getMockRelatedTracks = (trackId) => {
-  const engagement = getMockEngagementOrCreate(trackId)
+  const engagement = getMockEngagementOrCreate(trackId);
 
   return clone(
     engagement.relatedTrackIds
       .map((relatedId) => mockStore.tracks[relatedId])
       .filter(Boolean)
       .map(normalizeTrackCard),
-  )
-}
+  );
+};
 
 const getMockTrackPlaylistsData = (trackId) => {
-  const engagement = getMockEngagementOrCreate(trackId)
+  const engagement = getMockEngagementOrCreate(trackId);
 
   return clone(
     engagement.playlistIds
       .map((playlistId) => mockStore.playlists[playlistId])
       .filter(Boolean)
       .map(normalizePlaylist),
-  )
-}
+  );
+};
 
 const getMockFanLeaderboardData = (trackId) =>
-  clone(getMockEngagementOrCreate(trackId).fans.map(normalizeFanEntry))
-
-export const getTrack = async (trackId) => {
-  if (useMock) return getMockTrack(trackId)
-
-  return withMockFallback(
-    async () => normalizeTrack(await request(`/tracks/${trackId}`)),
-    () => getMockTrack(trackId),
-  )
-}
-
-  const payload = await request(`/tracks/${trackId}/waveform`, { auth: false });
-  return Array.isArray(payload) ? payload : unwrapCollection(payload);
-};
+  clone(getMockEngagementOrCreate(trackId).fans.map(normalizeFanEntry));
 
 export const getStreamUrl = async (trackId) => {
   if (useMock) {
@@ -632,13 +621,15 @@ export const getReposters = async (trackId) => {
 
 export const getComments = async (trackId) => {
   if (useMock) {
-    return clone(getMockEngagementOrCreate(trackId).comments).map(
+    const comments = clone(getMockEngagementOrCreate(trackId).comments).map(
       normalizeComment,
     );
+    return { comments, totalCount: comments.length };
   }
 
   const payload = await request(`/tracks/${trackId}/comments`, { auth: false });
-  return unwrapCollection(payload).map(normalizeComment);
+  const comments = unwrapCollection(payload).map(normalizeComment);
+  return { comments, totalCount: comments.length };
 };
 
 export const createComment = async (trackId, payload) => {
@@ -666,10 +657,31 @@ export const createComment = async (trackId, payload) => {
   return normalizeComment(response);
 };
 
-export const deleteComment = async (commentId) => {
+export const deleteComment = async (commentId, trackId) => {
   if (useMock) {
     const engagement = getMockEngagementOrCreate(trackId);
+    engagement.comments = engagement.comments.filter((c) => c.id !== commentId);
+    getMockTrackOrThrow(trackId).commentCount -= 1;
+    return { success: true };
+  }
 
+  return request(`/comments/${commentId}`, { method: "DELETE" });
+};
+
+export const getCommentReplies = async (commentId) => {
+  if (useMock) {
+    return { replies: [], totalCount: 0 };
+  }
+
+  const payload = await request(`/comments/${commentId}/replies`, {
+    auth: false,
+  });
+  return payload;
+};
+
+export const getRelatedTracks = async (trackId) => {
+  if (useMock) {
+    const engagement = getMockEngagementOrCreate(trackId);
     return clone(
       engagement.relatedTrackIds
         .map((relatedId) => mockStore.tracks[relatedId])
@@ -680,6 +692,15 @@ export const deleteComment = async (commentId) => {
 
   const payload = await request(`/tracks/${trackId}/related`, { auth: false });
   return unwrapCollection(payload).map(normalizeTrackCard);
+};
+
+export const getDownloadUrl = async (trackId) => {
+  if (useMock) {
+    const track = getMockTrackOrThrow(trackId);
+    return { url: track.audioUrl };
+  }
+
+  return request(`/tracks/${trackId}/download-url`);
 };
 
 export const getTrackPlaylists = async (trackId) => {
