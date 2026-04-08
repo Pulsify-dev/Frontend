@@ -39,23 +39,38 @@ async function getGoogleToken() {
   await loadScript("https://accounts.google.com/gsi/client", "google-gsi");
 
   return new Promise((resolve, reject) => {
-    const client = window.google.accounts.oauth2.initTokenClient({
+    window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      scope: "email profile",
       callback: (response) => {
-        if (response.error) {
-          reject(
-            new Error(response.error_description || "Google login failed"),
-          );
+        if (response.credential) {
+          resolve(response.credential);
         } else {
-          resolve(response.access_token);
+          reject(new Error("Google login failed - no credential received"));
         }
       },
-      error_callback: (err) => {
-        reject(new Error(err?.message || "Google login was cancelled"));
-      },
     });
-    client.requestAccessToken();
+
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // One Tap not available, fall back to button-triggered popup
+        const div = document.createElement("div");
+        div.id = "g-signin-temp";
+        div.style.display = "none";
+        document.body.appendChild(div);
+
+        window.google.accounts.id.renderButton(div, {
+          type: "icon",
+          size: "large",
+        });
+
+        const btn =
+          div.querySelector('[role="button"]') || div.firstElementChild;
+        if (btn) btn.click();
+
+        // Clean up after a delay
+        setTimeout(() => div.remove(), 60000);
+      }
+    });
   });
 }
 
