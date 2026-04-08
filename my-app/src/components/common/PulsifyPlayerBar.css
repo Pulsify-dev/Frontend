@@ -1,0 +1,146 @@
+/* ====== SoundCloud Player Bar ====== */
+
+.sc-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--sc-player-height);
+  background: #2a2a2a;
+  border-top: 1px solid #383838;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 12px;
+  z-index: 200;
+}
+
+/* Controls */
+.sc-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-player-btn {
+  background: none;
+  border: none;
+  color: var(--sc-text-secondary);
+  font-size: 14px;
+  padding: 4px 6px;
+  transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc-player-btn:hover {
+  color: var(--sc-text-primary);
+}
+
+.sc-player-play {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--sc-accent);
+  color: #fff !important;
+  font-size: 12px;
+}
+
+/* Progress */
+.sc-player-progress-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-player-time {
+  font-size: 11px;
+  color: var(--sc-text-muted);
+  min-width: 32px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-player-progress-track {
+  flex: 1;
+  height: 3px;
+  background: #444;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.sc-player-progress-fill {
+  height: 100%;
+  background: var(--sc-accent);
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+.sc-player-progress-track:hover {
+  height: 5px;
+}
+
+/* Volume */
+.sc-player-volume {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-volume-slider {
+  width: 60px;
+  height: 3px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #444;
+  border-radius: 2px;
+  outline: none;
+}
+
+.sc-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sc-text-primary);
+  cursor: pointer;
+}
+
+/* Track Info */
+.sc-player-trackinfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 200px;
+}
+
+.sc-player-art {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+}
+
+.sc-player-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sc-player-artist {
+  font-size: 10px;
+  color: var(--sc-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-player-title {
+  font-size: 11px;
+  color: var(--sc-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

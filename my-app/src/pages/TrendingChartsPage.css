@@ -1,0 +1,69 @@
+/* ====== SoundCloud Charts Page ====== */
+
+.sc-charts-page {
+  width: 100%;
+}
+
+/* Genre Tabs */
+.sc-genre-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--sc-border);
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+.sc-genre-tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--sc-text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.sc-genre-tab:hover {
+  color: var(--sc-text-primary);
+}
+
+.sc-genre-tab.active {
+  color: var(--sc-text-primary);
+  border-bottom-color: var(--sc-accent);
+}
+
+/* Chart List */
+.sc-chart-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-chart-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sc-chart-rank {
+  width: 40px;
+  min-width: 40px;
+  padding-top: 16px;
+  text-align: center;
+}
+
+.sc-rank-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sc-text-muted);
+}
+
+.sc-chart-entry:first-child .sc-rank-number {
+  color: var(--sc-accent);
+  font-size: 24px;
+}
+
+.sc-chart-track {
+  flex: 1;
+  min-width: 0;
+}

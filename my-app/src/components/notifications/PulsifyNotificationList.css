@@ -1,0 +1,117 @@
+/* ====== SoundCloud Notification Dropdown ====== */
+
+.sc-notif-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sc-border);
+}
+
+.sc-notif-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sc-text-primary);
+}
+
+.sc-notif-mark-all {
+  background: none;
+  border: none;
+  color: var(--sc-accent);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sc-notif-mark-all:hover {
+  text-decoration: underline;
+}
+
+/* Notification Items */
+.sc-notif-items {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.sc-notif-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(51, 51, 51, 0.5);
+}
+
+.sc-notif-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sc-notif-item.unread {
+  background: rgba(255, 85, 0, 0.04);
+  border-left: 3px solid var(--sc-accent);
+}
+
+.sc-notif-item.read {
+  opacity: 0.7;
+}
+
+.sc-notif-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.sc-notif-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-notif-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--sc-text-secondary);
+  line-height: 1.4;
+}
+
+.sc-notif-text strong {
+  color: var(--sc-text-primary);
+  font-weight: 600;
+}
+
+.sc-notif-target {
+  color: var(--sc-text-primary);
+}
+
+.sc-notif-time {
+  font-size: 11px;
+  color: var(--sc-text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.sc-notif-type-icon {
+  font-size: 16px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sc-notif-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--sc-text-muted);
+  font-size: 14px;
+}

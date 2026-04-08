@@ -1,0 +1,56 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RESPONSIVE UTILITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 900px) {
+  .page {
+    padding: 20px;
+  }
+
+  .pulsify-page-container,
+  .pulsify-detail-container {
+    padding: 20px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 20px;
+  }
+
+  .topbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .track-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .pulsify-grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+  }
+
+  .auth-card {
+    padding: 32px 24px;
+  }
+
+  .auth-navbar {
+    padding: 12px 16px;
+  }
+
+  .auth-nav-links,
+  .auth-nav-upload,
+  .auth-search-form {
+    display: none;
+  }
+
+  .auth-mobile-toggle {
+    display: block;
+  }
+}
