@@ -9,12 +9,19 @@ import PlayerDock from "../components/PlayerDock";
 import TrackHeader from "../components/TrackHeader";
 import { trackExperienceMockData } from "../mock/trackExperienceData";
 import {
+  clearAuthToken,
   createComment,
+  deleteComment,
+  getDownloadUrl,
+  getCommentReplies,
   getComments,
   getFanLeaderboard,
+  hasAuthToken,
   getLikers,
   getRelatedTracks,
   getReposters,
+  readAuthToken,
+  saveAuthToken,
   getStreamUrl,
   getTrack,
   getTrackPlaylists,
@@ -35,6 +42,28 @@ const buildTrackPath = (targetTrackId, view) => {
   return `/tracks/${targetTrackId}/${view}`;
 };
 
+const sanitizeFilenamePart = (value) =>
+  String(value ?? "")
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const inferDownloadExtension = (url, mimeType) => {
+  if (mimeType?.includes("mpeg")) return "mp3";
+  if (mimeType?.includes("wav")) return "wav";
+  if (mimeType?.includes("ogg")) return "ogg";
+  if (mimeType?.includes("aac")) return "aac";
+  if (mimeType?.includes("mp4")) return "m4a";
+
+  try {
+    const pathname = new URL(url).pathname;
+    const match = pathname.match(/\.([a-z0-9]{2,5})$/i);
+    return match?.[1]?.toLowerCase() ?? "mp3";
+  } catch {
+    return "mp3";
+  }
+};
+
 const sortCommentsByTimeline = (items) =>
   [...items].sort((left, right) => {
     const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER;
@@ -42,13 +71,19 @@ const sortCommentsByTimeline = (items) =>
     return leftTime - rightTime;
   });
 
+const markCommentAsDeleted = (comment) => ({
+  ...comment,
+  text: "Comment deleted.",
+  isDeleted: true,
+});
+
 const getSectionConfig = (
   view,
   track,
   relatedTracks,
   playlists,
   likers,
-  reposters,
+  reposters
 ) => {
   if (!track) return null;
 
@@ -98,9 +133,12 @@ function TrackPage({ view = "overview" }) {
   const audioRef = useRef(null);
   const sessionReportedRef = useRef(false);
 
+  const [authRefreshKey, setAuthRefreshKey] = useState(0);
+  const [tokenInput, setTokenInput] = useState(() => readAuthToken());
   const [track, setTrack] = useState(null);
   const [streamInfo, setStreamInfo] = useState(null);
   const [comments, setComments] = useState([]);
+  const [commentTotal, setCommentTotal] = useState(0);
   const [relatedTracks, setRelatedTracks] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [fanLeaderboard, setFanLeaderboard] = useState([]);
@@ -109,6 +147,7 @@ function TrackPage({ view = "overview" }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(70);
@@ -121,7 +160,7 @@ function TrackPage({ view = "overview" }) {
 
   const visibleComments = useMemo(
     () => (view === "overview" ? comments.slice(0, 6) : comments),
-    [comments, view],
+    [comments, view]
   );
 
   const sectionConfig = useMemo(
@@ -132,14 +171,14 @@ function TrackPage({ view = "overview" }) {
         relatedTracks,
         playlists,
         likers,
-        reposters,
+        reposters
       ),
-    [view, track, relatedTracks, playlists, likers, reposters],
+    [view, track, relatedTracks, playlists, likers, reposters]
   );
 
   const currentTrackIndex = useMemo(
     () => mockTrackOrder.indexOf(trackId),
-    [trackId],
+    [trackId]
   );
 
   useEffect(() => {
@@ -147,19 +186,39 @@ function TrackPage({ view = "overview" }) {
     audioRef.current.volume = volume / 100;
   }, [volume]);
 
+  const isAuthError =
+    error.startsWith("Missing access token.") ||
+    error.startsWith("Unauthorized.");
+
   useEffect(() => {
     let isMounted = true;
 
     const loadTrack = async () => {
       setIsLoading(true);
       setError("");
-      setPlayerMessage("");
+      setPlayerMessage(
+        hasAuthToken()
+          ? ""
+          : "Demo mode active. Add a backend token any time to use live data."
+      );
       setCurrentTime(0);
       setIsPlaying(false);
+      setCommentTotal(0);
       sessionReportedRef.current = false;
 
+      if (!isMounted) return;
+
+      let nextTrack = null;
+
+      try {
+        nextTrack = await getTrack(trackId);
+      } catch (trackError) {
+        setError("Track unavailable right now.");
+        setIsLoading(false);
+        return;
+      }
+
       const results = await Promise.allSettled([
-        getTrack(trackId),
         getStreamUrl(trackId),
         getComments(trackId),
         getLikers(trackId),
@@ -171,38 +230,40 @@ function TrackPage({ view = "overview" }) {
 
       if (!isMounted) return;
 
-      const trackResult = results[0];
-      if (trackResult.status !== "fulfilled") {
-        setError("Track unavailable right now.");
-        setIsLoading(false);
-        return;
-      }
-
-      const nextTrack = trackResult.value;
       setTrack(nextTrack);
       setDuration(nextTrack.duration ?? 0);
       setStreamInfo(
-        results[1].status === "fulfilled"
-          ? results[1].value
+        results[0].status === "fulfilled"
+          ? results[0].value
+          : results[0].reason?.status === 403
+          ? {
+              url: "",
+              playback_state: "Blocked",
+              preview_duration_seconds: 0,
+              message:
+                results[0].reason?.message ??
+                "This track is blocked for your plan or region.",
+            }
           : {
               url: nextTrack.audioUrl,
               playback_state: nextTrack.playbackState,
               preview_duration_seconds: nextTrack.previewDurationSeconds,
-            },
+            }
       );
-      setComments(
-        results[2].status === "fulfilled"
-          ? sortCommentsByTimeline(results[2].value)
-          : [],
-      );
-      setLikers(results[3].status === "fulfilled" ? results[3].value : []);
-      setReposters(results[4].status === "fulfilled" ? results[4].value : []);
-      setRelatedTracks(
-        results[5].status === "fulfilled" ? results[5].value : [],
-      );
-      setPlaylists(results[6].status === "fulfilled" ? results[6].value : []);
+
+      const commentsPayload =
+        results[1].status === "fulfilled"
+          ? results[1].value
+          : { comments: [], totalCount: nextTrack.commentCount ?? 0 };
+
+      setComments(sortCommentsByTimeline(commentsPayload.comments));
+      setCommentTotal(commentsPayload.totalCount ?? nextTrack.commentCount ?? 0);
+      setLikers(results[2].status === "fulfilled" ? results[2].value : []);
+      setReposters(results[3].status === "fulfilled" ? results[3].value : []);
+      setRelatedTracks(results[4].status === "fulfilled" ? results[4].value : []);
+      setPlaylists(results[5].status === "fulfilled" ? results[5].value : []);
       setFanLeaderboard(
-        results[7].status === "fulfilled" ? results[7].value : [],
+        results[6].status === "fulfilled" ? results[6].value : []
       );
       setIsLoading(false);
     };
@@ -212,11 +273,42 @@ function TrackPage({ view = "overview" }) {
     return () => {
       isMounted = false;
     };
-  }, [trackId]);
+  }, [authRefreshKey, trackId]);
+
+  const handleTokenSubmit = (event) => {
+    event.preventDefault();
+
+    const normalizedToken = tokenInput.trim();
+    if (!normalizedToken) {
+      setError("Enter a token first.");
+      return;
+    }
+
+    saveAuthToken(normalizedToken);
+    setError("");
+    setAuthRefreshKey((currentValue) => currentValue + 1);
+  };
+
+  const handleClearToken = () => {
+    clearAuthToken();
+    setTokenInput("");
+    setTrack(null);
+    setStreamInfo(null);
+    setComments([]);
+    setCommentTotal(0);
+    setRelatedTracks([]);
+    setPlaylists([]);
+    setFanLeaderboard([]);
+    setLikers([]);
+    setReposters([]);
+    setError(
+      "Missing access token. Add a valid token in localStorage as `accessToken` or `pulsify_token`, then reload."
+    );
+  };
 
   const submitPlayEvent = async () => {
     const playedMs = Math.round(
-      (audioRef.current?.currentTime ?? currentTime) * 1000,
+      (audioRef.current?.currentTime ?? currentTime) * 1000
     );
 
     if (!track || playedMs < 5000 || sessionReportedRef.current) {
@@ -233,7 +325,7 @@ function TrackPage({ view = "overview" }) {
               ...currentTrack,
               playCount: currentTrack.playCount + 1,
             }
-          : currentTrack,
+          : currentTrack
       );
     } catch (registerError) {
       sessionReportedRef.current = false;
@@ -263,7 +355,7 @@ function TrackPage({ view = "overview" }) {
 
     if (playbackState === "Blocked") {
       setPlayerMessage(
-        "This track is blocked because of plan or region rules.",
+        "This track is blocked because of plan or region rules."
       );
       return;
     }
@@ -290,7 +382,7 @@ function TrackPage({ view = "overview" }) {
       setPlayerMessage(
         playbackState === "Preview"
           ? `Preview access active for ${previewDurationSeconds} seconds.`
-          : "",
+          : ""
       );
     } catch (playError) {
       setPlayerMessage("Audio playback could not start.");
@@ -313,7 +405,7 @@ function TrackPage({ view = "overview" }) {
       setCurrentTime(previewDurationSeconds);
       setIsPlaying(false);
       setPlayerMessage(
-        `Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`,
+        `Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`
       );
       return;
     }
@@ -373,7 +465,7 @@ function TrackPage({ view = "overview" }) {
       viewerHasReposted: shouldRepost,
       repostCount: Math.max(
         currentTrack.repostCount + (shouldRepost ? 1 : -1),
-        0,
+        0
       ),
     }));
 
@@ -386,7 +478,7 @@ function TrackPage({ view = "overview" }) {
         viewerHasReposted: !shouldRepost,
         repostCount: Math.max(
           currentTrack.repostCount + (shouldRepost ? -1 : 1),
-          0,
+          0
         ),
       }));
       console.error(toggleError);
@@ -398,12 +490,28 @@ function TrackPage({ view = "overview" }) {
 
     const comment = await createComment(track.id, payload);
     setComments((currentComments) =>
-      sortCommentsByTimeline([...currentComments, comment]),
+      sortCommentsByTimeline([...currentComments, comment])
     );
+    setCommentTotal((currentTotal) => currentTotal + 1);
     setTrack((currentTrack) => ({
       ...currentTrack,
       commentCount: currentTrack.commentCount + 1,
     }));
+  };
+
+  const handleLoadReplies = async (commentId) => {
+    const response = await getCommentReplies(commentId);
+    return response.replies;
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    await deleteComment(commentId);
+    setComments((currentComments) =>
+      currentComments.map((comment) =>
+        comment.id === commentId ? markCommentAsDeleted(comment) : comment
+      )
+    );
+    setPlayerMessage("Comment deleted successfully.");
   };
 
   const copyShareLink = async (url, successMessage) => {
@@ -452,6 +560,79 @@ function TrackPage({ view = "overview" }) {
     await copyShareLink(window.location.href, "Track link copied.");
   };
 
+  const handleDownload = async () => {
+    if (!track || typeof document === "undefined") return;
+
+    const sourceUrl = streamInfo?.url ?? track.audioUrl;
+    if (!sourceUrl) {
+      setPlayerMessage("Download is not available for this track.");
+      return;
+    }
+
+    const baseName =
+      sanitizeFilenamePart(`${track.artist} - ${track.title}`) || "track";
+    setIsDownloading(true);
+    setPlayerMessage("");
+
+    try {
+      const downloadInfo = await getDownloadUrl(track.id);
+      const downloadUrl = downloadInfo?.url ?? sourceUrl;
+
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const extension = inferDownloadExtension(downloadUrl, blob.type);
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = objectUrl;
+      link.download = `${baseName}.${extension}`;
+      link.style.display = "none";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      setPlayerMessage("Download started. Check your Downloads folder.");
+    } catch (downloadError) {
+      console.error(downloadError);
+
+      if (downloadError?.status === 403) {
+        setPlayerMessage(
+          downloadError.message ||
+            "Download is only available on the ArtistPro plan."
+        );
+        return;
+      }
+
+      try {
+        const fallbackLink = document.createElement("a");
+        fallbackLink.href = sourceUrl;
+        fallbackLink.download = `${baseName}.mp3`;
+        fallbackLink.target = "_blank";
+        fallbackLink.rel = "noreferrer";
+        fallbackLink.style.display = "none";
+
+        document.body.appendChild(fallbackLink);
+        fallbackLink.click();
+        fallbackLink.remove();
+
+        setPlayerMessage(
+          "Download was triggered. If it did not save, allow downloads in your browser."
+        );
+      } catch (fallbackError) {
+        console.error(fallbackError);
+        setPlayerMessage("Could not download this track right now.");
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handlePreviousTrack = async () => {
     if (!mockTrackOrder.length) return;
 
@@ -488,6 +669,47 @@ function TrackPage({ view = "overview" }) {
   }
 
   if (!track || error) {
+    if (isAuthError) {
+      return (
+        <div className="app-shell">
+          <main className="page">
+            <section className="auth-token-panel">
+              <div className="auth-token-copy">
+                <span className="tag">Backend connection</span>
+                <h1>Enter your access token</h1>
+                <p>{error}</p>
+              </div>
+
+              <form className="auth-token-form" onSubmit={handleTokenSubmit}>
+                <label className="auth-token-field">
+                  <span>Access token</span>
+                  <textarea
+                    value={tokenInput}
+                    onChange={(event) => setTokenInput(event.target.value)}
+                    placeholder="Paste your backend access token here"
+                    rows={6}
+                  />
+                </label>
+
+                <div className="auth-token-actions">
+                  <button className="comment-submit" type="submit">
+                    Save and retry
+                  </button>
+                  <button
+                    className="action-square"
+                    type="button"
+                    onClick={handleClearToken}
+                  >
+                    Clear token
+                  </button>
+                </div>
+              </form>
+            </section>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="app-shell">
         <LoadingState label={error || "Track unavailable"} />
@@ -512,10 +734,12 @@ function TrackPage({ view = "overview" }) {
           <div className="content-column">
             <PlayerCard
               track={track}
-              commentCount={comments.length}
+              commentCount={commentTotal}
               currentTime={currentTime}
+              isDownloading={isDownloading}
               message={playerMessage}
               onAddComment={handleAddComment}
+              onDownload={handleDownload}
               onLikeToggle={handleLikeToggle}
               onRepostToggle={handleRepostToggle}
               onShare={handleShare}
@@ -533,8 +757,11 @@ function TrackPage({ view = "overview" }) {
             ) : (
               <Comments
                 comments={visibleComments}
-                totalCount={comments.length}
+                totalCount={commentTotal}
+                onDeleteComment={handleDeleteComment}
                 onJumpToTime={handleSeek}
+                onLoadReplies={handleLoadReplies}
+                onMessage={setPlayerMessage}
                 mode={view === "comments" ? "page" : "overview"}
               />
             )}

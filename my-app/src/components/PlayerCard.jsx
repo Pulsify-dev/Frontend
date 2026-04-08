@@ -19,8 +19,10 @@ function PlayerCard({
   track,
   commentCount,
   currentTime,
+  isDownloading,
   message,
   onAddComment,
+  onDownload,
   onLikeToggle,
   onRepostToggle,
   onShare,
@@ -101,8 +103,13 @@ function PlayerCard({
           <button className="action-square" type="button" onClick={onCopyLink}>
             Copy
           </button>
-          <button className="action-square" type="button">
-            Queue
+          <button
+            className="action-square"
+            type="button"
+            onClick={onDownload}
+            disabled={isDownloading}
+          >
+            {isDownloading ? 'Downloading' : 'Download'}
           </button>
           <Link
             className={`action-link ${view === 'comments' ? 'is-current' : ''}`}

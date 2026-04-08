@@ -9,11 +9,16 @@ import App from "./App.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <PulsifyAuthVaultProvider>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_relativeSplatPath: true,
+          v7_startTransition: true,
+        }}
+      >
         <AuthProvider>
           <App />
         </AuthProvider>
       </BrowserRouter>
     </PulsifyAuthVaultProvider>
-  </StrictMode>,
+  </StrictMode>
 );

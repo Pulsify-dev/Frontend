@@ -8,6 +8,62 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const formatIsoNow = () => new Date().toISOString();
 
+const readStoredJson = (key) => {
+  if (typeof window === 'undefined') return null
+
+  const rawValue = window.localStorage.getItem(key)
+  if (!rawValue) return null
+
+  try {
+    return JSON.parse(rawValue)
+  } catch {
+    return null
+  }
+}
+
+const normalizePlaybackState = (value) => {
+  const normalizedValue = String(value ?? '').toLowerCase()
+
+  if (normalizedValue === 'blocked') return 'Blocked'
+  if (normalizedValue === 'preview') return 'Preview'
+  return 'Playable'
+}
+
+export const getStoredViewerIdentity = () => {
+  if (typeof window === 'undefined') {
+    return {
+      userId: '',
+      username: '',
+      displayName: '',
+    }
+  }
+
+  const storedUser =
+    readStoredJson('user') ??
+    readStoredJson('currentUser') ??
+    readStoredJson('profile') ??
+    {}
+
+  return {
+    userId:
+      window.localStorage.getItem('userId') ??
+      window.localStorage.getItem('user_id') ??
+      storedUser.id ??
+      storedUser.user_id ??
+      '',
+    username:
+      window.localStorage.getItem('username') ??
+      storedUser.username ??
+      '',
+    displayName:
+      window.localStorage.getItem('display_name') ??
+      window.localStorage.getItem('displayName') ??
+      storedUser.display_name ??
+      storedUser.displayName ??
+      '',
+  }
+}
+
 const getAuthToken = () => {
   if (typeof window === "undefined")
     return import.meta.env.VITE_AUTH_TOKEN ?? "";
@@ -21,6 +77,50 @@ const getAuthToken = () => {
     ""
   );
 };
+
+export const hasAuthToken = () => Boolean(getAuthToken())
+
+export const readAuthToken = () => getAuthToken()
+
+export const saveAuthToken = (token) => {
+  if (typeof window === 'undefined') return
+
+  const normalizedToken = String(token ?? '').trim()
+  if (!normalizedToken) return
+
+  window.localStorage.setItem('accessToken', normalizedToken)
+  window.localStorage.setItem('pulsify_token', normalizedToken)
+}
+
+export const clearAuthToken = () => {
+  if (typeof window === 'undefined') return
+
+  window.localStorage.removeItem('accessToken')
+  window.localStorage.removeItem('pulsify_token')
+}
+
+const shouldUseMockFallback = (error) => {
+  if (useMock || !allowMockFallback) return false
+
+  return error?.status === 401 || error?.name === 'TypeError'
+}
+
+const withMockFallback = async (requester, fallback) => {
+  if (!useMock && allowMockFallback && !hasAuthToken()) {
+    return fallback()
+  }
+
+  try {
+    return await requester()
+  } catch (error) {
+    if (shouldUseMockFallback(error)) {
+      console.warn('Falling back to mock track data.', error)
+      return fallback()
+    }
+
+    throw error
+  }
+}
 
 const normalizeUser = (user = {}) => ({
   id: user.id ?? `user-${Math.random().toString(16).slice(2, 10)}`,
@@ -66,6 +166,8 @@ const normalizeTrack = (track = {}) => ({
   repostCount: track.repostCount ?? track.reposts ?? 0,
   commentCount:
     track.commentCount ??
+    track.comment_count ??
+    track.comments_count ??
     track.commentsCount ??
     (Array.isArray(track.comments) ? track.comments.length : 0),
   viewerHasLiked: Boolean(track.viewerHasLiked),
@@ -328,6 +430,72 @@ export const getWaveform = async (trackId) => {
   if (useMock) {
     return clone(getMockTrackOrThrow(trackId).waveform);
   }
+}
+
+const getMockLikers = (trackId) =>
+  clone(getMockEngagementOrCreate(trackId).likers.map(normalizeUser))
+
+const getMockReposters = (trackId) =>
+  clone(getMockEngagementOrCreate(trackId).reposters.map(normalizeUser))
+
+const getMockComments = (trackId, limit = 20) => {
+  const items = clone(getMockEngagementOrCreate(trackId).comments).map(normalizeComment)
+  return {
+    comments: items,
+    totalCount: items.length,
+    pagination: {
+      page: 1,
+      limit,
+      total: items.length,
+      pages: Math.ceil(items.length / Math.max(limit, 1)),
+    },
+  }
+}
+
+const getMockCommentReplies = (limit = 20) => ({
+  replies: [],
+  totalCount: 0,
+  pagination: {
+    page: 1,
+    limit,
+    total: 0,
+    pages: 0,
+  },
+})
+
+const getMockRelatedTracks = (trackId) => {
+  const engagement = getMockEngagementOrCreate(trackId)
+
+  return clone(
+    engagement.relatedTrackIds
+      .map((relatedId) => mockStore.tracks[relatedId])
+      .filter(Boolean)
+      .map(normalizeTrackCard),
+  )
+}
+
+const getMockTrackPlaylistsData = (trackId) => {
+  const engagement = getMockEngagementOrCreate(trackId)
+
+  return clone(
+    engagement.playlistIds
+      .map((playlistId) => mockStore.playlists[playlistId])
+      .filter(Boolean)
+      .map(normalizePlaylist),
+  )
+}
+
+const getMockFanLeaderboardData = (trackId) =>
+  clone(getMockEngagementOrCreate(trackId).fans.map(normalizeFanEntry))
+
+export const getTrack = async (trackId) => {
+  if (useMock) return getMockTrack(trackId)
+
+  return withMockFallback(
+    async () => normalizeTrack(await request(`/tracks/${trackId}`)),
+    () => getMockTrack(trackId),
+  )
+}
 
   const payload = await request(`/tracks/${trackId}/waveform`, { auth: false });
   return Array.isArray(payload) ? payload : unwrapCollection(payload);
@@ -498,7 +666,7 @@ export const createComment = async (trackId, payload) => {
   return normalizeComment(response);
 };
 
-export const getRelatedTracks = async (trackId) => {
+export const deleteComment = async (commentId) => {
   if (useMock) {
     const engagement = getMockEngagementOrCreate(trackId);
 
