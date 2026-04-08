@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import AppHeader from './components/AppHeader'
 import { PulsifyPlaylistDetailView } from './pages/PulsifyPlaylistDetailView'
 import { PulsifyPlaylistsView } from './pages/PulsifyPlaylistsView'
 import { PulsifyPremiumUpgradePage } from './pages/PulsifyPremiumUpgradePage'
@@ -27,57 +26,27 @@ function App() {
         />
         <Route
           path="/tracks/:trackId"
-          element={
-            <>
-              <AppHeader />
-              <TrackPage view="overview" />
-            </>
-          }
+          element={<TrackPage view="overview" />}
         />
         <Route
           path="/tracks/:trackId/comments"
-          element={
-            <>
-              <AppHeader />
-              <TrackPage view="comments" />
-            </>
-          }
+          element={<TrackPage view="comments" />}
         />
         <Route
           path="/tracks/:trackId/related"
-          element={
-            <>
-              <AppHeader />
-              <TrackPage view="related" />
-            </>
-          }
+          element={<TrackPage view="related" />}
         />
         <Route
           path="/tracks/:trackId/playlists"
-          element={
-            <>
-              <AppHeader />
-              <TrackPage view="playlists" />
-            </>
-          }
+          element={<TrackPage view="playlists" />}
         />
         <Route
           path="/tracks/:trackId/likes"
-          element={
-            <>
-              <AppHeader />
-              <TrackPage view="likes" />
-            </>
-          }
+          element={<TrackPage view="likes" />}
         />
         <Route
           path="/tracks/:trackId/reposts"
-          element={
-            <>
-              <AppHeader />
-              <TrackPage view="reposts" />
-            </>
-          }
+          element={<TrackPage view="reposts" />}
         />
       </Routes>
     </div>
