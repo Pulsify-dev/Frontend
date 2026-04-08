@@ -1357,10 +1357,21 @@ button:disabled:hover {
 }
 
 .auth-user-avatar {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.auth-user-avatar--default {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ff5500;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .auth-user-name {

@@ -151,7 +151,9 @@
   justify-content: center;
   border-radius: 6px;
   color: var(--sc-muted);
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .sidebar-toggle:hover {
@@ -188,7 +190,9 @@
   color: var(--sc-muted);
   font-size: 14px;
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .sidebar-nav-item:hover {
@@ -302,6 +306,17 @@
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.auth-user-avatar--default {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ff5500;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .auth-user-name {

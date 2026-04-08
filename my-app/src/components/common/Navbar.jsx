@@ -6,6 +6,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isArtist, logout } = useAuth();
@@ -109,14 +110,18 @@ const Navbar = () => {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="auth-user-menu-trigger"
               >
-                <img
-                  src={
-                    user?.avatarUrl ||
-                    "https://via.placeholder.com/40/333/ff5500?text=♪"
-                  }
-                  alt={user?.displayName}
-                  className="auth-user-avatar"
-                />
+                {user?.avatarUrl && !avatarError ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user?.displayName}
+                    className="auth-user-avatar"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <span className="auth-user-avatar auth-user-avatar--default">
+                    {(user?.displayName?.[0] || "♪").toUpperCase()}
+                  </span>
+                )}
                 <span className="auth-user-name">{user?.displayName}</span>
                 <svg
                   width="12"
@@ -134,14 +139,18 @@ const Navbar = () => {
               {isUserMenuOpen && (
                 <div className="auth-user-dropdown">
                   <div className="auth-user-dropdown-header">
-                    <img
-                      src={
-                        user?.avatarUrl ||
-                        "https://i1.sndcdn.com/avatars-default.jpg"
-                      }
-                      alt={user?.displayName}
-                      className="auth-user-dropdown-avatar"
-                    />
+                    {user?.avatarUrl && !avatarError ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user?.displayName}
+                        className="auth-user-dropdown-avatar"
+                        onError={() => setAvatarError(true)}
+                      />
+                    ) : (
+                      <span className="auth-user-dropdown-avatar auth-user-avatar--default">
+                        {(user?.displayName?.[0] || "♪").toUpperCase()}
+                      </span>
+                    )}
                     <div className="auth-user-dropdown-info">
                       <span className="auth-user-dropdown-name">
                         {user?.displayName}
