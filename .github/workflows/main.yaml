@@ -43,5 +43,6 @@ jobs:
             sudo docker rm pulsify-web || true
             sudo docker run -d \
               --name pulsify-web \
+              --restart always \
               -p 8080:80 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
