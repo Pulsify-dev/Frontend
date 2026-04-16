@@ -131,15 +131,42 @@ const normalizeUser = (user = {}) => ({
     "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
 });
 
-const normalizeComment = (comment = {}) => ({
-  id: comment.id ?? `comment-${Math.random().toString(16).slice(2, 10)}`,
-  text: comment.text ?? "",
-  timestamp_ms:
-    comment.timestamp_ms ??
-    (typeof comment.time === "number" ? Math.round(comment.time * 1000) : null),
-  created_at: comment.created_at ?? formatIsoNow(),
-  user: normalizeUser(comment.user),
-});
+const normalizeComment = (comment = {}) => {
+  const viewer = getStoredViewerIdentity();
+  const commentUserId = comment.user_id ?? comment.user?.id ?? "";
+
+  const user = comment.user
+    ? normalizeUser(comment.user)
+    : normalizeUser({
+        id: commentUserId,
+        name: comment.display_name ?? comment.username ?? "Unknown listener",
+        username: comment.username,
+        avatar: comment.avatar_url,
+      });
+
+  let timestampMs = comment.timestamp_ms ?? null;
+  if (timestampMs === null && typeof comment.timestamp_seconds === "number") {
+    timestampMs = Math.round(comment.timestamp_seconds * 1000);
+  } else if (timestampMs === null && typeof comment.time === "number") {
+    timestampMs = Math.round(comment.time * 1000);
+  }
+
+  return {
+    id:
+      comment.comment_id ??
+      comment.id ??
+      comment._id ??
+      `comment-${Math.random().toString(16).slice(2, 10)}`,
+    text: comment.text ?? "",
+    timestamp_ms: timestampMs,
+    created_at: comment.created_at ?? formatIsoNow(),
+    user,
+    repliesCount: comment.replies_count ?? comment.repliesCount ?? 0,
+    likesCount: comment.likes_count ?? comment.likesCount ?? 0,
+    isEdited: comment.is_edited ?? comment.isEdited ?? false,
+    isOwnedByViewer: Boolean(viewer.userId && commentUserId === viewer.userId),
+  };
+};
 
 const createWaveform = (seed) =>
   Array.from({ length: 140 }, (_, index) => {
@@ -521,22 +548,56 @@ export const registerPlay = async (trackId, payload) => {
   });
 };
 
-export const getRecentlyPlayed = async () => {
+export const getRecentlyPlayed = async ({ page = 1, limit = 20 } = {}) => {
   if (useMock) {
-    return clone(mockStore.recentlyPlayed);
+    return {
+      tracks: clone(mockStore.recentlyPlayed),
+      total: mockStore.recentlyPlayed.length,
+      page,
+      limit,
+    };
   }
 
-  const payload = await request("/users/me/recently-played");
-  return unwrapCollection(payload);
+  const payload = await request(
+    `/users/me/recently-played?page=${page}&limit=${limit}`,
+  );
+  return {
+    tracks: unwrapCollection(payload),
+    total: payload?.total ?? 0,
+    page: payload?.page ?? page,
+    limit: payload?.limit ?? limit,
+  };
 };
 
-export const getListeningHistory = async () => {
+export const getListeningHistory = async ({ page = 1, limit = 20 } = {}) => {
   if (useMock) {
-    return clone(mockStore.history);
+    return {
+      history: clone(mockStore.history),
+      total: mockStore.history.length,
+      page,
+      limit,
+    };
   }
 
-  const payload = await request("/users/me/history");
-  return unwrapCollection(payload);
+  const payload = await request(
+    `/users/me/history?page=${page}&limit=${limit}`,
+  );
+  return {
+    history: payload?.history ?? [],
+    total: payload?.total ?? 0,
+    page: payload?.page ?? page,
+    limit: payload?.limit ?? limit,
+  };
+};
+
+export const clearListeningHistory = async () => {
+  if (useMock) {
+    mockStore.history = [];
+    mockStore.recentlyPlayed = [];
+    return { message: "History cleared successfully" };
+  }
+
+  return request("/users/me/history", { method: "DELETE" });
 };
 
 export const toggleLike = async (trackId, shouldLike) => {
@@ -619,7 +680,7 @@ export const getReposters = async (trackId) => {
   return unwrapCollection(payload).map(normalizeUser);
 };
 
-export const getComments = async (trackId) => {
+export const getComments = async (trackId, { skip = 0, limit = 20 } = {}) => {
   if (useMock) {
     const comments = clone(getMockEngagementOrCreate(trackId).comments).map(
       normalizeComment,
@@ -627,9 +688,14 @@ export const getComments = async (trackId) => {
     return { comments, totalCount: comments.length };
   }
 
-  const payload = await request(`/tracks/${trackId}/comments`, { auth: false });
+  const payload = await request(
+    `/tracks/${trackId}/comments?skip=${skip}&limit=${limit}`,
+    { auth: false },
+  );
   const comments = unwrapCollection(payload).map(normalizeComment);
-  return { comments, totalCount: comments.length };
+  const totalCount =
+    payload?.comments_count ?? payload?.pagination?.total ?? comments.length;
+  return { comments, totalCount };
 };
 
 export const createComment = async (trackId, payload) => {
@@ -668,15 +734,26 @@ export const deleteComment = async (commentId, trackId) => {
   return request(`/comments/${commentId}`, { method: "DELETE" });
 };
 
-export const getCommentReplies = async (commentId) => {
+export const getCommentReplies = async (
+  commentId,
+  { skip = 0, limit = 20 } = {},
+) => {
   if (useMock) {
     return { replies: [], totalCount: 0 };
   }
 
-  const payload = await request(`/comments/${commentId}/replies`, {
-    auth: false,
-  });
-  return payload;
+  const payload = await request(
+    `/comments/${commentId}/replies?skip=${skip}&limit=${limit}`,
+    {
+      auth: false,
+    },
+  );
+  const replies = (payload?.replies ?? []).map(normalizeComment);
+  return {
+    replies,
+    totalCount:
+      payload?.replies_count ?? payload?.pagination?.total ?? replies.length,
+  };
 };
 
 export const getRelatedTracks = async (trackId) => {

@@ -10,6 +10,7 @@ import TrackHeader from "../components/TrackHeader";
 import { trackExperienceMockData } from "../mock/trackExperienceData";
 import {
   clearAuthToken,
+  clearListeningHistory,
   createComment,
   deleteComment,
   getDownloadUrl,
@@ -83,7 +84,7 @@ const getSectionConfig = (
   relatedTracks,
   playlists,
   likers,
-  reposters
+  reposters,
 ) => {
   if (!track) return null;
 
@@ -128,8 +129,8 @@ const getSectionConfig = (
 
 function TrackPage({ view = "overview" }) {
   const navigate = useNavigate();
-  const { trackId: routeTrackId } = useParams();
-  const trackId = routeTrackId ?? DEFAULT_TRACK_ID;
+  const { id: routeTrackId, trackId: legacyTrackId } = useParams();
+  const trackId = routeTrackId ?? legacyTrackId ?? DEFAULT_TRACK_ID;
   const audioRef = useRef(null);
   const sessionReportedRef = useRef(false);
 
@@ -160,7 +161,7 @@ function TrackPage({ view = "overview" }) {
 
   const visibleComments = useMemo(
     () => (view === "overview" ? comments.slice(0, 6) : comments),
-    [comments, view]
+    [comments, view],
   );
 
   const sectionConfig = useMemo(
@@ -171,14 +172,14 @@ function TrackPage({ view = "overview" }) {
         relatedTracks,
         playlists,
         likers,
-        reposters
+        reposters,
       ),
-    [view, track, relatedTracks, playlists, likers, reposters]
+    [view, track, relatedTracks, playlists, likers, reposters],
   );
 
   const currentTrackIndex = useMemo(
     () => mockTrackOrder.indexOf(trackId),
-    [trackId]
+    [trackId],
   );
 
   useEffect(() => {
@@ -199,7 +200,7 @@ function TrackPage({ view = "overview" }) {
       setPlayerMessage(
         hasAuthToken()
           ? ""
-          : "Demo mode active. Add a backend token any time to use live data."
+          : "Demo mode active. Add a backend token any time to use live data.",
       );
       setCurrentTime(0);
       setIsPlaying(false);
@@ -236,19 +237,19 @@ function TrackPage({ view = "overview" }) {
         results[0].status === "fulfilled"
           ? results[0].value
           : results[0].reason?.status === 403
-          ? {
-              url: "",
-              playback_state: "Blocked",
-              preview_duration_seconds: 0,
-              message:
-                results[0].reason?.message ??
-                "This track is blocked for your plan or region.",
-            }
-          : {
-              url: nextTrack.audioUrl,
-              playback_state: nextTrack.playbackState,
-              preview_duration_seconds: nextTrack.previewDurationSeconds,
-            }
+            ? {
+                url: "",
+                playback_state: "Blocked",
+                preview_duration_seconds: 0,
+                message:
+                  results[0].reason?.message ??
+                  "This track is blocked for your plan or region.",
+              }
+            : {
+                url: nextTrack.audioUrl,
+                playback_state: nextTrack.playbackState,
+                preview_duration_seconds: nextTrack.previewDurationSeconds,
+              },
       );
 
       const commentsPayload =
@@ -257,13 +258,17 @@ function TrackPage({ view = "overview" }) {
           : { comments: [], totalCount: nextTrack.commentCount ?? 0 };
 
       setComments(sortCommentsByTimeline(commentsPayload.comments));
-      setCommentTotal(commentsPayload.totalCount ?? nextTrack.commentCount ?? 0);
+      setCommentTotal(
+        commentsPayload.totalCount ?? nextTrack.commentCount ?? 0,
+      );
       setLikers(results[2].status === "fulfilled" ? results[2].value : []);
       setReposters(results[3].status === "fulfilled" ? results[3].value : []);
-      setRelatedTracks(results[4].status === "fulfilled" ? results[4].value : []);
+      setRelatedTracks(
+        results[4].status === "fulfilled" ? results[4].value : [],
+      );
       setPlaylists(results[5].status === "fulfilled" ? results[5].value : []);
       setFanLeaderboard(
-        results[6].status === "fulfilled" ? results[6].value : []
+        results[6].status === "fulfilled" ? results[6].value : [],
       );
       setIsLoading(false);
     };
@@ -302,13 +307,13 @@ function TrackPage({ view = "overview" }) {
     setLikers([]);
     setReposters([]);
     setError(
-      "Missing access token. Add a valid token in localStorage as `accessToken` or `pulsify_token`, then reload."
+      "Missing access token. Add a valid token in localStorage as `accessToken` or `pulsify_token`, then reload.",
     );
   };
 
   const submitPlayEvent = async () => {
     const playedMs = Math.round(
-      (audioRef.current?.currentTime ?? currentTime) * 1000
+      (audioRef.current?.currentTime ?? currentTime) * 1000,
     );
 
     if (!track || playedMs < 5000 || sessionReportedRef.current) {
@@ -325,7 +330,7 @@ function TrackPage({ view = "overview" }) {
               ...currentTrack,
               playCount: currentTrack.playCount + 1,
             }
-          : currentTrack
+          : currentTrack,
       );
     } catch (registerError) {
       sessionReportedRef.current = false;
@@ -355,7 +360,7 @@ function TrackPage({ view = "overview" }) {
 
     if (playbackState === "Blocked") {
       setPlayerMessage(
-        "This track is blocked because of plan or region rules."
+        "This track is blocked because of plan or region rules.",
       );
       return;
     }
@@ -382,7 +387,7 @@ function TrackPage({ view = "overview" }) {
       setPlayerMessage(
         playbackState === "Preview"
           ? `Preview access active for ${previewDurationSeconds} seconds.`
-          : ""
+          : "",
       );
     } catch (playError) {
       setPlayerMessage("Audio playback could not start.");
@@ -405,7 +410,7 @@ function TrackPage({ view = "overview" }) {
       setCurrentTime(previewDurationSeconds);
       setIsPlaying(false);
       setPlayerMessage(
-        `Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`
+        `Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`,
       );
       return;
     }
@@ -465,7 +470,7 @@ function TrackPage({ view = "overview" }) {
       viewerHasReposted: shouldRepost,
       repostCount: Math.max(
         currentTrack.repostCount + (shouldRepost ? 1 : -1),
-        0
+        0,
       ),
     }));
 
@@ -478,7 +483,7 @@ function TrackPage({ view = "overview" }) {
         viewerHasReposted: !shouldRepost,
         repostCount: Math.max(
           currentTrack.repostCount + (shouldRepost ? -1 : 1),
-          0
+          0,
         ),
       }));
       console.error(toggleError);
@@ -490,7 +495,7 @@ function TrackPage({ view = "overview" }) {
 
     const comment = await createComment(track.id, payload);
     setComments((currentComments) =>
-      sortCommentsByTimeline([...currentComments, comment])
+      sortCommentsByTimeline([...currentComments, comment]),
     );
     setCommentTotal((currentTotal) => currentTotal + 1);
     setTrack((currentTrack) => ({
@@ -508,8 +513,8 @@ function TrackPage({ view = "overview" }) {
     await deleteComment(commentId);
     setComments((currentComments) =>
       currentComments.map((comment) =>
-        comment.id === commentId ? markCommentAsDeleted(comment) : comment
-      )
+        comment.id === commentId ? markCommentAsDeleted(comment) : comment,
+      ),
     );
     setPlayerMessage("Comment deleted successfully.");
   };
@@ -604,7 +609,7 @@ function TrackPage({ view = "overview" }) {
       if (downloadError?.status === 403) {
         setPlayerMessage(
           downloadError.message ||
-            "Download is only available on the ArtistPro plan."
+            "Download is only available on the ArtistPro plan.",
         );
         return;
       }
@@ -622,7 +627,7 @@ function TrackPage({ view = "overview" }) {
         fallbackLink.remove();
 
         setPlayerMessage(
-          "Download was triggered. If it did not save, allow downloads in your browser."
+          "Download was triggered. If it did not save, allow downloads in your browser.",
         );
       } catch (fallbackError) {
         console.error(fallbackError);

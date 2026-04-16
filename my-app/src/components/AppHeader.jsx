@@ -1,29 +1,38 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink } from "react-router-dom";
+
+const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? "trk-2026-014";
 
 function AppHeader() {
   return (
     <header className="topbar">
       <div className="topbar-inner">
         <div className="topbar-left">
-          <Link className="brand" to="/tracks/trk-2026-014" aria-label="Pulsify home">
+          <Link
+            className="brand"
+            to={`/tracks/${DEFAULT_TRACK_ID}`}
+            aria-label="Pulsify home"
+          >
             <span className="logo-cloud" aria-hidden="true" />
           </Link>
 
           <nav className="main-nav" aria-label="Primary">
             <NavLink
-              className={({ isActive }) => (isActive ? 'active' : '')}
-              to="/tracks/trk-2026-014"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              to={`/tracks/${DEFAULT_TRACK_ID}`}
               end
             >
               Home
             </NavLink>
             <NavLink
-              className={({ isActive }) => (isActive ? 'active' : '')}
-              to="/tracks/trk-2026-014/comments"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              to={`/tracks/${DEFAULT_TRACK_ID}/comments`}
             >
               Feed
             </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? 'active' : '')} to="/playlists">
+            <NavLink
+              className={({ isActive }) => (isActive ? "active" : "")}
+              to="/playlists"
+            >
               Library
             </NavLink>
           </nav>
@@ -54,7 +63,7 @@ function AppHeader() {
         </div>
       </div>
     </header>
-  )
+  );
 }
 
-export default AppHeader
+export default AppHeader;

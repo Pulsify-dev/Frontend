@@ -76,7 +76,12 @@ const AppRoutes = () => {
               {/* Tracks & Engagement - Module 4/5/6 */}
               <Route
                 path="/trackpage"
-                element={<Navigate to="/tracks/trk-2026-014" replace />}
+                element={
+                  <Navigate
+                    to={`/tracks/${import.meta.env.VITE_TRACK_ID ?? "trk-2026-014"}`}
+                    replace
+                  />
+                }
               />
               <Route
                 path="/tracks/:trackId"
@@ -149,4 +154,3 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
-

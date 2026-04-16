@@ -28,6 +28,7 @@ const Navbar = () => {
     { name: "Library", path: "/library" },
     { name: "Trending", path: "/trending" },
     { name: "Discover", path: "/discover" },
+    { name: "TrackPage", path: "/trackpage" },
   ];
 
   const isActiveLink = (path) => {

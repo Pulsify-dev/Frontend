@@ -125,7 +125,7 @@ export async function updateBlockReasonApi(userId, reason) {
 
 export async function getBlockedUsersApi(page = 1, limit = 12) {
   const res = await fetch(
-    `${API_BASE_URL}/users/me/blockers?page=${page}&limit=${limit}`,
+    `${API_BASE_URL}/users/me/blocked?page=${page}&limit=${limit}`,
     { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch blocked users");

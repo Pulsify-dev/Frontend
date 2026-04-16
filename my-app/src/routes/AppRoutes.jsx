@@ -62,6 +62,7 @@ const AppRoutes = () => {
         <Route path="/trending" element={<TrendingChartsPage />} />
 
         {/* Track - Module 4/5 */}
+        <Route path="/trackpage" element={<TrackPage />} />
         <Route path="/track/:id" element={<TrackPage />} />
 
         {/* Playlists - Module 7 */}
