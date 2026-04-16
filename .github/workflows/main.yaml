@@ -25,6 +25,8 @@ jobs:
             --build-arg VITE_USE_MOCKS=false \
             --build-arg VITE_USE_MOCK=false \
             --build-arg VITE_USE_MOCK_API=false \
+            --build-arg VITE_RECAPTCHA_SITE_KEY="${{secrets.VITE_RECAPTCHA_SITE_KEY}}" \
+            --build-arg VITE_GOOGLE_CLIENT_ID="${{secrets.VITE_GOOGLE_CLIENT_ID}}" \
             -t ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest \
             ./my-app
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
@@ -41,5 +43,6 @@ jobs:
             sudo docker rm pulsify-web || true
             sudo docker run -d \
               --name pulsify-web \
+              --restart always \
               -p 8080:80 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
