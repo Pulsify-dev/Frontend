@@ -1,103 +1,117 @@
-.pulsify-notif-panel {
-  padding: 16px;
-  max-height: 480px;
+/* ====== SoundCloud Notification Dropdown ====== */
+
+.sc-notif-panel {
   display: flex;
   flex-direction: column;
 }
 
-.pulsify-notif-header {
+.sc-notif-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sc-border);
 }
 
-.pulsify-notif-header h4 {
+.sc-notif-header h4 {
   margin: 0;
-  font-size: 15px;
-  color: var(--text-main);
+  font-size: 14px;
   font-weight: 600;
+  color: var(--sc-text-primary);
 }
 
-.pulsify-text-btn {
+.sc-notif-mark-all {
   background: none;
   border: none;
-  color: var(--accent-primary);
+  color: var(--sc-accent);
   font-size: 12px;
-  font-weight: 500;
   cursor: pointer;
 }
 
-.pulsify-text-btn:hover {
+.sc-notif-mark-all:hover {
   text-decoration: underline;
 }
 
-.pulsify-notif-items {
+/* Notification Items */
+.sc-notif-items {
+  max-height: 400px;
   overflow-y: auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
-.pulsify-notif-row {
+.sc-notif-item {
   display: flex;
+  align-items: center;
   gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(51, 51, 51, 0.5);
 }
 
-.pulsify-notif-row:hover {
-  background: var(--glass-bg-hover);
+.sc-notif-item:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.pulsify-notif-row.unread .pulsify-notif-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--accent-primary);
+.sc-notif-item.unread {
+  background: rgba(255, 85, 0, 0.04);
+  border-left: 3px solid var(--sc-accent);
+}
+
+.sc-notif-item.read {
+  opacity: 0.7;
+}
+
+.sc-notif-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
-  margin-top: 6px;
-  box-shadow: 0 0 8px var(--accent-glow);
+  overflow: hidden;
 }
 
-.pulsify-notif-row.read {
-  opacity: 0.5;
+.sc-notif-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.pulsify-notif-content p {
-  margin: 0 0 6px 0;
+.sc-notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-notif-text {
+  margin: 0;
   font-size: 13px;
+  color: var(--sc-text-secondary);
   line-height: 1.4;
 }
 
-.pulsify-notif-content small {
-  color: var(--text-muted);
+.sc-notif-text strong {
+  color: var(--sc-text-primary);
+  font-weight: 600;
+}
+
+.sc-notif-target {
+  color: var(--sc-text-primary);
+}
+
+.sc-notif-time {
   font-size: 11px;
+  color: var(--sc-text-muted);
+  display: block;
+  margin-top: 2px;
 }
 
-.pulsify-empty-state {
+.sc-notif-type-icon {
+  font-size: 16px;
+  min-width: 20px;
   text-align: center;
-  color: var(--text-muted);
-  font-size: 13px;
-  padding: 30px 0;
 }
 
-.pulsify-close-btn {
-  margin-top: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--text-main);
-  padding: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-}
-
-.pulsify-close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.sc-notif-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--sc-text-muted);
+  font-size: 14px;
 }

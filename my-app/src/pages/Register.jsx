@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { mockRegister, mockOAuthLogin } from "@/mocks/mockService";
+import ReCAPTCHA from "react-google-recaptcha";
+import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getSocialToken,
+  getAvailableProviders,
+} from "@/services/socialAuthHelper";
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 function LoadingSpinner() {
   return (
@@ -81,86 +89,192 @@ function AppleIcon() {
 
 const Register = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState(null);
+  const [oauthLoading, setOauthLoading] = useState("");
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
 
-  const isEmailValid = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isPasswordValid = password.length >= 6;
-  const isPasswordMatch =
-    password && confirmPassword && password === confirmPassword;
-  const isDisplayNameValid = displayName.trim().length >= 2;
+  const availableProviders = getAvailableProviders();
+
+  // Redirect if already logged in
+  if (isAuthenticated) {
+    navigate("/home", { replace: true });
+    return null;
+  }
+
+  // Validation rules
+  const isUsernameValid = /^[a-zA-Z0-9_]{6,20}$/.test(username);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPasswordValid = password.length >= 8;
+  const isCaptchaValid = RECAPTCHA_SITE_KEY ? !!captchaToken : true;
+
+  const handleCaptchaChange = (token) => setCaptchaToken(token);
+  const handleCaptchaExpired = () => setCaptchaToken(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
-    if (!email || !password || !confirmPassword || !displayName.trim()) {
-      setError("Please fill in all required fields");
+
+    if (!username.trim()) {
+      setError("Please enter a username");
+      return;
+    }
+    if (!isUsernameValid) {
+      setError(
+        "Username must be 6-20 characters, alphanumeric and underscores only",
+      );
+      return;
+    }
+    if (!email.trim()) {
+      setError("Please enter your email address");
       return;
     }
     if (!isEmailValid) {
       setError("Please enter a valid email address");
       return;
     }
-    if (!isPasswordValid) {
-      setError("Password must be at least 6 characters");
+    if (!password) {
+      setError("Please enter a password");
       return;
     }
-    if (!isPasswordMatch) {
-      setError("Passwords do not match");
+    if (!isPasswordValid) {
+      setError("Password must be at least 8 characters");
       return;
     }
     if (!acceptTerms) {
       setError("Please accept the terms to continue");
       return;
     }
-    const usernameBase =
-      displayName
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "")
-        .slice(0, 16) || email.split("@")[0];
+    if (RECAPTCHA_SITE_KEY && !captchaToken) {
+      setError("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result = await mockRegister({
-        email: email.trim(),
+      await authService.register(
+        username.trim(),
+        email.trim(),
         password,
-        username: usernameBase,
-        displayName: displayName.trim(),
-        age: age ? Number(age) : undefined,
-        gender: gender || undefined,
-      });
-      setSuccess(result.message);
-      setTimeout(() => console.log("Registered as:", result.user), 1500);
+        captchaToken || "no-captcha",
+      );
+      setRegisteredEmail(email.trim());
+      setIsRegistered(true);
     } catch (err) {
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+      setCaptchaToken(null);
       setError(err?.message || "Unable to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * Social signup handler
+   * Backend auto-registers if user doesn't exist, or logs in if they do.
+   */
   const handleOAuthSignup = async (provider) => {
     setError("");
-    setSuccess("");
-    setLoadingProvider(provider);
+    setOauthLoading(provider);
+
     try {
-      const result = await mockOAuthLogin(provider);
-      setSuccess(result.message);
+      const providerToken = await getSocialToken(provider);
+      const result = await authService.socialLogin(provider, providerToken);
+
+      login(result.user, result.access_token, result.refresh_token);
+      navigate("/home", { replace: true });
     } catch (err) {
-      setError(err?.message || `Unable to sign up with ${provider}.`);
+      setError(err?.message || `${provider} signup failed. Please try again.`);
     } finally {
-      setLoadingProvider(null);
+      setOauthLoading("");
     }
   };
+
+  // Show success state after registration
+  if (isRegistered) {
+    return (
+      <div className="auth-page">
+        <div className="auth-bg-blob auth-bg-blob--tl" />
+        <div className="auth-bg-blob auth-bg-blob--br" />
+
+        <div className="auth-card">
+          <div className="auth-success-state">
+            <div className="auth-success-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#22c55e"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+
+            <h1 className="auth-title">Check your email</h1>
+            <p className="auth-subtitle">We've sent a verification link to</p>
+            <p className="auth-email-display">{registeredEmail}</p>
+            <p className="auth-subtitle">
+              Click the link in the email to verify your account.
+            </p>
+
+            <div className="auth-info-box">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <span>
+                Didn't receive the email? Check your spam folder or contact
+                support.
+              </span>
+            </div>
+
+            <Link
+              to="/login"
+              className="auth-submit-btn"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                textDecoration: "none",
+                marginTop: "8px",
+              }}
+            >
+              Go to Sign In
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isFormValid =
+    isUsernameValid &&
+    isEmailValid &&
+    isPasswordValid &&
+    acceptTerms &&
+    isCaptchaValid;
+  const anyLoading = isLoading || !!oauthLoading;
 
   return (
     <div className="auth-page">
@@ -168,9 +282,9 @@ const Register = () => {
       <div className="auth-bg-blob auth-bg-blob--br" />
 
       <div className="auth-card">
-        <h1 className="auth-title">Create your account</h1>
+        <h1 className="auth-title">Create your Pulsify account</h1>
         <p className="auth-subtitle">
-          By signing up, you agree to SoundCloud's{" "}
+          By signing up, you agree to Pulsify's{" "}
           <a href="#" className="auth-link">
             Terms of Use
           </a>{" "}
@@ -180,172 +294,148 @@ const Register = () => {
           </a>
         </p>
 
-        {success && (
-          <div className="auth-alert auth-alert--success">
-            <svg
-              width="16"
-              height="16"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            {success}
-          </div>
-        )}
         {error && <div className="auth-alert auth-alert--error">{error}</div>}
 
-        <div className="auth-oauth-group">
-          <button
-            className="auth-oauth-btn auth-oauth-btn--facebook"
-            onClick={() => handleOAuthSignup("facebook")}
-            disabled={loadingProvider !== null}
-          >
-            {loadingProvider === "facebook" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <FacebookIcon /> Sign up with Facebook
-              </>
-            )}
-          </button>
-          <button
-            className="auth-oauth-btn auth-oauth-btn--google"
-            onClick={() => handleOAuthSignup("google")}
-            disabled={loadingProvider !== null}
-          >
-            {loadingProvider === "google" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <GoogleIcon /> Sign up with Google
-              </>
-            )}
-          </button>
-          <button
-            className="auth-oauth-btn auth-oauth-btn--apple"
-            onClick={() => handleOAuthSignup("apple")}
-            disabled={loadingProvider !== null}
-          >
-            {loadingProvider === "apple" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <AppleIcon /> Sign up with Apple
-              </>
-            )}
-          </button>
-        </div>
+        {/* OAuth buttons — shown if any provider is configured */}
+        {availableProviders.length > 0 && (
+          <>
+            <div className="auth-oauth-group">
+              {availableProviders.includes("facebook") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--facebook"
+                  onClick={() => handleOAuthSignup("facebook")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "facebook" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <FacebookIcon /> Sign up with Facebook
+                    </>
+                  )}
+                </button>
+              )}
+              {availableProviders.includes("google") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--google"
+                  onClick={() => handleOAuthSignup("google")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "google" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <GoogleIcon /> Sign up with Google
+                    </>
+                  )}
+                </button>
+              )}
+              {availableProviders.includes("apple") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--apple"
+                  onClick={() => handleOAuthSignup("apple")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "apple" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <AppleIcon /> Sign up with Apple
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
 
-        <div className="auth-divider">
-          <span>or</span>
-        </div>
+            <div className="auth-divider">
+              <span>or</span>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="auth-fields">
+            <div className="auth-field auth-field--icon">
+              <input
+                type="text"
+                placeholder="Username (6-20 characters)"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={anyLoading}
+                className="auth-input"
+                autoComplete="username"
+              />
+              {username && isUsernameValid && (
+                <span className="auth-field-check">
+                  <CheckIcon />
+                </span>
+              )}
+            </div>
+            {username && !isUsernameValid && (
+              <p className="auth-field-hint auth-field-hint--error">
+                6-20 characters, letters, numbers, and underscores only
+              </p>
+            )}
+
             <div className="auth-field auth-field--icon">
               <input
                 type="email"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={anyLoading}
                 className="auth-input"
+                autoComplete="email"
               />
-              {isEmailValid && (
+              {email && isEmailValid && (
                 <span className="auth-field-check">
                   <CheckIcon />
                 </span>
               )}
             </div>
+
             <div className="auth-field auth-field--icon">
               <input
                 type="password"
-                placeholder="Password (min 6 characters)"
+                placeholder="Password (min 8 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
+                disabled={anyLoading}
                 className="auth-input"
+                autoComplete="new-password"
               />
-              {isPasswordValid && (
+              {password && isPasswordValid && (
                 <span className="auth-field-check">
                   <CheckIcon />
                 </span>
               )}
             </div>
-            <div className="auth-field auth-field--icon">
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isLoading}
-                className={`auth-input${confirmPassword && !isPasswordMatch ? " auth-input--error" : ""}`}
-              />
-              {isPasswordMatch && (
-                <span className="auth-field-check">
-                  <CheckIcon />
-                </span>
-              )}
-            </div>
-            <div className="auth-field auth-field--icon">
-              <input
-                type="text"
-                placeholder="Display name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                disabled={isLoading}
-                className="auth-input"
-              />
-              {isDisplayNameValid && (
-                <span className="auth-field-check">
-                  <CheckIcon />
-                </span>
-              )}
-            </div>
-            <div className="auth-field-row">
-              <input
-                type="number"
-                placeholder="Age (optional)"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                disabled={isLoading}
-                min="13"
-                max="120"
-                className="auth-input"
-              />
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                disabled={isLoading}
-                className="auth-input auth-select"
-              >
-                <option value="" disabled>
-                  Gender (optional)
-                </option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="custom">Custom</option>
-                <option value="prefer-not">Prefer not to say</option>
-              </select>
-            </div>
+            {password && !isPasswordValid && (
+              <p className="auth-field-hint auth-field-hint--error">
+                Password must be at least 8 characters
+              </p>
+            )}
+
             <label className="auth-checkbox-label">
               <input
                 type="checkbox"
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                disabled={isLoading}
+                disabled={anyLoading}
                 className="auth-checkbox"
               />
               <span className="auth-checkbox-text">
-                I agree to receive marketing communications from SoundCloud. I
-                can unsubscribe at any time as described in the{" "}
+                I agree to receive marketing communications from Pulsify. I can
+                unsubscribe at any time as described in the{" "}
                 <a href="#" className="auth-link">
                   Privacy Policy
                 </a>
@@ -354,10 +444,21 @@ const Register = () => {
             </label>
           </div>
 
+          {RECAPTCHA_SITE_KEY && (
+            <div className="auth-captcha">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+                onExpired={handleCaptchaExpired}
+              />
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={isLoading}
-            className={`auth-submit-btn${isLoading ? " disabled" : ""}`}
+            disabled={!isFormValid || anyLoading}
+            className={`auth-submit-btn${!isFormValid || anyLoading ? " disabled" : ""}`}
           >
             {isLoading ? (
               <>
@@ -370,7 +471,7 @@ const Register = () => {
         </form>
 
         <div className="auth-footer-row">
-          <a href="#" className="auth-link">
+          <a href="#" className="auth-link auth-link--muted">
             Need help?
           </a>
           <Link to="/login" className="auth-link">

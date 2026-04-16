@@ -1,15 +1,34 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
+import AuthLayout from "@/layouts/AuthLayout";
+import "./App.css";
+
+// Module 1 – Auth (Seif Allah Alaa)
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
+import Unauthorized from "@/pages/Unauthorized";
+import Home from "@/pages/Home";
+import { ProtectedRoute, ArtistRoute } from "@/components/auth";
+
+// Module 2 – Profile (Ahmad Hisham)
+import ProfilePage from "@/profile/pages/ProfilePage";
+
+// Module 3 – Social Graph (Ahmad Hisham)
+import FollowingPage from "@/social/pages/FollowingPage";
+import FollowersPage from "@/social/pages/FollowersPage";
+import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
+
+// Module 4/5/6 – Tracks, Playback & Engagement (Mayar Ayman)
+import TrackPage from "@/pages/TrackPage";
+
+// Module 7 + 12 – Playlists & Premium (Omar Nasser)
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
-import TrackPage from "@/pages/TrackPage";
-import ProfilePage from "@/profile/pages/ProfilePage";
 
+// Module 8/10 – Discovery & Notifications (Ahmed Ali)
 import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
 import PulsifyPlayerBar from "./components/common/PulsifyPlayerBar";
@@ -23,27 +42,108 @@ const AppRoutes = () => {
       <PlayerProvider>
         <>
           <Routes>
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<Login />} />
+            {/* Auth pages – minimal navbar */}
+            <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
             </Route>
 
-            <Route path="/playlists" element={<PulsifyPlaylistsView />} />
-            <Route
-              path="/playlists/:playlistId"
-              element={<PulsifyPlaylistDetailView />}
-            />
-            <Route path="/upload" element={<PulsifyTrackUploadScreen />} />
-            <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/trackpage" element={<TrackPage />} />
+            {/* App pages – full navbar */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<DiscoveryFeedPage />} />
+              <Route path="/home" element={<Home />} />
 
-            {/* Discovery / Notifications pages */}
-            <Route path="/feed" element={<DiscoveryFeedPage />} />
-            <Route path="/search" element={<SearchHubPage />} />
-            <Route path="/trending" element={<TrendingChartsPage />} />
+              {/* Profile - Module 2 (Protected) */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/profile/:userId" element={<ProfilePage />} />
+
+              {/* Social Graph - Module 3 */}
+              <Route path="/following" element={<FollowingPage />} />
+              <Route path="/following/:userId" element={<FollowingPage />} />
+              <Route path="/followers" element={<FollowersPage />} />
+              <Route path="/followers/:userId" element={<FollowersPage />} />
+              <Route path="/blocked" element={<BlockedUsersPage />} />
+
+              {/* Tracks & Engagement - Module 4/5/6 */}
+              <Route
+                path="/trackpage"
+                element={
+                  <Navigate
+                    to={`/tracks/${import.meta.env.VITE_TRACK_ID ?? "trk-2026-014"}`}
+                    replace
+                  />
+                }
+              />
+              <Route
+                path="/tracks/:trackId"
+                element={<TrackPage view="overview" />}
+              />
+              <Route
+                path="/tracks/:trackId/comments"
+                element={<TrackPage view="comments" />}
+              />
+              <Route
+                path="/tracks/:trackId/related"
+                element={<TrackPage view="related" />}
+              />
+              <Route
+                path="/tracks/:trackId/playlists"
+                element={<TrackPage view="playlists" />}
+              />
+              <Route
+                path="/tracks/:trackId/likes"
+                element={<TrackPage view="likes" />}
+              />
+              <Route
+                path="/tracks/:trackId/reposts"
+                element={<TrackPage view="reposts" />}
+              />
+
+              {/* Playlists - Module 7 */}
+              <Route path="/playlists" element={<PulsifyPlaylistsView />} />
+              <Route
+                path="/playlists/:playlistId"
+                element={<PulsifyPlaylistDetailView />}
+              />
+
+              {/* Library (Protected) */}
+              <Route
+                path="/library"
+                element={
+                  <ProtectedRoute>
+                    <PulsifyPlaylistsView />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Upload - Module 4 (Artist Only) */}
+              <Route
+                path="/upload"
+                element={
+                  <ArtistRoute>
+                    <PulsifyTrackUploadScreen />
+                  </ArtistRoute>
+                }
+              />
+
+              {/* Premium - Module 12 */}
+              <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
+
+              {/* Discovery & Notifications - Module 8/10 */}
+              <Route path="/feed" element={<DiscoveryFeedPage />} />
+              <Route path="/discover" element={<DiscoveryFeedPage />} />
+              <Route path="/search" element={<SearchHubPage />} />
+              <Route path="/trending" element={<TrendingChartsPage />} />
+            </Route>
           </Routes>
 
           <PulsifyPlayerBar />

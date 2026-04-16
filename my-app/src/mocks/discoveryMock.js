@@ -93,3 +93,20 @@ export const recordPlay = async (trackId) => {
     }, 200);
   });
 };
+
+// Resource Resolver: resolve a permalink URL into a resource object
+export const resolveUrl = async (permalink) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      // Mock resolution: check if link matches a known track
+      const match = mockFeedData.find(t =>
+        permalink.includes(t.trackId) || permalink.includes(t.title.toLowerCase().replace(/\s+/g, '-'))
+      );
+      if (match) {
+        resolve({ type: 'track', id: match.trackId, data: match, resolved: true });
+      } else {
+        resolve({ type: 'unknown', id: null, resolved: false });
+      }
+    }, 200);
+  });
+};

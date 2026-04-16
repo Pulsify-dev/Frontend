@@ -12,6 +12,13 @@ export const PulsifyMetadataForm = ({ file, onSubmit }) => {
     onSubmit({ title, genre, tags, releaseDate, isPublic, file });
   };
 
+  const waveformBars = Array.from({ length: 40 }, (_, index) => {
+    const base = file?.name
+      ? file.name.charCodeAt(index % file.name.length)
+      : index * 7;
+    return Math.max(20, ((base * 13) % 81) + 20);
+  });
+
   return (
     <div style={{ backgroundColor: '#111', padding: '20px', borderRadius: '8px', marginTop: '20px' }}>
       <h3 style={{ marginTop: 0 }}>Track Metadata: {file?.name}</h3>
@@ -81,8 +88,8 @@ export const PulsifyMetadataForm = ({ file, onSubmit }) => {
         <div style={{ marginTop: '10px' }}>
           <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '10px' }}>Generating Core Waveform...</p>
           <div style={{ display: 'flex', alignItems: 'center', height: '40px', gap: '2px' }}>
-            {Array.from({ length: 40 }).map((_, i) => (
-              <div key={i} style={{ flex: 1, backgroundColor: '#f50', height: `${Math.max(20, Math.random() * 100)}%`, opacity: 0.8, borderRadius: '2px' }}></div>
+            {waveformBars.map((height, i) => (
+              <div key={i} style={{ flex: 1, backgroundColor: '#f50', height: `${height}%`, opacity: 0.8, borderRadius: '2px' }}></div>
             ))}
           </div>
         </div>

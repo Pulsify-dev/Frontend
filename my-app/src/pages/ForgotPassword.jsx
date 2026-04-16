@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { mockForgotPassword } from "@/mocks/mockService";
+import { authService } from "@/services/authService";
 
 function LoadingSpinner() {
   return (
@@ -35,19 +35,23 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!email.trim()) {
+    
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setError("Please enter your email address");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError("Please enter a valid email address");
       return;
     }
+    
     setIsLoading(true);
     try {
-      await mockForgotPassword(email);
+      await authService.forgotPassword(trimmedEmail);
     } catch {
-      // show success anyway to prevent email enumeration
+      // Show success anyway to prevent email enumeration
+      // This matches the backend behavior
     } finally {
       setIsLoading(false);
       setIsSubmitted(true);
@@ -96,6 +100,7 @@ const ForgotPassword = () => {
                   disabled={isLoading}
                   autoFocus
                   className="auth-input"
+                  autoComplete="email"
                 />
                 <span className="auth-field-icon-right">
                   <svg

@@ -1,6 +1,29 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { mockLogin, mockOAuthLogin } from "@/mocks/mockService";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
+import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getSocialToken,
+  getAvailableProviders,
+} from "@/services/socialAuthHelper";
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+//added
+const USE_MOCKS =
+  String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === "true";
+
+const buildMockUser = (role = "listener") => ({
+  user_id: role === "artist" ? "mock-artist-1" : "mock-listener-1",
+  username: role === "artist" ? "mockartist" : "mocklistener",
+  email:
+    role === "artist"
+      ? "artist@mock.pulsify.local"
+      : "listener@mock.pulsify.local",
+  display_name: role === "artist" ? "Mock Artist" : "Mock Listener",
+  tier: role === "artist" ? "Pro" : "Free",
+  avatar_url: null,
+});
 
 function LoadingSpinner() {
   return (
@@ -67,51 +90,143 @@ function AppleIcon() {
 
 const Login = () => {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState(null);
+  const [oauthLoading, setOauthLoading] = useState("");
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
 
-  const handleContinue = async (e) => {
+  const availableProviders = getAvailableProviders();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || "/home";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
+
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    const nextEmail = email.trim();
-    if (!nextEmail) {
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setError("Please enter your email address");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError("Please enter a valid email address");
       return;
     }
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
+    if (showCaptcha && !captchaToken) {
+      setError("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result = await mockLogin(nextEmail);
-      setSuccess(result.message);
-      setTimeout(() => console.log("Logged in as:", result.user), 1500);
+      const result = await authService.login(trimmedEmail, password);
+
+      setSuccess("Login successful! Redirecting...");
+      login(result.user, result.access_token, result.refresh_token);
+      setFailedAttempts(0);
+
+      setTimeout(() => {
+        const from = location.state?.from?.pathname || "/home";
+        navigate(from, { replace: true });
+      }, 1000);
     } catch (err) {
-      setError(err?.message || "Unable to sign in. Please try again.");
+      const newFailedAttempts = failedAttempts + 1;
+      setFailedAttempts(newFailedAttempts);
+
+      if (newFailedAttempts >= 2 && RECAPTCHA_SITE_KEY) {
+        setShowCaptcha(true);
+      }
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      setCaptchaToken(null);
+
+      setError(err?.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+  // added
+  const handleMockLogin = (role = "listener") => {
+    const mockUser = buildMockUser(role);
+    const mockAccessToken = `mock-access-token-${role}`;
+    const mockRefreshToken = `mock-refresh-token-${role}`;
 
+    localStorage.setItem("userId", mockUser.user_id);
+    localStorage.setItem("user_id", mockUser.user_id);
+    localStorage.setItem("username", mockUser.username);
+    localStorage.setItem("display_name", mockUser.display_name);
+
+    login(mockUser, mockAccessToken, mockRefreshToken);
+
+    const from = location.state?.from?.pathname || "/followers";
+    navigate(from, { replace: true });
+  };
+
+  /**
+   * Social login handler
+   * 1. Get token from provider SDK (opens popup)
+   * 2. Send token to backend POST /auth/social/:provider
+   * 3. Backend returns access_token + refresh_token + user
+   * 4. Log the user in via AuthContext
+   */
   const handleOAuthLogin = async (provider) => {
     setError("");
     setSuccess("");
-    setLoadingProvider(provider);
+    setOauthLoading(provider);
+
     try {
-      const result = await mockOAuthLogin(provider);
-      setSuccess(result.message);
-      setTimeout(() => console.log("OAuth logged in as:", result.user), 1500);
+      // Step 1: Get provider token via SDK popup
+      const providerToken = await getSocialToken(provider);
+
+      // Step 2: Send to backend
+      const result = await authService.socialLogin(provider, providerToken);
+
+      // Step 3: Login via AuthContext
+      setSuccess(`Signed in with ${provider}! Redirecting...`);
+      login(result.user, result.access_token, result.refresh_token);
+
+      setTimeout(() => {
+        const from = location.state?.from?.pathname || "/home";
+        navigate(from, { replace: true });
+      }, 1000);
     } catch (err) {
-      setError(err?.message || `Unable to sign in with ${provider}.`);
+      setError(err?.message || `${provider} login failed. Please try again.`);
     } finally {
-      setLoadingProvider(null);
+      setOauthLoading("");
     }
   };
+
+  const isFormValid =
+    email.trim() && password && (!showCaptcha || captchaToken);
+  const anyLoading = isLoading || !!oauthLoading;
 
   return (
     <div className="auth-page">
@@ -119,10 +234,9 @@ const Login = () => {
       <div className="auth-bg-blob auth-bg-blob--bl" />
 
       <div className="auth-card">
-        <h1 className="auth-title">Sign in or create an account</h1>
+        <h1 className="auth-title">Sign in to Pulsify</h1>
         <p className="auth-subtitle">
-          By clicking on any of the 'Continue' buttons below, you agree to
-          SoundCloud's{" "}
+          By signing in, you agree to Pulsify's{" "}
           <a href="#" className="auth-link">
             Terms of Use
           </a>{" "}
@@ -153,91 +267,169 @@ const Login = () => {
         )}
         {error && <div className="auth-alert auth-alert--error">{error}</div>}
 
-        <div className="auth-oauth-group">
-          <button
-            className="auth-oauth-btn auth-oauth-btn--facebook"
-            onClick={() => handleOAuthLogin("facebook")}
-            disabled={loadingProvider !== null}
-          >
-            {loadingProvider === "facebook" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <FacebookIcon /> Continue with Facebook
-              </>
-            )}
-          </button>
-          <button
-            className="auth-oauth-btn auth-oauth-btn--google"
-            onClick={() => handleOAuthLogin("google")}
-            disabled={loadingProvider !== null}
-          >
-            {loadingProvider === "google" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <GoogleIcon /> Continue with Google
-              </>
-            )}
-          </button>
-          <button
-            className="auth-oauth-btn auth-oauth-btn--apple"
-            onClick={() => handleOAuthLogin("apple")}
-            disabled={loadingProvider !== null}
-          >
-            {loadingProvider === "apple" ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                <AppleIcon /> Continue with Apple
-              </>
-            )}
-          </button>
-        </div>
+        {/* OAuth buttons — shown if any provider is configured */}
+        {availableProviders.length > 0 && (
+          <>
+            <div className="auth-oauth-group">
+              {availableProviders.includes("facebook") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--facebook"
+                  onClick={() => handleOAuthLogin("facebook")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "facebook" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <FacebookIcon /> Continue with Facebook
+                    </>
+                  )}
+                </button>
+              )}
+              {availableProviders.includes("google") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--google"
+                  onClick={() => handleOAuthLogin("google")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "google" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <GoogleIcon /> Continue with Google
+                    </>
+                  )}
+                </button>
+              )}
+              {availableProviders.includes("apple") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--apple"
+                  onClick={() => handleOAuthLogin("apple")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "apple" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <AppleIcon /> Continue with Apple
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
 
-        <div className="auth-divider">
-          <span>or</span>
-        </div>
+            <div className="auth-divider">
+              <span>or</span>
+            </div>
+          </>
+        )}
 
-        <form onSubmit={handleContinue}>
-          <div className="auth-field">
-            <input
-              type="email"
-              placeholder="Your email address or profile URL"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              className="auth-input"
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="auth-fields">
+            <div className="auth-field">
+              <input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={anyLoading}
+                className="auth-input"
+                autoComplete="email"
+              />
+            </div>
+            <div className="auth-field">
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={anyLoading}
+                className="auth-input"
+                autoComplete="current-password"
+              />
+            </div>
           </div>
+
+          {showCaptcha && RECAPTCHA_SITE_KEY && (
+            <div className="auth-captcha">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+                onExpired={handleCaptchaExpired}
+              />
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={!email.trim() || isLoading}
-            className={`auth-submit-btn${!email.trim() || isLoading ? " disabled" : ""}`}
+            disabled={!isFormValid || anyLoading}
+            className={`auth-submit-btn${!isFormValid || anyLoading ? " disabled" : ""}`}
           >
             {isLoading ? (
               <>
                 <LoadingSpinner /> Signing in...
               </>
             ) : (
-              "Continue"
+              "Sign in"
             )}
           </button>
+          {/* added */}
+          {USE_MOCKS && (
+            <div className="auth-footer-row" style={{ marginTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => handleMockLogin("listener")}
+                disabled={anyLoading}
+                className="auth-link"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
+                Continue as mock listener
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMockLogin("artist")}
+                disabled={anyLoading}
+                className="auth-link"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
+                Continue as mock artist
+              </button>
+            </div>
+          )}
         </form>
 
         <div className="auth-footer-row">
-          <a href="#" className="auth-link">
-            Need help?
-          </a>
-          <a
-            href="#"
-            className="auth-link"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/register");
-            }}
-          >
+          <Link to="/forgot-password" className="auth-link">
+            Forgot your password?
+          </Link>
+          <Link to="/register" className="auth-link">
             Create account
+          </Link>
+        </div>
+
+        <div className="auth-help-row">
+          <a href="#" className="auth-link auth-link--muted">
+            Need help?
           </a>
         </div>
       </div>
