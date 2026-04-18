@@ -12,6 +12,7 @@ import VerifyEmail from "@/pages/VerifyEmail";
 // Module pages
 import { HomeFeedPage } from "@/pages/HomeFeedPage";
 import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
+import FeedPage from "@/pages/FeedPage";
 import SearchHubPage from "@/pages/SearchHubPage";
 import TrendingChartsPage from "@/pages/TrendingChartsPage";
 import TrackPage from "@/pages/TrackPage";
@@ -56,7 +57,7 @@ const AppRoutes = () => {
         <Route path="/blocked" element={<BlockedUsersPage />} />
 
         {/* Feed - Module 8 */}
-        <Route path="/feed" element={<HomeFeedPage />} />
+        <Route path="/feed" element={<FeedPage />} />
         <Route path="/discover" element={<DiscoveryFeedPage />} />
         <Route path="/search" element={<SearchHubPage />} />
         <Route path="/trending" element={<TrendingChartsPage />} />

@@ -33,6 +33,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
 import PulsifyPlayerBar from "./components/common/PulsifyPlayerBar";
 import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
+import FeedPage from "./pages/FeedPage";
 import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
 
@@ -139,7 +140,7 @@ const AppRoutes = () => {
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
 
               {/* Discovery & Notifications - Module 8/10 */}
-              <Route path="/feed" element={<DiscoveryFeedPage />} />
+              <Route path="/feed" element={<FeedPage />} />
               <Route path="/discover" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
