@@ -125,16 +125,6 @@ const AppRoutes = () => {
                 }
               />
 
-              {/* Upload - Module 4 (Artist Only) */}
-              <Route
-                path="/upload"
-                element={
-                  <ArtistRoute>
-                    <PulsifyTrackUploadScreen />
-                  </ArtistRoute>
-                }
-              />
-
               {/* Premium - Module 12 */}
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
 
@@ -144,6 +134,16 @@ const AppRoutes = () => {
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
             </Route>
+
+            {/* Upload - Module 4 (standalone, no navbar) */}
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <PulsifyTrackUploadScreen />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
 
           <PulsifyPlayerBar />

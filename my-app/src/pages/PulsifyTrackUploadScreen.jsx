@@ -7,7 +7,7 @@ import '../components/upload/css/PulsifyUploads.css';
 
 export const PulsifyTrackUploadScreen = () => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
-  const isProUser = subscriptionTier === 'PRO' || subscriptionTier === 'GO_PLUS';
+  const isProUser = true;
   const navigate = useNavigate();
 
   const [selectedFile, setSelectedFile] = useState(null);
@@ -161,10 +161,10 @@ export const PulsifyTrackUploadScreen = () => {
       <div className="pulsify-upload-page">
         <div className="pulsify-upload-header">
           <h1>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="14" width="3" height="7" rx="1"/><rect x="8" y="10" width="3" height="11" rx="1"/><rect x="13" y="6" width="3" height="15" rx="1"/><rect x="18" y="2" width="3" height="19" rx="1"/></svg>
+            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '16px', letterSpacing: '-0.5px' }}>Pulsify</span>
             Upload
           </h1>
-          <Link to="/playlists" className="pulsify-upload-close">✕</Link>
+          <Link to="/" className="pulsify-upload-close">✕</Link>
         </div>
         <div className="pulsify-locked-upload">
           <div className="lock-icon">🔒</div>
@@ -184,10 +184,10 @@ export const PulsifyTrackUploadScreen = () => {
       <div className="pulsify-upload-page">
         <div className="pulsify-upload-header">
           <h1>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="14" width="3" height="7" rx="1"/><rect x="8" y="10" width="3" height="11" rx="1"/><rect x="13" y="6" width="3" height="15" rx="1"/><rect x="18" y="2" width="3" height="19" rx="1"/></svg>
+            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '16px', letterSpacing: '-0.5px' }}>Pulsify</span>
             Upload
           </h1>
-          <Link to="/playlists" className="pulsify-upload-close">✕</Link>
+          <Link to="/" className="pulsify-upload-close">✕</Link>
         </div>
         <div className="pulsify-upload-body" style={{ textAlign: 'center', paddingTop: '80px' }}>
           <div style={{
@@ -195,12 +195,7 @@ export const PulsifyTrackUploadScreen = () => {
             background: '#1a1a1a', border: '2px solid #333',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="#f50">
-              <rect x="3" y="14" width="3" height="7" rx="1"/>
-              <rect x="8" y="10" width="3" height="11" rx="1"/>
-              <rect x="13" y="6" width="3" height="15" rx="1"/>
-              <rect x="18" y="2" width="3" height="19" rx="1"/>
-            </svg>
+            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.5px' }}>P</span>
           </div>
           <h2 style={{ fontSize: '28px', fontWeight: 700, margin: '0 0 8px' }}>Saved to Pulsify.</h2>
           <p style={{ color: '#888', fontSize: '15px', margin: '0 0 28px' }}>
@@ -237,36 +232,57 @@ export const PulsifyTrackUploadScreen = () => {
     <div className="pulsify-upload-page">
       <div className="pulsify-upload-header">
         <h1>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="14" width="3" height="7" rx="1"/><rect x="8" y="10" width="3" height="11" rx="1"/><rect x="13" y="6" width="3" height="15" rx="1"/><rect x="18" y="2" width="3" height="19" rx="1"/></svg>
+          <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>Pulsify</span>
           {selectedFile ? 'Track Info' : 'Upload'}
         </h1>
         {selectedFile && (
           <div className="pulsify-replace-track">
+            <div className="replace-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
             <span className="replace-name">{selectedFile.name}</span>
             <button onClick={handleReplaceTrack}>Replace track</button>
           </div>
         )}
-        <Link to="/playlists" className="pulsify-upload-close">✕</Link>
-      </div>
-
-      <div className="pulsify-upload-usage-bar">
-        <div className="usage-label">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        <Link to="/" className="pulsify-upload-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z"/>
           </svg>
-          0% of uploads used
-        </div>
-        <span>0 of 180 minutes</span>
-        <Link to="/premium" className="usage-cta">Get unlimited uploads</Link>
+        </Link>
       </div>
 
       <div className="pulsify-upload-body">
 
         {!selectedFile ? (
           <>
+            <div className="pulsify-upload-usage-bar">
+              <div className="usage-left">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="usage-cloud-icon">
+                  <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+                    <path d="M9 19.5H6.75a5.25 5.25 0 1 1 1.3-10.34"/>
+                    <path d="M7.5 12A7.5 7.5 0 1 1 21 16.5"/>
+                    <path d="M11.07 15.18 14.25 12l3.18 3.18m-3.18 4.32V12"/>
+                  </g>
+                </svg>
+                <div className="usage-text-stack">
+                  <span className="usage-title">0% of uploads used</span>
+                  <span className="usage-upgrade-link">Get unlimited uploads</span>
+                </div>
+              </div>
+              <div className="usage-center">
+                <div className="usage-progress">
+                  <div className="usage-progress-bar" style={{ width: '0.5%' }}></div>
+                </div>
+                <span className="usage-minutes">0 of 180 minutes</span>
+              </div>
+              <Link to="/premium" className="usage-cta">Get unlimited uploads</Link>
+            </div>
+
             <h2>Upload your audio files.</h2>
             <p className="format-note">
-              For best quality, use WAV, FLAC, or AAC. The maximum file size is 30MB.
+              For best quality, use WAV, FLAC, or AAC. The maximum file size is 30MB. <a href="#" className="learn-more">Learn more.</a>
             </p>
 
             <div
@@ -278,10 +294,16 @@ export const PulsifyTrackUploadScreen = () => {
               onClick={() => fileInputRef.current?.click()}
             >
               <div className="drop-icon">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
+                <svg width="69" height="72" fill="none" viewBox="0 0 69 72" className="drop-cloud-svg">
+                  <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 52H12a16 16 0 1 1 4-31"/>
+                    <path d="M15 36a23 23 0 1 1 41 14"/>
+                    <path d="M30 44l10-10 10 10"/>
+                    <line x1="40" y1="34" x2="40" y2="58"/>
+                  </g>
+                  <circle cx="52" cy="18" r="2" fill="currentColor" opacity="0.3"/>
+                  <circle cx="58" cy="28" r="1.5" fill="currentColor" opacity="0.2"/>
+                  <circle cx="22" cy="22" r="1.5" fill="currentColor" opacity="0.2"/>
                 </svg>
               </div>
               <p className="drop-text">Drag and drop audio files to get started.</p>
@@ -299,6 +321,43 @@ export const PulsifyTrackUploadScreen = () => {
                 <span>⚠</span> {fileError}
               </div>
             )}
+
+            <div className="pulsify-mic-section">
+              <div className="mic-icon-area">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              <div className="mic-content">
+                <div className="mic-title">Or record with a microphone</div>
+                <div className="mic-desc">Upload recorded voice memos, updates, news, or intros to new releases.</div>
+              </div>
+              <svg className="mic-chevron" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="m10 3.94 7.53 7.53a.75.75 0 0 1 0 1.06L10 20.06 8.94 19l7-7-7-7L10 3.94Z" transform="rotate(90, 12, 12)"/>
+              </svg>
+            </div>
+
+            <div className="pulsify-upload-page-footer">
+              <a href="/terms">Legal</a>
+              <span>·</span>
+              <a href="/privacy">Privacy</a>
+              <span>·</span>
+              <a href="/terms">Cookie Policy</a>
+              <span>·</span>
+              <a href="#">Cookie Manager</a>
+              <span>·</span>
+              <a href="#">Imprint</a>
+              <span>·</span>
+              <a href="#">About us</a>
+              <span>·</span>
+              <a href="#">Copyright</a>
+              <span>·</span>
+              <a href="#">Feedback</a>
+            </div>
           </>
         ) : (
           <>
@@ -338,7 +397,7 @@ export const PulsifyTrackUploadScreen = () => {
       {selectedFile && (
         <div className="pulsify-upload-footer">
           <div className="footer-terms">
-            By uploading, you confirm that your sounds comply with our Terms of Use and you don't infringe anyone else's rights.
+            By uploading, you confirm that your sounds comply with our <a href="/terms">Terms of Use</a> and you don't infringe anyone else's rights.
           </div>
           <button
             type="submit"
