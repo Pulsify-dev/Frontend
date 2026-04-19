@@ -184,41 +184,45 @@ export const PulsifyTrackUploadScreen = () => {
       <div className="pulsify-upload-page">
         <div className="pulsify-upload-header">
           <h1>
-            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '16px', letterSpacing: '-0.5px' }}>Pulsify</span>
+            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>Pulsify</span>
             Upload
           </h1>
-          <Link to="/" className="pulsify-upload-close">✕</Link>
+          <Link to="/" className="pulsify-upload-close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z"/>
+            </svg>
+          </Link>
         </div>
-        <div className="pulsify-upload-body" style={{ textAlign: 'center', paddingTop: '80px' }}>
-          <div style={{
-            width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 24px',
-            background: '#1a1a1a', border: '2px solid #333',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.5px' }}>P</span>
+        <div className="pulsify-upload-body pulsify-success-screen">
+          <div className="success-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
           </div>
-          <h2 style={{ fontSize: '28px', fontWeight: 700, margin: '0 0 8px' }}>Saved to Pulsify.</h2>
-          <p style={{ color: '#888', fontSize: '15px', margin: '0 0 28px' }}>
-            Your track is now on Pulsify.
-          </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          <h2 className="success-title">Saved to Pulsify.</h2>
+          <p className="success-subtitle">Your track "{uploadedTrack.title}" is now live on Pulsify.</p>
+          <div className="success-track-card">
+            <img 
+              src={uploadedTrack.artwork_url} 
+              alt={uploadedTrack.title} 
+              className="success-track-art"
+            />
+            <div className="success-track-info">
+              <span className="success-track-title">{uploadedTrack.title}</span>
+              <span className="success-track-genre">{uploadedTrack.genre}</span>
+            </div>
+          </div>
+          <div className="success-actions">
             <button
-              onClick={() => navigate('/playlists')}
-              style={{
-                padding: '10px 24px', background: '#333', color: '#fff',
-                border: '1px solid #555', borderRadius: '4px', fontSize: '13px',
-                fontWeight: 600, cursor: 'pointer'
-              }}
+              onClick={() => navigate(`/tracks/${uploadedTrack._id}`)}
+              className="success-btn success-btn-primary"
             >
               View track
             </button>
             <button
               onClick={handleReplaceTrack}
-              style={{
-                padding: '10px 24px', background: 'transparent', color: '#aaa',
-                border: '1px solid #333', borderRadius: '4px', fontSize: '13px',
-                fontWeight: 600, cursor: 'pointer'
-              }}
+              className="success-btn success-btn-secondary"
             >
               Upload another
             </button>
@@ -268,7 +272,6 @@ export const PulsifyTrackUploadScreen = () => {
                 </svg>
                 <div className="usage-text-stack">
                   <span className="usage-title">0% of uploads used</span>
-                  <span className="usage-upgrade-link">Get unlimited uploads</span>
                 </div>
               </div>
               <div className="usage-center">
@@ -361,19 +364,34 @@ export const PulsifyTrackUploadScreen = () => {
           </>
         ) : (
           <>
-            {isUploading && (
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#888', marginBottom: '8px' }}>
-                  <span>{transcodingStatus === 'processing' ? 'Processing...' : 'Uploading...'}</span>
-                  <span>{uploadProgress}%</span>
+            {(isUploading || transcodingStatus === 'processing') && (
+              <div className="pulsify-upload-progress-section">
+                <div className="progress-header">
+                  <div className="progress-status">
+                    {transcodingStatus === 'processing' ? (
+                      <>
+                        <span className="progress-spinner"></span>
+                        <span>Processing your track...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Uploading...</span>
+                      </>
+                    )}
+                  </div>
+                  <span className="progress-percent">{uploadProgress}%</span>
                 </div>
-                <div style={{ width: '100%', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${uploadProgress}%`, height: '100%',
-                    background: 'linear-gradient(90deg, #f50, #ff8a00)',
-                    borderRadius: '2px', transition: 'width 0.3s ease'
-                  }} />
+                <div className="progress-track">
+                  <div className="progress-fill" style={{ width: `${uploadProgress}%` }} />
                 </div>
+                {transcodingStatus === 'processing' && (
+                  <p className="progress-hint">Your file is being transcoded. This usually takes a few seconds.</p>
+                )}
               </div>
             )}
 
