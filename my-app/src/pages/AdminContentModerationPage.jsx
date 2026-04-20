@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import serviceLocator from '../utils/serviceLocator';
-import PulsifyAdminLayout from '../components/admin/PulsifyAdminLayout';        
 import './AdminContentModerationPage.css';
 
 const AdminContentModerationPage = () => {
@@ -50,13 +49,13 @@ const AdminContentModerationPage = () => {
   };
 
   return (
-    <PulsifyAdminLayout>
-      <div className="sc-admin-moderation-container" data-testid="admin-moderation-page">
+    <div className="sc-admin-moderation-container" data-testid="admin-moderation-page">
+      <div className="sc-mod-content-wrapper">
         {/* SoundCloud Error Page Lookalike Header */}
         <div className="sc-mod-player-header">
           <div className="sc-mod-player-top">
-            <button className="sc-mod-play-btn" disabled>
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+            <button className="sc-mod-play-btn" disabled title="Unavailable">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fillRule="evenodd" clipRule="evenodd" d="M20.346 11.58a.5.5 0 0 1 0 .84L7.77 20.506a.5.5 0 0 1-.77-.42V3.914a.5.5 0 0 1 .77-.42l12.576 8.084Z" fill="currentColor"></path></svg>
             </button>
             <div className="sc-mod-title-wrapper">
               <h1>Content Moderation & Reports</h1>
@@ -76,15 +75,6 @@ const AdminContentModerationPage = () => {
         {/* Trending-like Grid for Reports */}
         <div className="sc-mod-filters">
           <h2>Trending reports on Pulsify</h2>
-          <select 
-            className="sc-mod-select"
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="Pending">Pending</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Dismissed">Dismissed</option>
-          </select>
         </div>
 
         {loading ? (
@@ -98,7 +88,8 @@ const AdminContentModerationPage = () => {
                 key={report._id} 
                 className="sc-mod-report-card" 
                 onClick={() => openModal(report)}
-                data-testid={eport-card-+report._id}
+                data-testid={
+eport-card-+report._id}
               >
                 <div className="sc-mod-art-box">
                   <img src={report.entity_type === 'Track' ? 'https://picsum.photos/seed/'+report._id+'/200' : 'https://picsum.photos/seed/'+report._id+'/200'} alt="Report art" />
@@ -117,7 +108,7 @@ const AdminContentModerationPage = () => {
             <div className="sc-modal-content" onClick={e => e.stopPropagation()}>
               <div className="sc-modal-header">
                 <h3>Resolve Report ({selectedReport._id.slice(-6)})</h3>
-                <button className="sc-btn" style={{border:'none', background:'none', fontSize:'16px'}} onClick={() => setSelectedReport(null)}>×</button>
+                <button className="sc-btn" style={{border:'none', background:'none', fontSize:'16px'}} onClick={() => setSelectedReport(null)}>ï¿½</button>
               </div>
               <div className="sc-modal-body">
                 <p><strong>Entity Type:</strong> {selectedReport.entity_type}</p>
@@ -159,7 +150,7 @@ const AdminContentModerationPage = () => {
           </div>
         )}
       </div>
-    </PulsifyAdminLayout>
+    </div>
   );
 };
 
