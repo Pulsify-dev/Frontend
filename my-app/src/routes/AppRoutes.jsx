@@ -15,6 +15,8 @@ import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
 import FeedPage from "@/pages/FeedPage";
 import SearchHubPage from "@/pages/SearchHubPage";
 import TrendingChartsPage from "@/pages/TrendingChartsPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import AdminContentModerationPage from "@/pages/AdminContentModerationPage";
 import TrackPage from "@/pages/TrackPage";
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
@@ -61,6 +63,7 @@ const AppRoutes = () => {
         <Route path="/discover" element={<DiscoveryFeedPage />} />
         <Route path="/search" element={<SearchHubPage />} />
         <Route path="/trending" element={<TrendingChartsPage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
 
         {/* Track - Module 4/5 */}
         <Route path="/trackpage" element={<TrackPage />} />
