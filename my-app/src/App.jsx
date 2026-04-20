@@ -26,6 +26,7 @@ import TrackPage from "@/pages/TrackPage";
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
+import { PulsifyMyTracksView } from "@/pages/PulsifyMyTracksView";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
 
 // Module 8/10 – Discovery & Notifications (Ahmed Ali)
@@ -113,6 +114,16 @@ const AppRoutes = () => {
               <Route
                 path="/playlists/:playlistId"
                 element={<PulsifyPlaylistDetailView />}
+              />
+
+              {/* My Tracks - Module 4 (Omar Nasser) */}
+              <Route
+                path="/my-tracks"
+                element={
+                  <ProtectedRoute>
+                    <PulsifyMyTracksView />
+                  </ProtectedRoute>
+                }
               />
 
               {/* Library (Protected) */}
