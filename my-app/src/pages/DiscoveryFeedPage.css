@@ -1,4 +1,324 @@
-/* ====== SoundCloud Stream Page ====== */
+/* ====== SoundCloud Discover Page Clone ====== */
+
+.sc-discover-page {
+  width: 100%;
+  background-color: #121212; /* Dark theme */
+  color: #fff;
+  min-height: 100vh;
+  font-family: "Inter", "Lucida Grande", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding: 30px 20px;
+}
+
+.sc-discover-content {
+  display: flex;
+  gap: 30px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.sc-discover-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Shelf styling */
+.sc-discover-shelf {
+  margin-bottom: 40px;
+}
+
+.sc-shelf-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.sc-shelf-subtext {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 16px;
+  min-height: 20px; /* retain space if empty */
+}
+
+.sc-shelf-grid {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto; /* horizontally scrollable if needed */
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #333 #121212;
+}
+
+.sc-shelf-grid::-webkit-scrollbar {
+  height: 6px;
+}
+.sc-shelf-grid::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+/* Cards */
+.sc-card {
+  width: 175px;
+  min-width: 175px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-card-artwork,
+.sc-card-artwork-wrapper {
+  position: relative;
+  width: 175px;
+  height: 175px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #333; /* placeholder */
+}
+
+.sc-card-artwork img,
+.sc-card-artwork-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-card-mixed-img {
+  filter: grayscale(80%) brightness(0.6);
+}
+
+.sc-card-mixer-tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 0 4px 0 0;
+}
+
+.sc-card-curator-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #fff;
+  color: #000;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.sc-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.sc-card-artist {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-card-artist:hover,
+.sc-card-title:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ====== Right Sidebar ====== */
+.sc-discover-sidebar {
+  width: 320px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.sc-sidebar-widget {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.sc-widget-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.sc-widget-chevron {
+  color: #999;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.sc-widget-header-btn,
+.sc-widget-header-link {
+  font-size: 11px;
+  color: #999;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sc-widget-header-btn:hover,
+.sc-widget-header-link:hover {
+  color: #bbb;
+}
+
+/* List Items (Artists, Tracks) */
+.sc-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sc-artist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sc-artist-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #333;
+}
+
+.sc-artist-info {
+  flex: 1;
+}
+
+.sc-artist-name {
+  font-size: 13px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-verified-badge {
+  color: #1b64d1;
+  font-size: 11px;
+}
+
+.sc-artist-stats {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.sc-follow-btn {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sc-follow-btn:hover {
+  background-color: #e5e5e5;
+}
+
+/* 5 Likes / Listening History */
+.sc-track-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sc-track-mini-art {
+  width: 50px;
+  height: 50px;
+  border-radius: 2px;
+  object-fit: cover;
+  background-color: #333;
+}
+
+.sc-track-info {
+  flex: 1;
+}
+
+.sc-track-uploader {
+  font-size: 11px;
+  color: #999;
+}
+
+.sc-track-title {
+  font-size: 13px;
+  color: #fff;
+  margin: 2px 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.sc-track-stats {
+  font-size: 10px;
+  color: #999;
+  display: flex;
+  gap: 8px;
+}
+
+/* Sidebar Footer Links */
+.sc-sidebar-footer-links {
+  font-size: 11px;
+  color: #666;
+  border-top: 1px solid #333;
+  padding-top: 12px;
+  line-height: 1.6;
+}
+
+.sc-sidebar-footer-links a {
+  color: #666;
+  text-decoration: none;
+}
+
+.sc-sidebar-footer-links a:hover {
+  color: #999;
+}
+
+.sc-lang a {
+  color: #ccc;
+}
+
+@media (max-width: 900px) {
+  .sc-discover-content {
+    flex-direction: column;
+  }
+  .sc-discover-sidebar {
+    width: 100%;
+    min-width: 0;
+  }
+}/* ====== SoundCloud Stream Page ====== */
 
 .sc-stream-page {
   width: 100%;
@@ -180,3 +500,6 @@
     min-width: 0;
   }
 }
+
+
+.sc-card:hover .sc-card-artwork, .sc-card:hover .sc-card-artwork-wrapper { transform: scale(1.02); transition: transform 0.2s ease-in-out; cursor: pointer; }
