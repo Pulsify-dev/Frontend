@@ -46,7 +46,8 @@ export const PulsifyPlaylistDetailView = () => {
     dragOverItem.current = null;
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
     try {
-      await PulsifyPlaylistService.reorderTracks(playlistId, newTracks.map(t => t.id));
+      const trackIds = newTracks.map(t => t.track_id?._id || t.track_id || t.id);
+      await PulsifyPlaylistService.reorderTracks(playlistId, trackIds);
     } catch (err) {
       setFetchError('Failed to persist sequence order.');
     }
@@ -54,19 +55,23 @@ export const PulsifyPlaylistDetailView = () => {
 
   const copyEmbedCode = async () => {
     try {
-      const embedData = await PulsifyPlaylistService.generateEmbed(playlistId);
-      navigator.clipboard.writeText(embedData.html || embedData.embed_html || 'No embed string resolved');
+      const embedResult = await PulsifyPlaylistService.getEmbedCode(playlistId);
+      const embedData = embedResult.data || embedResult;
+      const code = embedData.embedCode || embedData.html || 'No embed string resolved';
+      navigator.clipboard.writeText(code);
       alert('Embed iframe copied to clipboard!');
     } catch (err) { alert('Failed to generate embed code.'); }
   };
 
   const handleRemoveTrack = async (indexToRemove) => {
+    const trackEntry = playlistDetail.tracks[indexToRemove];
+    const trackId = trackEntry.track_id?._id || trackEntry.track_id || trackEntry.id;
     const newTracks = [...playlistDetail.tracks];
     newTracks.splice(indexToRemove, 1);
-    setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
+    setPlaylistDetail({ ...playlistDetail, tracks: newTracks, track_count: newTracks.length });
     try {
-      await PulsifyPlaylistService.reorderTracks(playlistId, newTracks.map(t => t.id));
-    } catch (err) { alert('Failed to sync trace removal.'); }
+      await PulsifyPlaylistService.removeTrackFromPlaylist(playlistId, trackId);
+    } catch (err) { alert('Failed to remove track.'); }
   };
 
   const handleDeleteSet = async () => {
@@ -77,9 +82,15 @@ export const PulsifyPlaylistDetailView = () => {
     } catch (err) { alert('Delete failed.'); }
   };
 
-  const handleTogglePrivacy = () => {
-    setPlaylistDetail(prev => ({ ...prev, is_private: !prev.is_private }));
-    alert('Playlist privacy toggled.');
+  const handleTogglePrivacy = async () => {
+    const newPrivacy = !playlistDetail.is_private;
+    setPlaylistDetail(prev => ({ ...prev, is_private: newPrivacy }));
+    try {
+      await PulsifyPlaylistService.togglePrivacy(playlistId, newPrivacy);
+    } catch (err) {
+      setPlaylistDetail(prev => ({ ...prev, is_private: !newPrivacy }));
+      alert('Failed to toggle privacy.');
+    }
   };
 
   const handleOfflineDownload = () => {
@@ -95,8 +106,11 @@ export const PulsifyPlaylistDetailView = () => {
   if (fetchError) return <div style={{ ...loadingStyle, color: '#f44' }}>Error: {fetchError}</div>;
   if (!playlistDetail) return <div style={loadingStyle}>Playlist not found.</div>;
 
-  const trackCount = playlistDetail.tracks?.length || 0;
-  const totalSec = playlistDetail.tracks?.reduce((s, t) => s + (t.duration_seconds || 0), 0) || 0;
+  const trackCount = playlistDetail.track_count || playlistDetail.tracks?.length || 0;
+  const totalSec = playlistDetail.tracks?.reduce((s, t) => {
+    const dur = t.track_id?.duration || t.duration_seconds || t.duration || 0;
+    return s + dur;
+  }, 0) || 0;
   const durStr = `${Math.floor(totalSec / 60)}:${(totalSec % 60).toString().padStart(2, '0')}`;
 
   return (
@@ -131,7 +145,7 @@ export const PulsifyPlaylistDetailView = () => {
                 </span>
                 <br />
                 <span style={{ backgroundColor: 'rgba(0,0,0,0.75)', color: '#bbb', padding: '2px 10px', fontSize: '13px', display: 'inline-block', marginTop: '3px' }}>
-                  {playlistDetail.creator_username || 'You'}
+                  {playlistDetail.creator_id?.display_name || playlistDetail.creator_username || 'You'}
                 </span>
               </div>
               <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
@@ -167,7 +181,7 @@ export const PulsifyPlaylistDetailView = () => {
 
           <div style={{ width: '280px', height: '280px', flexShrink: 0 }}>
             <img
-              src={playlistDetail.thumbnail_url || 'https://placehold.co/280x280/2a1e30/666?text=♫'}
+              src={playlistDetail.cover_url || 'https://placehold.co/280x280/2a1e30/666?text=♫'}
               alt={playlistDetail.title}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
@@ -213,7 +227,7 @@ export const PulsifyPlaylistDetailView = () => {
               ♫
             </div>
             <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '2px' }}>
-              {playlistDetail.creator_username || 'You'}
+              {playlistDetail.creator_id?.display_name || playlistDetail.creator_username || 'You'}
             </div>
             <div style={{ fontSize: '11px', color: '#f50', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="#f50"><rect x="3" y="14" width="3" height="7" rx="1"/><rect x="8" y="10" width="3" height="11" rx="1"/><rect x="13" y="6" width="3" height="15" rx="1"/><rect x="18" y="2" width="3" height="19" rx="1"/></svg>
@@ -223,17 +237,20 @@ export const PulsifyPlaylistDetailView = () => {
 
           <div style={{ flex: 1, borderLeft: '1px solid #222', paddingLeft: '24px' }}>
             {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
-              playlistDetail.tracks.map((track, idx) => (
-                <PulsifyTrackRow
-                  key={track.id || idx}
-                  track={track}
-                  index={idx}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onRemoveTrack={handleRemoveTrack}
-                />
-              ))
+              playlistDetail.tracks.map((track, idx) => {
+                const trackData = track.track_id && typeof track.track_id === 'object' ? track.track_id : track;
+                return (
+                  <PulsifyTrackRow
+                    key={trackData._id || trackData.id || idx}
+                    track={{ ...trackData, _id: trackData._id || trackData.id }}
+                    index={idx}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onRemoveTrack={handleRemoveTrack}
+                  />
+                );
+              })
             ) : (
               <div style={{ color: '#555', padding: '30px 0', fontSize: '14px' }}>No tracks in this set yet.</div>
             )}

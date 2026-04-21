@@ -9,7 +9,9 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
 
   const navigate = useNavigate();
   const waveform = useMemo(() => generateWaveform(), []);
+  const plId = playlist._id || playlist.id;
   const trackCount = playlist.track_count || playlist.tracks?.length || 0;
+  const creatorName = playlist.creator_id?.display_name || playlist.creator_username || 'You';
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -28,8 +30,8 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
     setMenuOpen(false);
     if (!window.confirm(`Delete "${playlist.title}"? This cannot be undone.`)) return;
     try {
-      await PulsifyPlaylistService.deletePlaylist(playlist.id);
-      if (onDelete) onDelete(playlist.id);
+      await PulsifyPlaylistService.deletePlaylist(plId);
+      if (onDelete) onDelete(plId);
     } catch (err) {
       alert('Failed to delete playlist: ' + err.message);
     }
@@ -37,9 +39,9 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
 
   return (
     <div className="pulsify-playlist-card">
-      <div className="pulsify-artwork-wrapper" onClick={() => navigate(`/playlists/${playlist.id}`)} style={{ cursor: 'pointer' }}>
+      <div className="pulsify-artwork-wrapper" onClick={() => navigate(`/playlists/${plId}`)} style={{ cursor: 'pointer' }}>
         <img
-          src={playlist.thumbnail_url || 'https://placehold.co/160x160/1a1a1a/333?text=♫'}
+          src={playlist.cover_url || 'https://placehold.co/160x160/1a1a1a/333?text=♫'}
           alt={playlist.title}
           className="pulsify-artwork"
         />
@@ -55,8 +57,8 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           </button>
 
           <div className="pulsify-card-info">
-            <span className="pulsify-card-artist">{playlist.creator_username || 'You'}</span>
-            <Link to={`/playlists/${playlist.id}`} className="pulsify-card-name">{playlist.title}</Link>
+            <span className="pulsify-card-artist">{creatorName}</span>
+            <Link to={`/playlists/${plId}`} className="pulsify-card-name">{playlist.title}</Link>
           </div>
 
           <span className="pulsify-card-time">2 hours ago</span>
@@ -77,20 +79,23 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
 
         {playlist.tracks && playlist.tracks.length > 0 && (
           <div className="pulsify-card-tracklist">
-            {playlist.tracks.slice(0, 3).map((t, i) => (
-              <div key={t.id || i} className="pulsify-card-track-entry">
-                <img
-                  src={t.cover_art_url || 'https://placehold.co/20x20/222/555?text=♪'}
-                  alt=""
-                  className="pulsify-card-track-thumb"
-                />
-                <span className="pulsify-card-track-idx">{i + 1}</span>
-                <span className="pulsify-card-track-dot">·</span>
-                <span className="pulsify-card-track-title">{t.title}</span>
-              </div>
-            ))}
+            {playlist.tracks.slice(0, 3).map((t, i) => {
+              const trackData = t.track_id && typeof t.track_id === 'object' ? t.track_id : t;
+              return (
+                <div key={trackData._id || trackData.id || i} className="pulsify-card-track-entry">
+                  <img
+                    src={trackData.artwork_url || 'https://placehold.co/20x20/222/555?text=♪'}
+                    alt=""
+                    className="pulsify-card-track-thumb"
+                  />
+                  <span className="pulsify-card-track-idx">{i + 1}</span>
+                  <span className="pulsify-card-track-dot">·</span>
+                  <span className="pulsify-card-track-title">{trackData.title}</span>
+                </div>
+              );
+            })}
             {playlist.tracks.length > 3 && (
-              <Link to={`/playlists/${playlist.id}`} className="pulsify-card-view-all">
+              <Link to={`/playlists/${plId}`} className="pulsify-card-view-all">
                 View all {playlist.tracks.length} tracks
               </Link>
             )}
@@ -105,7 +110,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
         )}
 
         <div className="pulsify-card-actions">
-          <Link to={`/playlists/${playlist.id}`} className="pulsify-card-action-btn" title="Edit & Reorder">
+          <Link to={`/playlists/${plId}`} className="pulsify-card-action-btn" title="Edit & Reorder">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           </Link>
           <button className="pulsify-card-action-btn" title="Copy link">
@@ -132,7 +137,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
                 overflow: 'hidden'
               }}>
                 <button
-                  onClick={() => { setMenuOpen(false); navigate(`/playlists/${playlist.id}`); }}
+                  onClick={() => { setMenuOpen(false); navigate(`/playlists/${plId}`); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
                     padding: '10px 14px', background: 'none', border: 'none',

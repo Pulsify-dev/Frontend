@@ -1,7 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
 import '../components/upload/css/PulsifyMyTracks.css';
+
+/* Stable waveform bars — heights are computed once */
+const WAVEFORM_HEIGHTS = Array.from({ length: 80 }, () => Math.random() * 60 + 10);
+const WaveformBars = () => (
+  <div className="waveform-demo">
+    {WAVEFORM_HEIGHTS.map((h, i) => (
+      <div key={i} className="waveform-bar" style={{ height: `${h}%` }} />
+    ))}
+  </div>
+);
 
 export const PulsifyMyTracksView = () => {
   const navigate = useNavigate();
@@ -268,15 +278,7 @@ export const PulsifyMyTracksView = () => {
         <div className="mytracks-waveform-section">
           <h3>Waveform Preview</h3>
           <p className="waveform-hint">Click on a track above to see its waveform on the track detail page.</p>
-          <div className="waveform-demo">
-            {Array.from({ length: 80 }).map((_, i) => (
-              <div
-                key={i}
-                className="waveform-bar"
-                style={{ height: `${Math.random() * 60 + 10}%` }}
-              />
-            ))}
-          </div>
+          <WaveformBars />
         </div>
       )}
     </div>

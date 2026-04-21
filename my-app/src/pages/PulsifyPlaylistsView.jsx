@@ -109,8 +109,9 @@ export const PulsifyPlaylistsView = () => {
 
   const handleCreatePlaylist = async (payload) => {
     try {
-      const newPlaylist = await PulsifyPlaylistService.createPlaylist(payload);
-      setPulsifyPlaylists(prev => [{ ...newPlaylist, tracks: [], track_count: 0, creator_username: 'i Omz' }, ...prev]);
+      const result = await PulsifyPlaylistService.createPlaylist(payload);
+      const newPlaylist = result.data || result;
+      setPulsifyPlaylists(prev => [newPlaylist, ...prev]);
     } catch (err) {
       alert('Failed to create playlist: ' + err.message);
     }
@@ -205,9 +206,9 @@ export const PulsifyPlaylistsView = () => {
           ) : (
             pulsifyPlaylists.map((pl) => (
               <PulsifyPlaylistCard 
-                key={pl.id} 
+                key={pl._id || pl.id} 
                 playlist={pl} 
-                onDelete={(id) => setPulsifyPlaylists(prev => prev.filter(p => p.id !== id))}
+                onDelete={(id) => setPulsifyPlaylists(prev => prev.filter(p => (p._id || p.id) !== id))}
               />
             ))
           )}

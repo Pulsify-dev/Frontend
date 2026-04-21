@@ -25,7 +25,7 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
       }}
     >
       <img
-        src={track.cover_art_url || 'https://placehold.co/28x28/252525/555?text=♫'}
+        src={track.artwork_url || track.cover_art_url || 'https://placehold.co/28x28/252525/555?text=♫'}
         alt={track.title}
         width="28"
         height="28"
@@ -44,7 +44,7 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
           {track.title}
         </span>
         <span style={{ fontSize: '11px', color: '#666' }}>
-          {track.artist_name || 'Unknown Artist'}
+          {track.artist_id?.display_name || track.artist_name || 'Unknown Artist'}
         </span>
       </div>
 
@@ -70,7 +70,7 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
 
       {!hovered && (
         <div style={{ color: '#555', fontSize: '12px', marginRight: '12px', flexShrink: 0 }}>
-          {Math.floor((track.duration_seconds || 0) / 60)}:{((track.duration_seconds || 0) % 60).toString().padStart(2, '0')}
+          {(() => { const sec = track.duration || track.duration_seconds || 0; return `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`; })()}
         </div>
       )}
 

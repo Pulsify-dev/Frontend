@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext, useCallback } from 'react';
+import React, { useState, useRef, useContext, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
@@ -21,6 +21,14 @@ export const PulsifyTrackUploadScreen = () => {
   const [uploadedTrack, setUploadedTrack] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const fileInputRef = useRef(null);
+  const pollingRef = useRef(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
 
   const handleFileValidation = useCallback((file) => {
     setFileError(null);
@@ -130,23 +138,27 @@ export const PulsifyTrackUploadScreen = () => {
   };
 
   const pollTranscoding = async (trackId) => {
-    const interval = setInterval(async () => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollingRef.current = setInterval(async () => {
       try {
         const status = await PulsifyTrackService.pollTrackStatus(trackId);
         if (status.status === 'finished') {
           setTranscodingStatus('finished');
-          clearInterval(interval);
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
         } else if (status.status === 'failed') {
           setTranscodingStatus('failed');
           setUploadError(status.error_message || 'Transcoding failed.');
-          clearInterval(interval);
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
         } else {
           setUploadProgress(status.progress_percent || 0);
         }
       } catch (err) {
         setTranscodingStatus('failed');
         setUploadError('Failed to check transcoding status.');
-        clearInterval(interval);
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
       }
     }, 3000);
   };
