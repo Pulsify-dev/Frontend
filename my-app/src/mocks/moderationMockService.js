@@ -34,6 +34,28 @@ export const suspendUser = async (userId) => {
 export const restoreUser = async (userId) => {
   return new Promise(resolve => setTimeout(() => resolve({ status: 'success', message: 'User restored' }), 300));
 };
+
+const mockUsersData = [
+  { _id: 'u1', username: 'johndoe', email: 'john@example.com', role: 'User', is_suspended: false, created_at: '2023-01-01' },
+  { _id: 'u2', username: 'janedoe', email: 'jane@example.com', role: 'Artist', is_suspended: false, created_at: '2023-05-12' },
+  { _id: 'u3', username: 'spammer99', email: 'spam@example.com', role: 'User', is_suspended: true, created_at: '2024-02-10' },
+  { _id: 'u4', username: 'admin_boss', email: 'boss@pulsify.com', role: 'Admin', is_suspended: false, created_at: '2022-10-01' }
+];
+
+export const getUsers = async ({ role = 'All', search = '' } = {}) => {
+  let filtered = mockUsersData;
+  if (role !== 'All') filtered = filtered.filter(u => u.role === role);
+  if (search) filtered = filtered.filter(u => u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+  
+  return new Promise(resolve => setTimeout(() => resolve({ status: 'success', data: { users: filtered, total: filtered.length } }), 300));
+};
+
+export const updateUserRole = async (userId, role) => {
+  const user = mockUsersData.find(u => u._id === userId);
+  if (user) user.role = role;
+  return new Promise(resolve => setTimeout(() => resolve({ status: 'success', message: 'Role updated' }), 300));
+};
+
 // Mock logic for development when VITE_USE_MOCK_API is true
 class ModerationMockService {
   constructor() {

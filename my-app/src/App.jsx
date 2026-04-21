@@ -39,8 +39,7 @@ import TrendingChartsPage from "./pages/TrendingChartsPage";
 
 // Module 11 - Admin & Moderation
 import AdminDashboardPage from "./pages/AdminDashboardPage";
-import AdminContentModerationPage from "./pages/AdminContentModerationPage";
-
+import AdminContentModerationPage from "./pages/AdminContentModerationPage";import AdminUserManagementPage from "./pages/AdminUserManagementPage";
 const AppRoutes = () => {
   return (
     <NotificationProvider>
@@ -150,6 +149,7 @@ const AppRoutes = () => {
               <Route path="/trending" element={<TrendingChartsPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/moderation" element={<AdminContentModerationPage />} />
+              <Route path="/admin/users" element={<AdminUserManagementPage />} />
             </Route>
           </Routes>
 

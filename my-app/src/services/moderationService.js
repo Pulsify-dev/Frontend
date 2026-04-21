@@ -61,3 +61,30 @@ export const restoreUser = async (userId) => {
   if (!response.ok) throw new Error(await response.text());
   return response.json();
 };
+
+export const getUsers = async ({ page = 1, limit = 20, role = 'All', search = '' } = {}) => {
+  const token = localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const query = new URLSearchParams({ page, limit });
+  if (role !== 'All') query.append('role', role);
+  if (search) query.append('search', search);
+  
+  const response = await fetch(`${API_BASE_URL}/admin/users?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};
+
+export const updateUserRole = async (userId, role) => {
+  const token = localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}` 
+    },
+    body: JSON.stringify({ role })
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};

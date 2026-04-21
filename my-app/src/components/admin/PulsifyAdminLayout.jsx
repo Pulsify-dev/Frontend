@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import './PulsifyAdminLayout.css';
 
 const PulsifyAdminLayout = ({ children }) => {
@@ -11,10 +12,9 @@ const PulsifyAdminLayout = ({ children }) => {
         </div>
         <nav className="pulsify-admin-nav">
           <ul>
-            <li className="active">Dashboard</li>
-            <li>Reports Inbox</li>
-            <li>Content Moderation</li>
-            <li>User Management</li>
+            <li><NavLink to="/admin" end className={({ isActive }) => isActive ? "active" : ""}>Dashboard</NavLink></li>
+            <li><NavLink to="/admin/moderation" className={({ isActive }) => isActive ? "active" : ""}>Content Moderation</NavLink></li>
+            <li><NavLink to="/admin/users" className={({ isActive }) => isActive ? "active" : ""}>User Management</NavLink></li>
           </ul>
         </nav>
       </aside>
