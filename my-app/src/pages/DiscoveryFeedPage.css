@@ -112,6 +112,33 @@
   font-size: 14px;
 }
 
+.sc-card-report-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.sc-card:hover .sc-card-report-btn {
+  opacity: 1;
+}
+
+.sc-card-report-btn:hover {
+  background: #f50;
+}
+
 .sc-card-title {
   font-size: 14px;
   font-weight: 500;

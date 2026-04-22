@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import serviceLocator from '../utils/serviceLocator';
 import './DiscoveryFeedPage.css';
 
 import ArtistToolsWidget from '../components/common/ArtistToolsWidget';
+import ReportModal from '../components/common/ReportModal';
 
 const MOCK_MORE = [
-  { id: 1, title: 'Caribou - Broke My Hea...', artist: '', img: 'https://i1.sndcdn.com/artworks-HwUoYhhL5kRj6QeH-LtoLmw-t200x200.jpg' },
-  { id: 2, title: 'أديني رجعتلك- عمرو دياب 2001', artist: 'Someone\'', img: 'https://i1.sndcdn.com/artworks-000570081299-s27eb4-t200x200.jpg' },
-  { id: 3, title: 'Metro Showdown', artist: 'HALSKI', img: 'https://i1.sndcdn.com/artworks-bUpx121XrtJdM3I5-Z7M3lA-t200x200.jpg' },
-  { id: 4, title: 'عمرو دياب-لو كان يرضيك', artist: 'Roqaiation2', img: 'https://i1.sndcdn.com/artworks-000552763260-2t8ozm-t200x200.jpg' },
-  { id: 5, title: 'BRE.AK', artist: '', img: 'https://i1.sndcdn.com/artworks-000490197771-3qpw7o-t200x200.jpg' },
+  { id: '65e2b3c4d5e6f7a8b9c0d1e1', title: 'Caribou - Broke My Hea...', artist: '', img: 'https://i1.sndcdn.com/artworks-HwUoYhhL5kRj6QeH-LtoLmw-t200x200.jpg' },
+  { id: '65e2b3c4d5e6f7a8b9c0d1e2', title: 'أديني رجعتلك- عمرو دياب 2001', artist: 'Someone\'', img: 'https://i1.sndcdn.com/artworks-000570081299-s27eb4-t200x200.jpg' },
+  { id: '65e2b3c4d5e6f7a8b9c0d1e3', title: 'Metro Showdown', artist: 'HALSKI', img: 'https://i1.sndcdn.com/artworks-bUpx121XrtJdM3I5-Z7M3lA-t200x200.jpg' },
+  { id: '65e2b3c4d5e6f7a8b9c0d1e4', title: 'عمرو دياب-لو كان يرضيك', artist: 'Roqaiation2', img: 'https://i1.sndcdn.com/artworks-000552763260-2t8ozm-t200x200.jpg' },
+  { id: '65e2b3c4d5e6f7a8b9c0d1e5', title: 'BRE.AK', artist: '', img: 'https://i1.sndcdn.com/artworks-000490197771-3qpw7o-t200x200.jpg' },
 ];
 
 const MOCK_MIXED = [
@@ -42,6 +44,30 @@ const MOCK_HISTORY = [
 ];
 
 const DiscoveryFeedPage = () => {
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportEntity, setReportEntity] = useState({ type: '', id: '' });
+  const [liveTracks, setLiveTracks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadRealFeed = async () => {
+      try {
+        const tracks = await serviceLocator.discovery.fetchFeed();
+        setLiveTracks(tracks || []);
+      } catch (err) {
+        console.error("Failed to load live feed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRealFeed();
+  }, []);
+
+  const handleOpenReport = (type, id) => {
+    setReportEntity({ type, id });
+    setReportModalOpen(true);
+  };
+
   return (
     <div className="sc-discover-page" data-testid="discovery-feed-page">
       <div className="sc-discover-content">
@@ -51,17 +77,33 @@ const DiscoveryFeedPage = () => {
           
           <section className="sc-discover-shelf">
             <h2 className="sc-shelf-title">More of what you like</h2>
-            <div className="sc-shelf-subtext">Suggestions based on what you've liked or played</div>
+            <div className="sc-shelf-subtext">Recent tracks from the platform</div>
             <div className="sc-shelf-grid">
-              {MOCK_MORE.map(item => (
-                <div className="sc-card" key={item.id}>
-                  <div className="sc-card-artwork">
-                    <img src={item.img} alt={item.title} />
+              {loading ? (
+                <div style={{ color: '#888', padding: '20px' }}>Loading tracks...</div>
+              ) : liveTracks.length > 0 ? (
+                liveTracks.slice(0, 5).map(track => (
+                  <div className="sc-card" key={track.trackId}>
+                    <div className="sc-card-artwork">
+                      <img src={track.coverArt || 'https://picsum.photos/seed/default/200/200'} alt={track.title} />
+                      <button className="sc-card-report-btn" onClick={(e) => { e.preventDefault(); handleOpenReport('Track', track.trackId); }} title="Report Track">⚑</button>
+                    </div>
+                    <div className="sc-card-title">{track.title}</div>
+                    {track.artist?.name && <div className="sc-card-artist">{track.artist.name}</div>}
                   </div>
-                  <div className="sc-card-title">{item.title}</div>
-                  {item.artist && <div className="sc-card-artist">{item.artist}</div>}
-                </div>
-              ))}
+                ))
+              ) : (
+                MOCK_MORE.map(item => (
+                  <div className="sc-card" key={item.id}>
+                    <div className="sc-card-artwork">
+                      <img src={item.img} alt={item.title} />
+                      <button className="sc-card-report-btn" onClick={(e) => { e.preventDefault(); handleOpenReport('Track', item.id); }} title="Report Track">⚑</button>
+                    </div>
+                    <div className="sc-card-title">{item.title}</div>
+                    {item.artist && <div className="sc-card-artist">{item.artist}</div>}
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
@@ -192,6 +234,13 @@ const DiscoveryFeedPage = () => {
 
         </aside>
       </div>
+
+      <ReportModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        entityType={reportEntity.type}
+        entityId={reportEntity.id}
+      />
     </div>
   );
 };

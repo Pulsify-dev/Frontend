@@ -119,6 +119,23 @@ class ModerationMockService {
       setTimeout(() => resolve({ status: 'success', message: 'User restored', data: { user: { _id: userId, is_suspended: false } } }), 500)
     );
   }
+
+  async getSystemLogs({ level = 'All' } = {}) {
+    console.log(`MOCK: getSystemLogs (level: ${level})`);
+    const logs = [
+      { id: 'log-1', category: 'SECURITY', level: 'CRITICAL', action: 'Multiple Failed Logins', user: 'Unknown IP', details: '192.168.1.99 tried 15 times', timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString() },
+      { id: 'log-2', category: 'MODERATION', level: 'WARNING', action: 'User Suspended', user: 'Admin (admin@pulsify.com)', details: 'Suspended user ID: user-004', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString() },
+      { id: 'log-3', category: 'SYSTEM', level: 'INFO', action: 'Database Backup', user: 'System', details: 'Automated backup completed', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString() },
+      { id: 'log-4', category: 'MODERATION', level: 'INFO', action: 'Role Upgraded', user: 'Admin (admin@pulsify.com)', details: 'Upgraded user-002 to Artist', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
+      { id: 'log-5', category: 'CONTENT', level: 'WARNING', action: 'Track Takedown', user: 'Admin (admin@pulsify.com)', details: 'Removed track trk-991 due to copyright', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() },
+    ];
+    return new Promise(resolve => 
+      setTimeout(() => {
+        const filtered = level === 'All' ? logs : logs.filter(l => l.level === level);
+        resolve({ status: 'success', data: { logs: filtered, total: filtered.length } });
+      }, 500)
+    );
+  }
 }
 
 export default new ModerationMockService();
