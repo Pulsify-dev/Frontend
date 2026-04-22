@@ -39,10 +39,20 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
-            sudo docker stop pulsify-web || true
-            sudo docker rm pulsify-web || true
+            sudo docker stop pulsify-web-1 pulsify-web-2 pulsify-web-3 || true
+            sudo docker rm pulsify-web-1 pulsify-web-2 pulsify-web-3 || true
             sudo docker run -d \
-              --name pulsify-web \
+              --name pulsify-web-1 \
               --restart always \
-              -p 8080:80 \
+              -p 8081:80 \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
+                sudo docker run -d \
+              --name pulsify-web-2 \
+              --restart always \
+              -p 8082:80 \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
+                sudo docker run -d \
+              --name pulsify-web-3 \
+              --restart always \
+              -p 8083:80 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
