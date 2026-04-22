@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
+import { useAuth } from '../contexts/AuthContext';
 import '../components/upload/css/PulsifyMyTracks.css';
 import { AddToPlaylistModal } from '../components/playlists/AddToPlaylistModal';
 
@@ -16,6 +17,7 @@ const WaveformBars = () => (
 
 export const PulsifyMyTracksView = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,7 +30,8 @@ export const PulsifyMyTracksView = () => {
   const fetchTracks = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await PulsifyTrackService.getArtistTracks('me');
+      const userId = user?._id || user?.id;
+      const result = await PulsifyTrackService.getArtistTracks(userId || 'me');
       setTracks(result.tracks || []);
     } catch (err) {
       setError(err.message || 'Failed to load tracks.');
