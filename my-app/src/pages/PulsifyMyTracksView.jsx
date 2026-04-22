@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
 import '../components/upload/css/PulsifyMyTracks.css';
+import { AddToPlaylistModal } from '../components/playlists/AddToPlaylistModal';
 
 /* Stable waveform bars — heights are computed once */
 const WAVEFORM_HEIGHTS = Array.from({ length: 80 }, () => Math.random() * 60 + 10);
@@ -22,6 +23,7 @@ export const PulsifyMyTracksView = () => {
   const [editForm, setEditForm] = useState({ title: '', genre: '', visibility: '' });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [filter, setFilter] = useState('all'); // all | public | private
+  const [playlistModalTrackId, setPlaylistModalTrackId] = useState(null);
 
   const fetchTracks = useCallback(async () => {
     try {
@@ -241,6 +243,16 @@ export const PulsifyMyTracksView = () => {
 
               {/* Actions */}
               <div className="track-actions">
+                <button 
+                  className="action-btn" 
+                  title="Add to Playlist" 
+                  onClick={() => setPlaylistModalTrackId(track._id || track.id)}
+                  style={{ marginRight: '8px' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/>
+                  </svg>
+                </button>
                 <button className="action-btn" title="Edit" onClick={() => handleEditClick(track)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -281,6 +293,12 @@ export const PulsifyMyTracksView = () => {
           <WaveformBars />
         </div>
       )}
+
+      <AddToPlaylistModal 
+        isOpen={!!playlistModalTrackId}
+        onClose={() => setPlaylistModalTrackId(null)}
+        trackId={playlistModalTrackId}
+      />
     </div>
   );
 };
