@@ -163,6 +163,8 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
+  const { togglePlay, isPlaying, currentTrack } = usePlayer();
+
   const handlePlaylistShare = () => {
     const embedCode = `<iframe src="https://pulsify.page/playlists/${plId}" width="400" height="600" frameborder="0" allowtransparency="true" allow="autoplay"></iframe>`;
     navigator.clipboard.writeText(embedCode).then(() => {
@@ -189,15 +191,47 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           alt={playlist.title}
           className="pulsify-artwork"
         />
-        <div className="pulsify-play-overlay">▶</div>
+        <div 
+          className="pulsify-play-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (playlist.tracks && playlist.tracks.length > 0) {
+              const firstTrack = playlist.tracks[0].track_id && typeof playlist.tracks[0].track_id === 'object' ? playlist.tracks[0].track_id : playlist.tracks[0];
+              togglePlay(firstTrack);
+            } else {
+              alert('No tracks to play in this playlist!');
+            }
+          }}
+        >
+          {isPlaying && currentTrack && playlist.tracks?.[0] && (playlist.tracks[0].track_id?._id || playlist.tracks[0]._id || playlist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? '⏸' : '▶'}
+        </div>
       </div>
 
       <div className="pulsify-card-body">
         <div className="pulsify-card-header-row">
-          <button className="pulsify-card-play-btn" title="Play">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="6,3 20,12 6,21" />
-            </svg>
+          <button 
+            className="pulsify-card-play-btn" 
+            title={isPlaying && currentTrack && playlist.tracks?.[0] && (playlist.tracks[0].track_id?._id || playlist.tracks[0]._id || playlist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? "Pause" : "Play"}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (playlist.tracks && playlist.tracks.length > 0) {
+                const firstTrack = playlist.tracks[0].track_id && typeof playlist.tracks[0].track_id === 'object' ? playlist.tracks[0].track_id : playlist.tracks[0];
+                togglePlay(firstTrack);
+              } else {
+                alert('No tracks to play in this playlist!');
+              }
+            }}
+          >
+            {isPlaying && currentTrack && playlist.tracks?.[0] && (playlist.tracks[0].track_id?._id || playlist.tracks[0]._id || playlist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6,3 20,12 6,21" />
+              </svg>
+            )}
           </button>
 
           <div className="pulsify-card-info">
