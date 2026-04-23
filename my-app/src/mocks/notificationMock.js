@@ -70,6 +70,15 @@ export const fetchNotifications = async () => {
   });
 };
 
+export const fetchUnreadCount = async () => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const count = mockNotifications.filter(n => !n.read).length;
+      resolve(count);
+    }, 100);
+  });
+};
+
 export const markNotificationRead = async (notifId) => {
   return new Promise(resolve => {
     setTimeout(() => {

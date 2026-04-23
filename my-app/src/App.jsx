@@ -36,6 +36,7 @@ import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
 import FeedPage from "./pages/FeedPage";
 import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 // Module 11 - Admin & Moderation
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -150,6 +151,7 @@ const AppRoutes = () => {
               <Route path="/discover" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/moderation" element={<AdminContentModerationPage />} />
               <Route path="/admin/users" element={<AdminUserManagementPage />} />

@@ -18,19 +18,27 @@ apiClient.interceptors.request.use((config) => {
 
 // Adapter: snake_case backend to camelCase frontend
 const adaptNotification = (n) => ({
-  id: n.id,
-  type: n.type,
-  actorName: n.actor_name || n.actorName,
-  actorAvatar: n.actor_avatar || n.actorAvatar,
+  id: n._id || n.id,
+  type: n.action_type || n.type,
+  actorName: n.actor_id?.display_name || n.actor_name || n.actorName || 'Someone',
+  actorAvatar: n.actor_id?.avatar_url || n.actor_avatar || n.actorAvatar || '',
   targetTitle: n.target_title || n.targetTitle,
-  message: n.message,
-  read: n.read,
+  message: n.message || `performed a ${n.action_type || 'action'}`,
+  read: n.is_read || n.read,
   createdAt: n.created_at || n.createdAt,
+  entityId: n.entity_id,
+  entityType: n.entity_type
 });
 
 export const fetchNotifications = async () => {
-  const { data } = await apiClient.get("/notifications");
-  return Array.isArray(data) ? data.map(adaptNotification) : [];
+  const { data } = await apiClient.get("/notifications?page=1&limit=20");
+  const items = data.data || data; // Handle 'data: []' envelope from spec
+  return Array.isArray(items) ? items.map(adaptNotification) : [];
+};
+
+export const fetchUnreadCount = async () => {
+  const { data } = await apiClient.get("/notifications/unread-count");
+  return data.data?.unread_count || 0;
 };
 
 export const markNotificationRead = async (notifId) => {

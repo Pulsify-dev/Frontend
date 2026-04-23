@@ -10,7 +10,17 @@ const mockReports = [
 ];
 
 export const createReport = async (reportData) => {
-  return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 300));
+  const report = {
+    _id: Date.now().toString(),
+    reporter_id: { _id: 'mock-user', username: 'current_user', email: 'current_user@pulsify.dev' },
+    entity_type: reportData.entity_type,
+    entity_id: reportData.entity_id,
+    reason: reportData.reason,
+    description: reportData.description || '',
+    status: 'Pending'
+  };
+  mockReports.unshift(report);
+  return new Promise(resolve => setTimeout(() => resolve({ status: 'success', data: { report } }), 300));
 };
 
 export const getReports = async ({ status = 'Pending' } = {}) => {
@@ -81,8 +91,18 @@ class ModerationMockService {
 
   async createReport(reportData) {
     console.log('MOCK: createReport', reportData);
+    const report = {
+      _id: Date.now().toString(),
+      reporter_id: { _id: 'mock-user', username: 'current_user', email: 'current_user@pulsify.dev' },
+      entity_type: reportData.entity_type,
+      entity_id: reportData.entity_id,
+      reason: reportData.reason,
+      description: reportData.description || '',
+      status: 'Pending'
+    };
+    this.mockReports.unshift(report);
     return new Promise(resolve => 
-      setTimeout(() => resolve({ status: 'success', data: { report: { _id: Date.now().toString(), ...reportData, status: 'Pending' } } }), 500)
+      setTimeout(() => resolve({ status: 'success', data: { report } }), 500)
     );
   }
 
@@ -103,6 +123,30 @@ class ModerationMockService {
     }
     return new Promise(resolve => 
       setTimeout(() => resolve({ status: 'success', data: { report: { _id: reportId, status, admin_notes: adminNotes } } }), 500)
+    );
+  }
+
+  async getAnalytics() {
+    const totalUsers = mockUsersData.length;
+    const suspendedUsers = mockUsersData.filter((user) => user.is_suspended).length;
+    const activeUsers = Math.max(0, totalUsers - suspendedUsers);
+    const pendingReports = this.mockReports.filter((report) => report.status === 'Pending').length;
+    const playThroughRate = 0.72;
+    const totalStorageBytes = totalUsers * 185000000000;
+
+    return new Promise((resolve) =>
+      setTimeout(() => resolve({
+        status: 'success',
+        data: {
+          total_active_users: activeUsers,
+          play_through_rate: playThroughRate,
+          total_storage_bytes: totalStorageBytes,
+          new_users_this_month: 3,
+          suspended_users_count: suspendedUsers,
+          pending_reports_count: pendingReports,
+          plan_distribution: { Free: 2, Artist: 1, ArtistPro: 1 }
+        }
+      }), 300)
     );
   }
 
