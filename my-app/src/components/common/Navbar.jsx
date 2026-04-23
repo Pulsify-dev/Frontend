@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import "../../css/navbar-soundcloud.css";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");

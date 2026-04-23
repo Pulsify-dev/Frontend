@@ -205,39 +205,117 @@ export const PulsifyTrackUploadScreen = () => {
             </svg>
           </Link>
         </div>
-        <div className="pulsify-upload-body pulsify-success-screen">
-          <div className="success-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-          </div>
-          <h2 className="success-title">Saved to Pulsify.</h2>
-          <p className="success-subtitle">Your track "{uploadedTrack.title}" is now live on Pulsify.</p>
-          <div className="success-track-card">
-            <img 
-              src={uploadedTrack.artwork_url} 
-              alt={uploadedTrack.title} 
-              className="success-track-art"
-            />
-            <div className="success-track-info">
-              <span className="success-track-title">{uploadedTrack.title}</span>
-              <span className="success-track-genre">{uploadedTrack.genre}</span>
+        <div className="pulsify-upload-body pulsify-success-screen-modern">
+          <div className="success-timeline-container">
+            <div className="success-timeline">
+              <div className="timeline-line"></div>
+              
+              {/* Step 1: Saved (Solid) */}
+              <div className="timeline-step">
+                <div className="timeline-circle circle-solid">
+                  <svg height="58" width="58" viewBox="0 0 143 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" transform="translate(-166.000000, -1125.000000)" d="M308.984235,1169.99251 C308.382505,1180.70295 299.444837,1189.03525 288.718543,1188.88554 L240.008437,1188.88554 C237.777524,1188.86472 235.977065,1187.05577 235.966737,1184.82478 L235.966737,1132.37801 C235.894282,1130.53582 236.962478,1128.83883 238.654849,1128.10753 C238.654849,1128.10753 243.135035,1124.99996 252.572022,1124.99996 C258.337036,1124.99309 263.996267,1126.54789 268.948531,1129.49925 C276.76341,1134.09703 282.29495,1141.75821 284.200228,1150.62285 C285.880958,1150.14737 287.620063,1149.90993 289.36674,1149.91746 C294.659738,1149.88414 299.738952,1152.0036 303.438351,1155.78928 C307.13775,1159.57496 309.139562,1164.70168 308.984235,1169.99251 Z M229.885123,1135.69525 C231.353099,1153.48254 232.420718,1169.70654 229.885123,1187.43663 C229.796699,1188.23857 229.119091,1188.84557 228.312292,1188.84557 C227.505494,1188.84557 226.827885,1188.23857 226.739461,1187.43663 C224.375448,1169.85905 225.404938,1153.33003 226.739461,1135.69525 C226.672943,1135.09199 226.957336,1134.50383 227.471487,1134.18133 C227.985639,1133.85884 228.638946,1133.85884 229.153097,1134.18133 C229.667248,1134.50383 229.951641,1135.09199 229.885123,1135.69525 Z M220.028715,1187.4557 C219.904865,1188.26549 219.208361,1188.86356 218.389157,1188.86356 C217.569953,1188.86356 216.87345,1188.26549 216.7496,1187.4557 C214.986145,1172.28686 214.986145,1156.96477 216.7496,1141.79593 C216.840309,1140.9535 217.551388,1140.31488 218.398689,1140.31488 C219.245991,1140.31488 219.95707,1140.9535 220.047779,1141.79593 C222.005153,1156.95333 221.998746,1172.29994 220.028715,1187.4557 Z M210.153241,1140.2517 C211.754669,1156.55195 212.479125,1171.15545 210.134176,1187.41757 C210.134176,1188.29148 209.425728,1188.99993 208.551813,1188.99993 C207.677898,1188.99993 206.969449,1188.29148 206.969449,1187.41757 C204.70076,1171.36516 205.463344,1156.34224 206.969449,1140.2517 C207.05845,1139.43964 207.744425,1138.82474 208.561345,1138.82474 C209.378266,1138.82474 210.06424,1139.43964 210.153241,1140.2517 Z M200.258703,1187.47476 C200.169129,1188.29694 199.474788,1188.91975 198.647742,1188.91975 C197.820697,1188.91975 197.126356,1188.29694 197.036782,1187.47476 C195.216051,1173.32359 195.216051,1158.99744 197.036782,1144.84627 C197.036782,1143.94077 197.770837,1143.20671 198.676339,1143.20671 C199.581842,1143.20671 200.315897,1143.94077 200.315897,1144.84627 C202.251054,1158.99121 202.231809,1173.33507 200.258703,1187.47476 Z M190.383229,1155.50339 C192.880695,1166.56087 191.755882,1176.32196 190.287906,1187.58915 C190.168936,1188.33924 189.522207,1188.89148 188.762737,1188.89148 C188.003266,1188.89148 187.356537,1188.33924 187.237567,1187.58915 C185.903044,1176.47448 184.797296,1166.48462 187.142244,1155.50339 C187.142244,1154.60842 187.867763,1153.8829 188.762737,1153.8829 C189.65771,1153.8829 190.383229,1154.60842 190.383229,1155.50339 Z M180.526821,1153.82571 C182.814575,1165.15009 182.071055,1174.7396 180.469627,1186.10211 C180.27898,1187.7798 177.400223,1187.79886 177.247706,1186.10211 C175.798795,1174.91118 175.112468,1165.0357 177.190512,1153.82571 C177.281785,1152.97315 178.001234,1152.32661 178.858666,1152.32661 C179.716099,1152.32661 180.435548,1152.97315 180.526821,1153.82571 Z M170.575089,1159.31632 C172.977231,1166.82778 172.157452,1172.92846 170.479765,1180.63056 C170.391921,1181.42239 169.722678,1182.02149 168.925999,1182.02149 C168.12932,1182.02149 167.460077,1181.42239 167.372232,1180.63056 C165.923321,1173.08097 165.332318,1166.84684 167.23878,1159.31632 C167.330053,1158.46376 168.049502,1157.81722 168.906934,1157.81722 C169.764367,1157.81722 170.483816,1158.46376 170.575089,1159.31632 Z"></path></svg>
+                </div>
+                <div className="timeline-content">
+                  <h2 className="success-title-main">Saved to Pulsify.</h2>
+                  <p className="success-subtitle-main">Congratulations! Your tracks are now on Pulsify.</p>
+                  <button
+                    onClick={() => navigate(`/tracks/${uploadedTrack._id}`)}
+                    className="success-btn-outline"
+                  >
+                    View track
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2: Distribute (Dashed 1 - Spotify) */}
+              <div className="timeline-step distribute-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M30 3.75C15.503 3.75 3.75 15.502 3.75 30S15.503 56.25 30 56.25 56.25 44.498 56.25 30 44.497 3.75 30 3.75Zm12.807 37.841a2.29 2.29 0 0 1-3.11.876 27.183 27.183 0 0 0-10.624-3.345 27.325 27.325 0 0 0-11.104 1.15 2.281 2.281 0 1 1-1.388-4.348 31.782 31.782 0 0 1 12.954-1.343 31.771 31.771 0 0 1 12.393 3.904 2.279 2.279 0 0 1 .879 3.106Zm3.142-7.973a2.28 2.28 0 0 1-3.078.97 35.682 35.682 0 0 0-12.943-3.861 35.57 35.57 0 0 0-13.542 1.206 2.282 2.282 0 0 1-1.265-4.387 40.217 40.217 0 0 1 15.269-1.362 40.257 40.257 0 0 1 14.592 4.356 2.282 2.282 0 0 1 .967 3.078Zm1.137-6.634a2.3 2.3 0 0 1-1.018-.239 44.107 44.107 0 0 0-15.288-4.413 44.014 44.014 0 0 0-15.894 1.257 2.283 2.283 0 0 1-1.173-4.412 48.654 48.654 0 0 1 17.532-1.386 48.599 48.599 0 0 1 16.86 4.867 2.284 2.284 0 0 1-1.019 4.326Z" fill="currentColor"></path></svg>
+                </div>
+                <div className="timeline-content distribute-content">
+                  <h3 className="distribute-title">Distribute to more streaming services?</h3>
+                  <p className="distribute-subtitle">
+                    Easily send your Pulsify tracks to Spotify, Apple Music, TikTok, Instagram and more with a Artist Pro subscription. <a href="#" className="learn-more-link">Learn more.</a>
+                  </p>
+                  <button className="success-btn-white">Unlock with Artist Pro</button>
+                </div>
+              </div>
+
+              {/* Step 3: Apple Music (Dashed 2) */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M56.25 18.29v1.882l-.022 19.653c0 .209 0 .418.002.627.001.418.003.836-.002 1.254 0 .525-.007 1.057-.022 1.582-.036 1.153-.102 2.312-.306 3.45a11.566 11.566 0 0 1-1.08 3.281 10.959 10.959 0 0 1-2.026 2.793A11.088 11.088 0 0 1 50 54.84a11.518 11.518 0 0 1-3.274 1.08c-1.137.204-2.297.277-3.449.306a57.18 57.18 0 0 1-1.582.022H20.164l-.628.001c-.418.002-.836.004-1.254-.001a57.18 57.18 0 0 1-1.582-.022c-1.152-.037-2.311-.102-3.449-.306a11.595 11.595 0 0 1-3.274-1.08 11.089 11.089 0 0 1-2.793-2.027 11.086 11.086 0 0 1-2.027-2.793 11.64 11.64 0 0 1-1.079-3.281c-.204-1.138-.277-2.297-.306-3.45a57.232 57.232 0 0 1-.022-1.582V18.291l.022-1.575c.036-1.153.102-2.312.306-3.45.204-1.16.547-2.231 1.08-3.281a10.985 10.985 0 0 1 2.034-2.793 10.957 10.957 0 0 1 2.792-2.027c1.043-.54 2.122-.875 3.274-1.087 1.138-.204 2.297-.277 3.45-.306a57.22 57.22 0 0 1 1.582-.022H41.71l1.59.022c1.152.036 2.312.102 3.449.306 1.152.204 2.224.547 3.274 1.08a11.085 11.085 0 0 1 2.793 2.027 11.086 11.086 0 0 1 2.027 2.793c.532 1.05.875 2.129 1.079 3.281.204 1.138.277 2.297.306 3.45.015.524.022 1.057.022 1.582Zm-16.778-6.278a55.87 55.87 0 0 1 1.393-.241c.845-.073 1.32.481 1.327 1.378v24.755c0 .664-.008 1.269-.146 1.933a4.932 4.932 0 0 1-.766 1.8c-.379.547-.867.992-1.436 1.328-.576.342-1.181.532-1.823.663-1.21.248-2.035.3-2.815.146a3.95 3.95 0 0 1-1.896-.962 4.085 4.085 0 0 1-1.327-2.596 4.114 4.114 0 0 1 1.116-3.267c.438-.452.977-.81 1.706-1.094.758-.291 1.597-.466 2.888-.729.171-.033.34-.067.51-.102.17-.035.34-.07.51-.102.445-.095.832-.204 1.138-.583.306-.38.314-.839.314-1.298V21.476c0-.882-.394-1.123-1.24-.962-.605.116-13.577 2.734-13.577 2.734-.736.182-.992.423-.992 1.327v16.931c0 .664-.036 1.27-.175 1.933a4.932 4.932 0 0 1-.765 1.8c-.38.548-.868.992-1.437 1.328a5.91 5.91 0 0 1-1.823.67c-1.21.248-2.034.3-2.814.146a3.897 3.897 0 0 1-1.896-.97 4.048 4.048 0 0 1-1.298-2.595c-.124-1.145.226-2.37 1.086-3.267.438-.452.978-.81 1.707-1.094.758-.291 1.597-.466 2.887-.729.172-.033.341-.067.51-.102.17-.034.34-.07.511-.102.445-.095.831-.204 1.137-.583.307-.38.343-.817.343-1.276V17.138c0-.263.022-.438.037-.525.065-.409.226-.766.525-1.014.24-.204.561-.35.97-.437h.007l15.604-3.15Z" fill="currentColor"></path></svg>
+                </div>
+                <div className="timeline-content"></div>
+              </div>
+
+              {/* Step 4: YouTube (Dashed 3) */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M51.974 11.488a7.046 7.046 0 0 1 4.975 4.973C58.126 20.848 58.126 30 58.126 30s0 9.152-1.177 13.539a7.046 7.046 0 0 1-4.975 4.973c-4.389 1.175-21.988 1.175-21.988 1.175s-17.598 0-21.987-1.175a7.046 7.046 0 0 1-4.975-4.973c-1.176-4.387-1.176-13.54-1.176-13.54s0-9.151 1.176-13.538a7.046 7.046 0 0 1 4.975-4.973c4.389-1.175 21.987-1.175 21.987-1.175s17.6 0 21.988 1.175ZM38.98 30l-14.621 8.438V21.561L38.979 30Z" fill="currentColor"></path></svg>
+                </div>
+                <div className="timeline-content"></div>
+              </div>
+
+              {/* Step 5: Instagram (Dashed 4) */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12.81 5.127c-1.73.672-3.191 1.569-4.653 3.03-1.462 1.452-2.358 2.925-3.03 4.644-.651 1.665-1.089 3.575-1.217 6.371-.128 2.797-.16 3.693-.16 10.823 0 7.13.032 8.026.16 10.822.128 2.796.576 4.707 1.217 6.372.672 1.729 1.568 3.19 3.03 4.653 1.462 1.462 2.924 2.359 4.652 3.031 1.665.651 3.575 1.089 6.37 1.217 2.797.128 3.693.16 10.821.16s8.024-.032 10.82-.16c2.796-.128 4.706-.576 6.37-1.217 1.73-.672 3.191-1.569 4.653-3.03 1.462-1.463 2.358-2.925 3.03-4.654.651-1.665 1.089-3.576 1.217-6.372.128-2.796.16-3.693.16-10.822 0-7.13-.032-8.026-.16-10.823-.128-2.796-.576-4.706-1.217-6.371-.672-1.719-1.568-3.192-3.02-4.643-1.461-1.462-2.923-2.359-4.652-3.031-1.664-.651-3.575-1.089-6.37-1.217-2.796-.128-3.692-.16-10.82-.16s-8.025.032-10.82.16c-2.807.117-4.717.566-6.381 1.217Zm27.797 3.5c2.56.118 3.948.545 4.876.908 1.227.48 2.102 1.046 3.02 1.963.918.918 1.483 1.794 1.964 3.021.362.928.79 2.316.907 4.877.127 2.765.149 3.597.149 10.61 0 7.011-.032 7.844-.15 10.608-.117 2.562-.544 3.95-.906 4.878-.48 1.227-1.046 2.102-1.964 3.02-.918.918-1.793 1.484-3.02 1.964-.928.363-2.315.79-4.876.907-2.764.128-3.596.15-10.607.15-7.01 0-7.843-.032-10.607-.15-2.56-.117-3.948-.544-4.876-.907-1.227-.48-2.102-1.046-3.02-1.964-.918-.918-1.483-1.793-1.963-3.02-.363-.929-.79-2.316-.907-4.878-.129-2.764-.15-3.597-.15-10.609 0-7.012.032-7.844.15-10.608.117-2.562.544-3.95.907-4.878.48-1.227 1.045-2.103 1.963-3.02.918-.918 1.793-1.484 3.02-1.964.928-.363 2.315-.79 4.876-.907 2.764-.129 3.596-.15 10.607-.15 7.01 0 7.843.021 10.607.15Z" fill="currentColor"></path><path d="M16.523 30.005c0 7.45 6.04 13.48 13.477 13.48 7.438 0 13.477-6.04 13.477-13.48 0-7.439-6.029-13.48-13.477-13.48s-13.477 6.03-13.477 13.48Zm22.227 0A8.75 8.75 0 0 1 30 38.757a8.75 8.75 0 0 1-8.75-8.752A8.75 8.75 0 0 1 30 21.254a8.75 8.75 0 0 1 8.75 8.751Zm5.271-10.865a3.148 3.148 0 1 0 0-6.296 3.148 3.148 0 0 0 0 6.296Z" fill="currentColor"></path></svg>
+                </div>
+                <div className="timeline-content"></div>
+              </div>
+
+              {/* Steps 6-12: Remaining icons */}
+              {/* Step 6 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M41.934 22.701a20.62 20.62 0 0 0 12.028 3.847v-8.626c-.85 0-1.696-.089-2.526-.265v6.79a20.624 20.624 0 0 1-12.028-3.846v17.604c0 8.806-7.142 15.945-15.953 15.945-3.287 0-6.343-.994-8.88-2.697A15.909 15.909 0 0 0 25.98 56.25c8.811 0 15.954-7.139 15.954-15.946V22.701Zm3.116-8.703a12.02 12.02 0 0 1-3.116-7.039V5.85H39.54A12.077 12.077 0 0 0 45.05 14ZM20.147 44.695a7.296 7.296 0 0 1 5.809-11.709c.75 0 1.497.115 2.213.342v-8.82a16.09 16.09 0 0 0-2.524-.145v6.865a7.303 7.303 0 0 0-2.215-.342 7.295 7.295 0 0 0-7.298 7.293 7.292 7.292 0 0 0 4.015 6.516Z" fill="currentColor" opacity="0.2"></path><path d="M39.408 20.6a20.624 20.624 0 0 0 12.028 3.848v-6.79a12.074 12.074 0 0 1-6.386-3.66 12.077 12.077 0 0 1-5.51-8.148h-6.287v34.454a7.296 7.296 0 0 1-7.298 7.27 7.288 7.288 0 0 1-5.809-2.88 7.293 7.293 0 0 1 3.283-13.808c.773 0 1.517.12 2.215.342v-6.865c-8.655.18-15.617 7.248-15.617 15.941 0 4.34 1.734 8.274 4.547 11.149a15.883 15.883 0 0 0 8.881 2.697c8.81 0 15.953-7.14 15.953-15.945V20.6Z" fill="currentColor"></path><path d="M51.434 17.658v-1.836a12.03 12.03 0 0 1-6.386-1.824 12.064 12.064 0 0 0 6.386 3.66ZM39.54 5.85a12.324 12.324 0 0 1-.133-.99V3.75h-8.681v34.455a7.296 7.296 0 0 1-7.297 7.269 7.27 7.27 0 0 1-3.284-.778 7.289 7.289 0 0 0 5.81 2.877 7.296 7.296 0 0 0 7.297-7.268V5.85h6.288ZM25.643 24.364v-1.955c-.726-.099-1.457-.149-2.19-.148-8.81 0-15.953 7.138-15.953 15.944 0 5.52 2.807 10.386 7.073 13.248a15.886 15.886 0 0 1-4.547-11.149c0-8.693 6.96-15.762 15.617-15.94Z" fill="currentColor"></path></svg>
+                </div>
+              </div>
+
+              {/* Step 7 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M56.25 13.125H44.898v6.642H56.25v-6.642Zm0 9.211H44.898v6.642H56.25v-6.642Zm0 9.207H44.898v6.642H56.25v-6.642Zm-41.148 9.206H3.75v6.642h11.352v-6.642Zm13.707 0H17.457v6.642h11.352v-6.642Zm13.734 0H31.191v6.642h11.352v-6.642Zm13.707 0H44.898v6.642H56.25v-6.642Zm-13.707-9.206H31.191v6.642h11.352v-6.642Zm-13.734 0H17.457v6.642h11.352v-6.642Zm0-9.207H17.457v6.642h11.352v-6.642Z" fill="currentColor"></path></svg>
+                </div>
+              </div>
+
+              {/* Step 8 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="m22.81 13.902 6.442 30.695h1.497l6.44-30.695H48.75v32.196h-5.845V19.24l1.088-3.838h-1.886l-6.712 30.695H24.65l-6.759-30.695h-1.839l1.042 3.838v26.857H11.25V13.902h11.56Z" fill="currentColor"></path></svg>
+                </div>
+              </div>
+
+              {/* Step 9 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M34.064 56.25V32.302h8.038l1.204-9.333h-9.242v-5.958c0-2.702.75-4.544 4.625-4.544l4.942-.002V4.118c-.855-.114-3.788-.368-7.202-.368-7.125 0-12.003 4.35-12.003 12.337v6.882h-8.059v9.333h8.059V56.25h9.638Z" fill="currentColor"></path></svg>
+                </div>
+              </div>
+
+              {/* Step 10 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M36.668 60c-9.642 0-17.337-7.597-17.337-17.435a17.45 17.45 0 0 1 4.53-11.785L12.076 42.565 5.89 36.38l13.297-13.15c1.8-1.8 2.725-4.14 2.725-6.72V0h8.718v16.51c0 5.065-1.8 9.35-5.308 12.857l-.39.39a17.36 17.36 0 0 1 11.735-4.53c9.888 0 17.438 7.84 17.438 17.338A17.357 17.357 0 0 1 36.668 60m0-26.785c-5.307 0-9.447 4.382-9.447 9.35 0 5.113 4.187 9.45 9.45 9.45a9.51 9.51 0 0 0 9.545-9.45c0-5.162-4.288-9.35-9.548-9.35" fill="currentColor"></path></svg>
+                </div>
+              </div>
+
+              {/* Step 11 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg height="58" width="58" viewBox="0 0 48 48" fill="none" xmlnsXlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g stroke="currentColor" fill="none"><circle cx="24" cy="24" r="21.5"></circle><path d="M32.2807,29.7009c1.112-.451,3.0916-1.0492,3.6872-.3272.6446.7814-.17,2.4769-.92,3.7942"></path><path d="M11.7984,30.2234c1.7586,1.3965,6.9532,3.5343,12.4876,3.5343a17.0029,17.0029,0,0,0,10.1671-3.0789"></path><path d="M20.4043,20.125v3.3a2,2,0,0,0,2,2h0a2,2,0,0,0,2-2v-3.3"></path><line x1="24.4043" y1="23.425" x2="24.4043" y2="25.425"></line><path d="M10.4,22.225a2,2,0,0,1,2-2h0a2,2,0,0,1,2,2v3.2"></path><line x1="10.4001" y1="20.225" x2="10.4001" y2="25.425"></line><path d="M14.4,22.225a2,2,0,0,1,2-2h0a2,2,0,0,1,2,2v3.2"></path><circle cx="31.88" cy="17.675" r="0.7"></circle><line x1="31.88" y1="20.125" x2="31.88" y2="25.425"></line><path d="M26.5407,24.9733a2.249,2.249,0,0,0,1.6448.4472h.4487a1.3236,1.3236,0,0,0,1.3222-1.325h0a1.3236,1.3236,0,0,0-1.3222-1.325h-.8974a1.3235,1.3235,0,0,1-1.3221-1.325h0a1.3235,1.3235,0,0,1,1.3221-1.325h.4487a2.2494,2.2494,0,0,1,1.6449.4472"></path><path d="M37.6,24.4176a1.9991,1.9991,0,0,1-1.7366,1.0074h0a2,2,0,0,1-2-2v-1.3a2,2,0,0,1,2-2h0a1.9989,1.9989,0,0,1,1.7346,1.0039"></path></g></svg>
+                </div>
+              </div>
+
+              {/* Step 12 */}
+              <div className="timeline-step empty-step">
+                <div className="timeline-circle circle-dashed">
+                  <svg width="58" height="58" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 3.75V12M12 12V20.25M12 12H3.75M12 12H20.25" stroke="currentColor" strokeWidth="1.5" fill="currentColor"></path></svg>
+                </div>
+              </div>
+
             </div>
-          </div>
-          <div className="success-actions">
-            <button
-              onClick={() => navigate(`/tracks/${uploadedTrack._id}`)}
-              className="success-btn success-btn-primary"
-            >
-              View track
-            </button>
-            <button
-              onClick={handleReplaceTrack}
-              className="success-btn success-btn-secondary"
-            >
-              Upload another
-            </button>
           </div>
         </div>
       </div>
@@ -249,21 +327,39 @@ export const PulsifyTrackUploadScreen = () => {
       <div className="pulsify-upload-header">
         <h1>
           <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>Pulsify</span>
-          {selectedFile ? 'Track Info' : 'Upload'}
+          {selectedFile ? 'Track info' : 'Upload'}
         </h1>
         {selectedFile && (
-          <div className="pulsify-replace-track">
-            <div className="replace-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
+          isUploading ? (
+            <div className="pulsify-header-upload-progress">
+              <span className="replace-name">{selectedFile.name}</span>
+              <div className="usage-progress-small">
+                <div
+                  className="usage-progress-bar-small"
+                  style={{ width: `${uploadProgress}%`, backgroundColor: '#38d13b' }}
+                ></div>
+              </div>
+              <span className="upload-pct">Uploading {uploadProgress}%</span>
+              <button className="pulsify-upload-close-small">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block' }}>
+                  <path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z" />
+                </svg>
+              </button>
             </div>
-            <span className="replace-name">{selectedFile.name}</span>
-            <button onClick={handleReplaceTrack}>Replace track</button>
-          </div>
+          ) : (
+            <div className="pulsify-replace-track">
+              <div className="replace-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+              <span className="replace-name">{selectedFile.name}</span>
+              <button onClick={handleReplaceTrack} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '12px' }}>Replace track</button>
+            </div>
+          )
         )}
         <Link to="/" className="pulsify-upload-close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block' }}>
             <path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z"/>
           </svg>
         </Link>
@@ -377,37 +473,6 @@ export const PulsifyTrackUploadScreen = () => {
           </>
         ) : (
           <>
-            {(isUploading || transcodingStatus === 'processing') && (
-              <div className="pulsify-upload-progress-section">
-                <div className="progress-header">
-                  <div className="progress-status">
-                    {transcodingStatus === 'processing' ? (
-                      <>
-                        <span className="progress-spinner"></span>
-                        <span>Processing your track...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="17 8 12 3 7 8"/>
-                          <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                        <span>Uploading...</span>
-                      </>
-                    )}
-                  </div>
-                  <span className="progress-percent">{uploadProgress}%</span>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{ width: `${uploadProgress}%` }} />
-                </div>
-                {transcodingStatus === 'processing' && (
-                  <p className="progress-hint">Your file is being transcoded. This usually takes a few seconds.</p>
-                )}
-              </div>
-            )}
-
             {uploadError && (
               <div className="pulsify-upload-error" style={{ marginBottom: '24px' }}>
                 <span>⚠</span> {uploadError}
