@@ -10,8 +10,12 @@ export const PlayerProvider = ({ children }) => {
   const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
 
   const togglePlay = async (track) => {
+    const getTrackId = (t) => t?.track_id?._id || t?.track_id || t?._id || t?.id || t?.trackId;
+    const currentId = getTrackId(currentTrack);
+    const newId = getTrackId(track);
+
     // If clicking the same track that is currently playing, toggle pause
-    if (currentTrack && currentTrack.trackId === track.trackId) {
+    if (currentTrack && currentId && currentId === newId) {
       setIsPlaying(!isPlaying);
       return;
     }

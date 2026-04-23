@@ -61,9 +61,17 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
             onClick={(e) => { e.stopPropagation(); togglePlay(track); }}
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: '2px' }}
           >
-             <span style={{ color: '#f50', fontSize: '14px', backgroundColor: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: isPlaying && currentTrack && (currentTrack.trackId === (track._id || track.id) || currentTrack._id === (track._id || track.id)) ? '0' : '2px' }}>
-                {isPlaying && currentTrack && (currentTrack.trackId === (track._id || track.id) || currentTrack._id === (track._id || track.id)) ? '⏸' : '▶'}
-             </span>
+              <span style={{ color: '#f50', fontSize: '14px', backgroundColor: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: (() => {
+                const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+                const trackId = track?._id || track?.id;
+                return isPlaying && currentId === trackId ? '0' : '2px';
+              })() }}>
+                {(() => {
+                  const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+                  const trackId = track?._id || track?.id;
+                  return isPlaying && currentId === trackId ? '⏸' : '▶';
+                })()}
+              </span>
           </div>
         )}
       </div>

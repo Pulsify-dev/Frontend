@@ -61,7 +61,39 @@ const PulsifyPlayerBar = () => {
   const artistName = currentTrack?.artist_id?.display_name || currentTrack?.artist_name || currentTrack?.artist?.name || 'Unknown Artist';
   
   // Use backend stream URL if available, otherwise fallback to a default mock stream so sound actually plays
-  const audioSrc = currentTrack?.audio_url || currentTrack?.stream_url || currentTrack?.url || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+  const [streamUrl, setStreamUrl] = useState('');
+
+  useEffect(() => {
+    const fetchStreamUrl = async () => {
+      if (!currentTrack) return;
+      const trackId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+      console.log('Player Bar: Fetching stream for trackId:', trackId, 'currentTrack:', currentTrack);
+      
+      if (!trackId) {
+        console.warn('Player Bar: No valid trackId found in currentTrack');
+        return;
+      }
+
+      try {
+        const { getStreamUrl } = await import('../../services/api');
+        const data = await getStreamUrl(trackId);
+        console.log('Player Bar: Stream URL received:', data?.url);
+        if (data && data.url) {
+          setStreamUrl(data.url);
+        } else {
+          console.warn('Player Bar: API returned no URL, falling back');
+          setStreamUrl(''); 
+        }
+      } catch (err) {
+        console.error('Player Bar: Failed to get stream URL:', err);
+        setStreamUrl('');
+      }
+    };
+    fetchStreamUrl();
+  }, [currentTrack]);
+
+  // Priority: 1. Fetched Stream URL, 2. Track's own URLs, 3. No fallback (let it fail) or Mock if explicitly in mock mode
+  const audioSrc = streamUrl || currentTrack?.audio_url || currentTrack?.stream_url || currentTrack?.url;
 
   if (!currentTrack) return null;
 
@@ -71,7 +103,20 @@ const PulsifyPlayerBar = () => {
         ref={audioRef} 
         src={audioSrc} 
         onTimeUpdate={handleTimeUpdate}
-        onEnded={() => togglePlay(currentTrack)} 
+        onEnded={async () => {
+          if (currentTrack) {
+            const trackId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+            try {
+              const { registerPlay } = await import('../../services/api');
+              const durationMs = audioRef.current?.currentTime ? audioRef.current.currentTime * 1000 : 0;
+              console.log('Player Bar: Registering play for trackId:', trackId, 'durationMs:', durationMs);
+              await registerPlay(trackId, { duration_played_ms: durationMs });
+            } catch (err) {
+              console.error('Player Bar: Failed to register play:', err);
+            }
+          }
+          togglePlay(currentTrack);
+        }} 
       />
       <div className="sc-player-inner">
         {/* Controls */}

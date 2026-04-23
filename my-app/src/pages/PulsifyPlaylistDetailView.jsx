@@ -160,7 +160,15 @@ export const PulsifyPlaylistDetailView = () => {
                   }
                 }}
               >
-                {isPlaying && currentTrack && playlistDetail.tracks?.some(t => (t.track_id?._id || t.track_id || t.id) === currentTrack._id) ? '⏸' : '▶'}
+                {(() => {
+                  if (!isPlaying || !currentTrack) return '▶';
+                  const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+                  const isThisPlaylistPlaying = playlistDetail.tracks?.some(t => {
+                    const tId = t.track_id?._id || t.track_id || t._id || t.id;
+                    return tId === currentId;
+                  });
+                  return isThisPlaylistPlaying ? '⏸' : '▶';
+                })()}
               </button>
               <div style={{ minWidth: 0 }}>
                 <span style={{ backgroundColor: 'rgba(0,0,0,0.75)', color: '#fff', padding: '4px 10px', fontSize: '22px', fontWeight: '400', display: 'inline-block', lineHeight: 1.3 }}>
@@ -177,7 +185,14 @@ export const PulsifyPlaylistDetailView = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', height: '80px', marginBottom: '10px' }}>
-              {!(isPlaying && currentTrack && playlistDetail.tracks?.some(t => (t.track_id?._id || t.track_id || t.id) === currentTrack._id)) ? (
+              {(() => {
+                const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+                const isThisPlaylistPlaying = isPlaying && currentTrack && playlistDetail.tracks?.some(t => {
+                  const tId = t.track_id?._id || t.track_id || t._id || t.id;
+                  return tId === currentId;
+                });
+                return !isThisPlaylistPlaying;
+              })() ? (
                 <div style={{
                   width: '100px', height: '100px', borderRadius: '50%',
                   border: 'none',
