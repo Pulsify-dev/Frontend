@@ -6,6 +6,8 @@ export const PlayerContext = createContext();
 export const PlayerProvider = ({ children }) => {
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playerProgress, setPlayerProgress] = useState(0);
+  const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
 
   const togglePlay = async (track) => {
     // If clicking the same track that is currently playing, toggle pause
@@ -17,6 +19,8 @@ export const PlayerProvider = ({ children }) => {
     // Otherwise, play the new track
     setCurrentTrack(track);
     setIsPlaying(true);
+    setPlayerProgress(0);
+    setPlayerCurrentTime(0);
 
     // Call DI service to record the play for analytics/history
     try {
@@ -27,7 +31,7 @@ export const PlayerProvider = ({ children }) => {
   };
 
   return (
-    <PlayerContext.Provider value={{ currentTrack, isPlaying, togglePlay }}>
+    <PlayerContext.Provider value={{ currentTrack, isPlaying, togglePlay, playerProgress, setPlayerProgress, playerCurrentTime, setPlayerCurrentTime }}>
       {children}
     </PlayerContext.Provider>
   );

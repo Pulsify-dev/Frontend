@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
 import { useAuth } from '../contexts/AuthContext';
+import { usePlayer } from '../hooks/usePlayer';
 import '../components/upload/css/PulsifyMyTracks.css';
 import { AddToPlaylistModal } from '../components/playlists/AddToPlaylistModal';
 
@@ -18,6 +19,7 @@ const WaveformBars = () => (
 export const PulsifyMyTracksView = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { togglePlay, isPlaying, currentTrack } = usePlayer();
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -160,12 +162,16 @@ export const PulsifyMyTracksView = () => {
               <span className="track-index">{index + 1}</span>
 
               {/* Artwork */}
-              <div className="track-artwork">
-                <img src={track.artwork_url} alt={track.title} />
+              <div className="track-artwork" onClick={() => togglePlay(track)} style={{ cursor: 'pointer' }}>
+                <img src={track.artwork_url || track.cover_art_url || 'https://placehold.co/40x40/222/555?text=♪'} alt={track.title} />
                 <div className="track-play-overlay">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
+                  {isPlaying && currentTrack && (currentTrack._id === track._id || currentTrack.trackId === track._id) ? (
+                    <span style={{ color: '#fff', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⏸</span>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  )}
                 </div>
               </div>
 

@@ -36,7 +36,19 @@ export const PulsifyPlaylistsView = () => {
         setIsLoading(true);
         const data = await PulsifyPlaylistService.retrieveAllPlaylists('me');
         if (isMounted) {
-          setPulsifyPlaylists(Array.isArray(data) ? data : data.playlists || []);
+          const rawPlaylists = Array.isArray(data) ? data : data.playlists || [];
+          // Fetch detailed data for each playlist to populate track titles
+          const detailedPlaylists = await Promise.all(
+            rawPlaylists.map(async (pl) => {
+              try {
+                const detailed = await PulsifyPlaylistService.getPlaylistById(pl._id || pl.id);
+                return detailed.data || detailed || pl;
+              } catch (e) {
+                return pl; // fallback to raw
+              }
+            })
+          );
+          setPulsifyPlaylists(detailedPlaylists);
         }
       } catch (err) {
         if (isMounted) {
@@ -91,23 +103,6 @@ export const PulsifyPlaylistsView = () => {
         <span className="pulsify-tab active">Playlists</span>
         <span className="pulsify-tab">Reposts</span>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button data-testid="create-playlist-btn" className="pulsify-btn pulsify-btn-dark" style={{ fontSize: '12px', padding: '5px 10px' }} onClick={() => setShowCreateModal(true)}>
-            + Create
-          </button>
-          {isUploadLocked ? (
-            <button className="pulsify-btn pulsify-btn-outline" onClick={() => alert('Free Tier Limit Reached (3 Tracks). Please upgrade to Pro or Go+ to upload more!')} style={{ color: '#999', borderColor: '#444', cursor: 'not-allowed', fontSize: '12px', padding: '5px 10px' }}>
-              🔒 Upload Limit Reached
-            </button>
-          ) : (
-            <Link data-testid="upload-track-link" to="/upload" className="pulsify-btn pulsify-btn-dark" style={{ fontSize: '12px', padding: '5px 10px' }}>
-              Upload Track
-            </Link>
-          )}
-          <Link data-testid="go-premium-link" to="/premium" className="pulsify-btn pulsify-btn-brand" style={{ fontSize: '12px', padding: '5px 10px' }}>
-            Go Pro
-          </Link>
-        </div>
       </div>
 
       <div className="pulsify-page-layout">
@@ -146,9 +141,8 @@ export const PulsifyPlaylistsView = () => {
           </div>
 
           <div className="pulsify-sidebar-likes">
-            <div className="pulsify-sidebar-likes-header">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-              2 Likes
+            <div className="pulsify-sidebar-likes-header" style={{ borderBottom: 'none' }}>
+              2 LIKES
               <Link to="/likes" className="view-all">View all</Link>
             </div>
             <div className="pulsify-liked-track">
@@ -167,10 +161,11 @@ export const PulsifyPlaylistsView = () => {
           </div>
 
           <div className="pulsify-sidebar-promo">
-            <div className="pulsify-sidebar-promo-header">
-              ⓘ On Tour
+            <div className="pulsify-sidebar-promo-header" style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold', color: '#fff', fontSize: '13px', marginBottom: '15px', paddingBottom: '8px', borderBottom: 'none' }}>
+              <svg viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ height: '14px', marginRight: '6px' }}><path d="M13.25 3.75V4.25M13.25 7.75V8.25M13.25 11.75V12.25M2.75 0.75H17.25C18.3546 0.75 19.25 1.64543 19.25 2.75V5.25C16.5 6 16.5 10 19.25 10.75V13.25C19.25 14.3546 18.3546 15.25 17.25 15.25H2.75C1.64543 15.25 0.75 14.3546 0.75 13.25V10.75C3.5 10 3.5 6 0.75 5.25V2.75C0.75 1.64543 1.64543 0.75 2.75 0.75Z" stroke="#959595" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+              ON TOUR
             </div>
-            <p className="pulsify-sidebar-promo-text">
+            <p className="pulsify-sidebar-promo-text" style={{ color: '#fff', fontSize: '13px', lineHeight: '1.4' }}>
               With an Artist Pro account, you can create ticketed live events on SoundCloud, and list existing events.
             </p>
             <Link to="/premium" className="pulsify-btn-pill-white" style={{ display: 'block' }}>
