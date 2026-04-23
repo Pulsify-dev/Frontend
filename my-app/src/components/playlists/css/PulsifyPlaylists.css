@@ -1,3 +1,109 @@
+/* --- PROFILE HEADER STYLES --- */
+.pulsify-profile-banner {
+  background: linear-gradient(135deg, #d4b5db 0%, #a485ab 100%);
+  height: 250px;
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto 15px auto;
+}
+
+.pulsify-profile-inner {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  position: absolute;
+  bottom: 35px;
+  left: 30px;
+}
+
+.pulsify-profile-avatar {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background-color: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  color: #555;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.pulsify-profile-name-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding-bottom: 45px;
+  padding-left: 15px;
+}
+
+.pulsify-profile-display-name {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  background-color: #111;
+  padding: 8px 14px;
+  display: inline-block;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pulsify-profile-username {
+  font-size: 16px;
+  color: #ccc;
+  background-color: #111;
+  padding: 6px 14px;
+  display: inline-block;
+  margin: 0;
+}
+
+.pulsify-header-image-btn {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background: #111;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- TAB BAR STYLES --- */
+.pulsify-tab-bar {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #111;
+  padding: 0;
+}
+
+.pulsify-tab {
+  padding: 12px 4px;
+  font-size: 14px;
+  color: #999;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.12s;
+  font-weight: 700;
+}
+
+.pulsify-tab.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
 .pulsify-playlists-container {
   max-width: 1240px;
   margin: 0 auto;
@@ -62,6 +168,27 @@
   color: #999;
 }
 
+.pulsify-page-layout {
+  display: flex;
+  max-width: 1240px;
+  margin: -15px auto 0 auto; /* Negative top margin to pull playlists up */
+  gap: 30px;
+  padding: 0 0 30px 0; /* 0 top padding */
+}
+
+.pulsify-main-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.pulsify-sidebar-column {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
 .pulsify-grid-container {
   display: flex;
   flex-direction: column;
@@ -71,7 +198,8 @@
 .pulsify-playlist-card {
   display: flex;
   flex-direction: row;
-  border-bottom: 1px solid #1e1e1e;
+  border: none;
+  /* Removed the separator line */
   padding: 24px 0;
   gap: 20px;
 }
@@ -83,6 +211,7 @@
   flex-shrink: 0;
   background-color: #1a1a1a;
   overflow: hidden;
+  border-radius: 6px; /* Added rounded edges */
 }
 
 .pulsify-artwork {
@@ -107,7 +236,7 @@
   opacity: 0;
   transition: opacity 0.12s ease;
   font-size: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .pulsify-artwork-wrapper:hover .pulsify-play-overlay {
@@ -132,20 +261,23 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #333;
+  background-color: #fff;
+  /* White circle */
   border: none;
-  color: #fff;
+  color: #000;
+  /* Black icon inside */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background-color 0.12s;
+  transition: transform 0.12s;
   padding: 0;
 }
 
 .pulsify-card-play-btn:hover {
-  background-color: #444;
+  transform: scale(1.05);
+  /* Slight grow on hover instead of color change */
 }
 
 .pulsify-card-info {
@@ -279,29 +411,170 @@
 
 .pulsify-card-actions {
   display: flex;
-  gap: 10px;
+  gap: 16px;
+  /* Increased spacing */
   margin-top: auto;
 }
 
 .pulsify-card-action-btn {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  /* Wider */
+  height: 30px;
+  /* Squished / shorter */
   border-radius: 4px;
-  border: 1px solid #333;
-  background: transparent;
-  color: #777;
+  border: none;
+  background-color: #2a2a2a;
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: border-color 0.12s, color 0.12s;
+  transition: background-color 0.12s;
   text-decoration: none;
 }
 
 .pulsify-card-action-btn:hover {
-  border-color: #666;
+  background-color: #3a3a3a;
+}
+
+/* --- SIDEBAR STYLES --- */
+.pulsify-sidebar-stats {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #222;
+  padding-bottom: 15px;
+}
+
+.pulsify-stat-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.pulsify-stat-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.pulsify-stat-value {
+  font-size: 18px;
+  color: #ccc;
+  font-weight: 300;
+}
+
+.pulsify-sidebar-likes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #222;
+  padding-bottom: 8px;
+}
+
+.pulsify-sidebar-likes-header .view-all {
+  margin-left: auto;
+  text-transform: none;
+  color: #999;
+  text-decoration: none;
+}
+
+.pulsify-sidebar-likes-header .view-all:hover {
+  color: #ccc;
+}
+
+.pulsify-liked-track {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.pulsify-liked-track img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+}
+
+.pulsify-liked-track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pulsify-liked-track-artist {
+  font-size: 11px;
+  color: #999;
+}
+
+.pulsify-liked-track-title {
+  font-size: 13px;
+  color: #ccc;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.pulsify-liked-track-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.pulsify-sidebar-promo {
+  border-top: 1px solid #222;
+  padding-top: 15px;
+}
+
+.pulsify-sidebar-promo-header {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.pulsify-sidebar-promo-text {
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.pulsify-btn-pill-white {
+  background-color: #fff;
+  color: #111;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.pulsify-btn-pill-white:hover {
+  opacity: 0.9;
+}
+
+.pulsify-btn-pill-black {
+  background-color: #111;
   color: #fff;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pulsify-btn-pill-black:hover {
+  border-color: #f50;
 }
 
 .pulsify-util-msg {
@@ -313,7 +586,10 @@
 
 .pulsify-modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgba(17, 17, 17, 0.95);
   display: flex;
   justify-content: center;
@@ -325,7 +601,7 @@
   background-color: #1a1a1a;
   padding: 25px;
   width: 450px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   border: 1px solid #333;
   color: #ccc;
 }
