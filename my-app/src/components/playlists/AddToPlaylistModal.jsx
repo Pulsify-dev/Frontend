@@ -73,14 +73,15 @@ export const AddToPlaylistModal = ({ isOpen, onClose, trackId }) => {
 
     setIsCreating(true);
     try {
-      // 1. Create the new playlist
-      const createResponse = await PulsifyPlaylistService.createPlaylist({
+      const payload = {
         title: newTitle.trim(),
-        is_private: isPrivate,
-        description: ''
-      });
+        is_private: isPrivate
+      };
       
-      const newPlaylistId = createResponse.data._id || createResponse.data.id;
+      const createResponse = await PulsifyPlaylistService.createPlaylist(payload);
+      
+      const newPlaylist = createResponse.data || createResponse;
+      const newPlaylistId = newPlaylist._id || newPlaylist.id;
 
       // 2. Automatically add the track to it
       if (newPlaylistId && trackId) {

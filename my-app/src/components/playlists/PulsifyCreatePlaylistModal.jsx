@@ -9,7 +9,11 @@ export const PulsifyCreatePlaylistModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ title, description, is_private: isPrivate });
+    const payload = { title, is_private: isPrivate };
+    if (description.trim() !== '') {
+      payload.description = description.trim();
+    }
+    onSubmit(payload);
     setTitle('');
     setDescription('');
     setIsPrivate(false);
