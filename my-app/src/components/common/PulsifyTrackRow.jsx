@@ -1,10 +1,12 @@
 import React from 'react';
 import './PulsifyTrackRow.css';
 import { usePlayer } from '../../hooks/usePlayer';
+import ReportModal from './ReportModal';
 
 const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
   const { currentTrack, isPlaying, togglePlay } = usePlayer();
   const isActive = currentTrack?.trackId === track.trackId;
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
 
   const formatDuration = (secs) => {
     if (!secs) return '0:00';
@@ -65,6 +67,7 @@ const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
               <button className={`sc-btn ${isReposted ? 'active' : ''}`} onClick={() => onRepost(track.trackId)}>𓅄 {	sReposted ? track.reposts + 1 : track.reposts}</button>
               <button className="sc-btn">🔥 Share</button>
               <button className="sc-btn">𝆋 Copy Link</button>
+              <button className="sc-btn" onClick={() => setIsReportModalOpen(true)}>🚩 Report</button>
               <button className="sc-btn">⋯ More</button>
             </div>
             <div className="sc-track-counters">
@@ -74,6 +77,13 @@ const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
           </div>
         </div>
       </div>
+
+      <ReportModal 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+        entityType="Track" 
+        entityId={track.trackId} 
+      />
     </div>
   );
 };

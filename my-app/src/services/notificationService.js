@@ -17,7 +17,7 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Adapter: snake_case backend to camelCase frontend
-const adaptNotification = (n) => ({
+export const adaptNotification = (n) => ({
   id: n._id || n.id,
   type: n.action_type || n.type,
   actorName: n.actor_id?.display_name || n.actor_name || n.actorName || 'Someone',
@@ -48,5 +48,10 @@ export const markNotificationRead = async (notifId) => {
 
 export const markAllNotificationsRead = async () => {
   const { data } = await apiClient.put("/notifications/read-all");
+  return data;
+};
+
+export const registerPushToken = async (token) => {
+  const { data } = await apiClient.post("/notifications/push-token", { token });
   return data;
 };
