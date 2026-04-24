@@ -179,3 +179,27 @@
 .sc-counter:hover {
   color: var(--sc-text-secondary);
 }
+
+.sc-track-actions .sc-btn {
+  background: transparent;
+  border: 1px solid var(--sc-border);
+  color: var(--sc-text-secondary);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.sc-track-actions .sc-btn:hover {
+  border-color: var(--sc-text-muted);
+  color: var(--sc-text-primary);
+}
+
+.sc-track-actions .sc-btn.active {
+  color: var(--sc-accent);
+  border-color: var(--sc-accent);
+}

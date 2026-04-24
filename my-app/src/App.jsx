@@ -9,7 +9,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Unauthorized from "@/pages/Unauthorized";
 import Home from "@/pages/Home";
-import { ProtectedRoute, ArtistRoute } from "@/components/auth";
+import { ProtectedRoute, ArtistRoute, AdminRoute } from "@/components/auth";
 
 // Module 2 – Profile (Ahmad Hisham)
 import ProfilePage from "@/profile/pages/ProfilePage";
@@ -152,10 +152,27 @@ const AppRoutes = () => {
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/admin" element={<AdminDashboardPage />} />
-              <Route path="/admin/moderation" element={<AdminContentModerationPage />} />
-              <Route path="/admin/users" element={<AdminUserManagementPage />} />
-              <Route path="/admin/logs" element={<AdminSystemLogsPage />} />
+              
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboardPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/moderation" element={
+                <AdminRoute>
+                  <AdminContentModerationPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/users" element={
+                <AdminRoute>
+                  <AdminUserManagementPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/logs" element={
+                <AdminRoute>
+                  <AdminSystemLogsPage />
+                </AdminRoute>
+              } />
             </Route>
           </Routes>
 

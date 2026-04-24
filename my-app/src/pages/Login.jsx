@@ -14,14 +14,12 @@ const USE_MOCKS =
   String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === "true";
 
 const buildMockUser = (role = "listener") => ({
-  user_id: role === "artist" ? "mock-artist-1" : "mock-listener-1",
-  username: role === "artist" ? "mockartist" : "mocklistener",
-  email:
-    role === "artist"
-      ? "artist@mock.pulsify.local"
-      : "listener@mock.pulsify.local",
-  display_name: role === "artist" ? "Mock Artist" : "Mock Listener",
+  user_id: `mock-${role.toLowerCase()}-1`,
+  username: `mock${role.toLowerCase()}`,
+  email: `${role.toLowerCase()}@mock.pulsify.local`,
+  display_name: `Mock ${role.charAt(0).toUpperCase() + role.slice(1)}`,
   tier: role === "artist" ? "Pro" : "Free",
+  role: role,
   avatar_url: null,
 });
 
@@ -186,7 +184,7 @@ const Login = () => {
 
     login(mockUser, mockAccessToken, mockRefreshToken);
 
-    const from = location.state?.from?.pathname || "/followers";
+    const from = role === "Admin" ? "/admin" : (location.state?.from?.pathname || "/followers");
     navigate(from, { replace: true });
   };
 
@@ -413,6 +411,20 @@ const Login = () => {
                 }}
               >
                 Continue as mock artist
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMockLogin("Admin")}
+                disabled={anyLoading}
+                className="auth-link"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
+                Continue as mock admin
               </button>
             </div>
           )}

@@ -33,20 +33,48 @@ const adaptTrack = (track) => ({
   uploadedAt: track.uploaded_at || track.uploadedAt,
 });
 
-export const fetchFeed = async () => {
-  const { data } = await apiClient.get("/discovery/feed");
-  return Array.isArray(data) ? data.map(adaptTrack) : [];
+export const fetchFeed = async (page = 1, limit = 20) => {
+  const { data } = await apiClient.get(`/feed?page=${page}&limit=${limit}`);
+  // Feed returns a mix of tracks and reposts according to the spec
+  const items = data.data?.tracks || data;
+  return Array.isArray(items) ? items.map(adaptTrack) : [];
 };
 
-export const fetchTrending = async () => {
-  const { data } = await apiClient.get("/discovery/trending");
-  return Array.isArray(data) ? data.map(adaptTrack) : [];
+export const fetchTrending = async (page = 1, limit = 20) => {
+  const { data } = await apiClient.get(`/trending?page=${page}&limit=${limit}`);
+  const items = data.data?.tracks || data;
+  return Array.isArray(items) ? items.map(adaptTrack) : [];
 };
 
-export const searchTracks = async (term) => {
+export const getCharts = async (limit = 50) => {
+  const { data } = await apiClient.get(`/charts?limit=${limit}`);
+  const items = data.data?.tracks || data;
+  return Array.isArray(items) ? items.map(adaptTrack) : [];
+};
+
+export const searchTracks = async (term, limit = 10, offset = 0) => {
   const safeTerm = encodeURIComponent(term);
-  const { data } = await apiClient.get(`/discovery/search?q=${safeTerm}`);
-  return Array.isArray(data) ? data.map(adaptTrack) : [];
+  const { data } = await apiClient.get(`/search?q=${safeTerm}&limit=${limit}&offset=${offset}`);
+  // Returning the partitioned object natively from the spec
+  const results = data.data || {};
+  return {
+    tracks: Array.isArray(results.tracks) ? results.tracks.map(adaptTrack) : [],
+    users: results.users || [],
+    playlists: results.playlists || [],
+    albums: results.albums || []
+  };
+};
+
+export const searchSuggestions = async (term, limit = 5) => {
+  const safeTerm = encodeURIComponent(term);
+  const { data } = await apiClient.get(`/search/suggestions?q=${safeTerm}&limit=${limit}`);
+  const results = data.data || {};
+  return {
+    tracks: Array.isArray(results.tracks) ? results.tracks.map(adaptTrack) : [],
+    users: results.users || [],
+    playlists: results.playlists || [],
+    albums: results.albums || []
+  };
 };
 
 export const likeTrack = async (trackId) => {

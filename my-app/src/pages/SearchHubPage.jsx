@@ -11,14 +11,17 @@ const SearchHubPage = () => {
   const initialQuery = searchParams.get('q') || '';
 
   const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState({ tracks: [], users: [], playlists: [], albums: [] });
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState('Everything');
   const [likedTracks, setLikedTracks] = useState(new Set());
   const [repostedTracks, setRepostedTracks] = useState(new Set());
 
   useEffect(() => {
-    if (!searchTerm.trim()) { setResults([]); return; }
+    if (!searchTerm.trim()) { 
+      setResults({ tracks: [], users: [], playlists: [], albums: [] }); 
+      return; 
+    }
     let mounted = true;
     setLoading(true);
     const debounce = setTimeout(async () => {
@@ -56,6 +59,18 @@ const SearchHubPage = () => {
   };
 
   const hasQuery = searchTerm.trim().length > 0;
+  
+  // Helper to determine the active list based on the filter tab
+  const getActiveList = () => {
+    if (activeFilter === 'Tracks') return results.tracks;
+    if (activeFilter === 'People') return results.users;
+    if (activeFilter === 'Playlists') return results.playlists;
+    if (activeFilter === 'Albums') return results.albums;
+    // For 'Everything', we just combine them or show tracks primarily
+    return [...results.tracks, ...results.users, ...results.playlists, ...results.albums];
+  };
+
+  const activeList = getActiveList();
 
   return (
     <div className="sc-search-page" data-testid="search-hub-page">
@@ -117,24 +132,49 @@ const SearchHubPage = () => {
             </p>
           )}
 
-          {!loading && hasQuery && results.length === 0 && (
+          {!loading && hasQuery && activeList.length === 0 && (
             <div className="sc-no-results">
-              <p>Sorry, we didn't find any results for "<strong>{searchTerm}</strong>"</p>
+              <p>Sorry, we didn't find any results for "<strong>{searchTerm}</strong>" in {activeFilter}</p>
               <span>Check the spelling, or try a different search.</span>
             </div>
           )}
 
-          {!loading && results.length > 0 && (
+          {!loading && activeList.length > 0 && (
             <div className="sc-track-list">
-              {results.map(track => (
-                <PulsifyTrackRow
-                  key={track.trackId}
-                  track={track}
-                  onLike={handleLike}
-                  onRepost={handleRepost}
-                  isLiked={likedTracks.has(track.trackId)}
-                  isReposted={repostedTracks.has(track.trackId)}
-                />
+              {activeFilter === 'Everything' || activeFilter === 'Tracks' ? (
+                results.tracks.map(track => (
+                  <PulsifyTrackRow
+                    key={track.trackId || track.id}
+                    track={track}
+                    onLike={handleLike}
+                    onRepost={handleRepost}
+                    isLiked={likedTracks.has(track.trackId)}
+                    isReposted={repostedTracks.has(track.trackId)}
+                  />
+                ))
+              ) : null}
+              
+              {/* Dummy rendering for other types to avoid crashing, 
+                  ideally we'd have dedicated row components for Users/Albums */}
+              {activeFilter === 'People' && results.users.map(user => (
+                <div key={user.id || user._id} className="sc-user-row">
+                  <div className="sc-user-avatar">
+                     <img src={user.avatar_url || 'https://via.placeholder.com/50'} alt={user.display_name} />
+                  </div>
+                  <span>{user.display_name || user.username}</span>
+                </div>
+              ))}
+              
+              {activeFilter === 'Albums' && results.albums.map(album => (
+                <div key={album.id || album._id} className="sc-album-row">
+                  <span>💿 {album.title}</span>
+                </div>
+              ))}
+              
+              {activeFilter === 'Playlists' && results.playlists.map(pl => (
+                <div key={pl.id || pl._id} className="sc-playlist-row">
+                  <span>🎵 {pl.title}</span>
+                </div>
               ))}
             </div>
           )}

@@ -52,19 +52,45 @@ export const fetchTrending = async () => {
   return new Promise((resolve) => setTimeout(() => resolve(mockTrendingData), 450));
 };
 
-export const searchTracks = async (term) => {
+export const getCharts = async (limit = 50) => {
+  return new Promise((resolve) => setTimeout(() => resolve(mockTrendingData.slice(0, limit)), 450));
+};
+
+export const searchTracks = async (term, limit = 10, offset = 0) => {
   return new Promise(resolve => {
     setTimeout(() => {
-      if (!term.trim()) return resolve([]);
+      if (!term.trim()) return resolve({ tracks: [], users: [], playlists: [], albums: [] });
       const lowerTerm = term.toLowerCase();
       const results = [...mockFeedData, ...mockTrendingData].filter(t => 
         t.title.toLowerCase().includes(lowerTerm) || 
         t.artist.name.toLowerCase().includes(lowerTerm)
       );
       // Remove duplicates by trackId
-      const unique = Array.from(new Map(results.map(item => [item.trackId, item])).values());
-      resolve(unique);
+      const uniqueTracks = Array.from(new Map(results.map(item => [item.trackId, item])).values());
+      
+      resolve({
+        tracks: uniqueTracks.slice(offset, offset + limit),
+        users: [],
+        playlists: [],
+        albums: []
+      });
     }, 400); // 400ms network delay
+  });
+};
+
+export const searchSuggestions = async (term, limit = 5) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (!term.trim()) return resolve({ tracks: [], users: [], playlists: [], albums: [] });
+      const lowerTerm = term.toLowerCase();
+      const results = [...mockFeedData].filter(t => t.title.toLowerCase().includes(lowerTerm));
+      resolve({
+        tracks: results.slice(0, limit),
+        users: [],
+        playlists: [],
+        albums: []
+      });
+    }, 150);
   });
 };
 

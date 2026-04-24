@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationContext } from "../../context/NotificationContext";
+import serviceLocator from "../../utils/serviceLocator";
 import "../../css/navbar-soundcloud.css";
 
 const Navbar = () => {
@@ -12,6 +13,8 @@ const Navbar = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [suggestions, setSuggestions] = useState({ tracks: [], users: [] });
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isArtist, logout } = useAuth();
@@ -23,6 +26,7 @@ const Navbar = () => {
   const overflowMenuRef = useRef(null);
   const notificationsRef = useRef(null);
   const messagesRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   // Close all other dropdowns when one opens
   const openDropdown = (setter) => {
@@ -47,10 +51,33 @@ const Navbar = () => {
       if (messagesRef.current && !messagesRef.current.contains(event.target)) {
         setIsMessagesOpen(false);
       }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSuggestions({ tracks: [], users: [] });
+      setShowSuggestions(false);
+      return;
+    }
+    
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const data = await serviceLocator.discovery.searchSuggestions(searchQuery);
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } catch (err) {
+        console.error("Autocomplete search error:", err);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -64,11 +91,36 @@ const Navbar = () => {
     return location.pathname.startsWith(path);
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (!searchQuery.trim()) return;
+    
+    setShowSuggestions(false);
+    
+    // Resource Resolver logic: If it looks like a URL, try resolving it directly
+    if (searchQuery.includes("http://") || searchQuery.includes("https://") || searchQuery.includes("localhost:")) {
+      try {
+        const resolved = await serviceLocator.discovery.resolveUrl(searchQuery.trim());
+        if (resolved && resolved.type === "track" && resolved.id) {
+          navigate(`/tracks/${resolved.id}`);
+          return;
+        } else if (resolved && resolved.type === "user" && resolved.id) {
+          navigate(`/profile/${resolved.id}`);
+          return;
+        }
+      } catch (err) {
+        console.error("Resource Resolver failed:", err);
+      }
     }
+    
+    // Otherwise fallback to global search
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const handleSuggestionClick = (path) => {
+    setShowSuggestions(false);
+    setSearchQuery("");
+    navigate(path);
   };
 
   const handleLogout = () => {
@@ -96,28 +148,50 @@ const Navbar = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSearch} className="auth-search-form">
-        <input
-          type="text"
-          placeholder="Search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="auth-search-input"
-        />
-        <button type="submit" className="auth-search-btn">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-        </button>
-      </form>
+      <div style={{ position: 'relative', flexGrow: 1, margin: '0 30px' }} ref={searchContainerRef}>
+        <form onSubmit={handleSearch} className="auth-search-form" style={{ margin: 0 }}>
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => { if (searchQuery.trim()) setShowSuggestions(true); }}
+            className="auth-search-input"
+          />
+          <button type="submit" className="auth-search-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </button>
+        </form>
+
+        {showSuggestions && (suggestions.tracks?.length > 0 || suggestions.users?.length > 0) && (
+          <div className="auth-search-suggestions">
+            {suggestions.users?.map(user => (
+              <div 
+                key={user.id || user._id} 
+                className="auth-suggestion-item"
+                onClick={() => handleSuggestionClick(`/users/${user.id || user._id}`)}
+              >
+                <img src={user.avatarUrl || user.avatar_url || 'https://via.placeholder.com/24'} alt="" className="auth-suggestion-avatar" />
+                <span>{user.displayName || user.username}</span>
+              </div>
+            ))}
+            {suggestions.tracks?.map(track => (
+              <div 
+                key={track.trackId || track.id} 
+                className="auth-suggestion-item"
+                onClick={() => handleSuggestionClick(`/tracks/${track.trackId || track.id}`)}
+              >
+                <img src={track.coverArt || track.cover_art} alt="" className="auth-suggestion-cover" />
+                <span>{track.title}</span>
+                <span style={{color: '#777', fontSize: '11px', marginLeft: 'auto'}}>Track</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="auth-navbar-right">
         {isAuthenticated ? (
@@ -299,7 +373,19 @@ const Navbar = () => {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: "14px", lineHeight: "1.4", color: "#ccc", wordWrap: "break-word" }}>
                                 <strong style={{ color: "#fff" }}>{notif.actorName || notif.actor_name || notif.actor_id?.display_name || "Someone"}</strong>
-                                {' '}{notif.message || `performed a ${notif.type || notif.action_type || 'action'}`}{' '}
+                                {' '}
+                                {(() => {
+                                  const type = notif.type || notif.action_type || '';
+                                  switch(type.toUpperCase()) {
+                                    case 'LIKE': return <span><span style={{color: '#ff5500'}}>❤️</span> liked your track</span>;
+                                    case 'REPOST': return <span><span style={{color: '#ff5500'}}>🔁</span> reposted your track</span>;
+                                    case 'COMMENT': return <span>💬 commented on your track</span>;
+                                    case 'FOLLOW': return <span>👤 started following you</span>;
+                                    case 'MESSAGE': return <span>✉️ sent you a message</span>;
+                                    default: return <span>{notif.message || 'interacted with you'}</span>;
+                                  }
+                                })()}
+                                {' '}
                                 {notif.targetTitle && <em style={{ fontStyle: "normal", color: "#fff" }}>{notif.targetTitle}</em>}
                               </div>
                               <div style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>
