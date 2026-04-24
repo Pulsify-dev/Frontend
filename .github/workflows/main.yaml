@@ -56,3 +56,4 @@ jobs:
               --restart always \
               -p 8083:80 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
+            sudo docker image prune -f
