@@ -116,16 +116,6 @@ const AppRoutes = () => {
                 element={<PulsifyPlaylistDetailView />}
               />
 
-              {/* My Tracks - Module 4 (Omar Nasser) */}
-              <Route
-                path="/my-tracks"
-                element={
-                  <ProtectedRoute>
-                    <PulsifyMyTracksView />
-                  </ProtectedRoute>
-                }
-              />
-
               {/* Library (Protected) */}
               <Route
                 path="/library"
@@ -146,12 +136,20 @@ const AppRoutes = () => {
               <Route path="/trending" element={<TrendingChartsPage />} />
             </Route>
 
-            {/* Upload - Module 4 (standalone, no navbar) */}
+            {/* Upload & My Tracks (standalone, no navbar) */}
             <Route
               path="/upload"
               element={
                 <ProtectedRoute>
                   <PulsifyTrackUploadScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-tracks"
+              element={
+                <ProtectedRoute>
+                  <PulsifyMyTracksView />
                 </ProtectedRoute>
               }
             />
