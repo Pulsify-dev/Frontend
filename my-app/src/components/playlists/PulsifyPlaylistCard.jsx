@@ -2,6 +2,8 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyPlaylistService } from '../../services/pulsifyPlaylistService';
 import { usePlayer } from '../../hooks/usePlayer';
+import { PulsifyEditPlaylistModal } from './PulsifyEditPlaylistModal';
+import { PulsifyShareModal } from './PulsifyShareModal';
 
 const generateWaveform = () => Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
@@ -143,13 +145,15 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
 
 export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
   if (!playlist) return null;
-
+  const [localPlaylist, setLocalPlaylist] = useState(playlist);
   const navigate = useNavigate();
   const waveform = useMemo(() => generateWaveform(), []);
-  const plId = playlist._id || playlist.id;
-  const trackCount = playlist.track_count || playlist.tracks?.length || 0;
-  const creatorName = playlist.creator_id?.display_name || playlist.creator_username || 'You';
+  const plId = localPlaylist._id || localPlaylist.id;
+  const trackCount = localPlaylist.track_count || localPlaylist.tracks?.length || 0;
+  const creatorName = localPlaylist.creator_id?.display_name || localPlaylist.creator_username || 'You';
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Close menu when clicking outside
@@ -166,10 +170,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
   const { togglePlay, isPlaying, currentTrack } = usePlayer();
 
   const handlePlaylistShare = () => {
-    const embedCode = `<iframe src="https://pulsify.page/playlists/${plId}" width="400" height="600" frameborder="0" allowtransparency="true" allow="autoplay"></iframe>`;
-    navigator.clipboard.writeText(embedCode).then(() => {
-      alert('Embed iframe copied to clipboard!');
-    }).catch(err => console.error('Failed to copy embed code:', err));
+    setIsShareModalOpen(true);
   };
 
   const handleDelete = async () => {
@@ -187,23 +188,23 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
     <div className="pulsify-playlist-card">
       <div className="pulsify-artwork-wrapper" onClick={() => navigate(`/playlists/${plId}`)} style={{ cursor: 'pointer' }}>
         <img
-          src={playlist.cover_url || 'https://placehold.co/160x160/1a1a1a/333?text=♫'}
-          alt={playlist.title}
+          src={localPlaylist.cover_url || 'https://placehold.co/160x160/1a1a1a/333?text=♫'}
+          alt={localPlaylist.title}
           className="pulsify-artwork"
         />
         <div 
           className="pulsify-play-overlay"
           onClick={(e) => {
             e.stopPropagation();
-            if (playlist.tracks && playlist.tracks.length > 0) {
-              const firstTrack = playlist.tracks[0].track_id && typeof playlist.tracks[0].track_id === 'object' ? playlist.tracks[0].track_id : playlist.tracks[0];
+            if (localPlaylist.tracks && localPlaylist.tracks.length > 0) {
+              const firstTrack = localPlaylist.tracks[0].track_id && typeof localPlaylist.tracks[0].track_id === 'object' ? localPlaylist.tracks[0].track_id : localPlaylist.tracks[0];
               togglePlay(firstTrack);
             } else {
               alert('No tracks to play in this playlist!');
             }
           }}
         >
-          {isPlaying && currentTrack && playlist.tracks?.[0] && (playlist.tracks[0].track_id?._id || playlist.tracks[0]._id || playlist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? '⏸' : '▶'}
+          {isPlaying && currentTrack && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? '⏸' : '▶'}
         </div>
       </div>
 
@@ -211,18 +212,18 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
         <div className="pulsify-card-header-row">
           <button 
             className="pulsify-card-play-btn" 
-            title={isPlaying && currentTrack && playlist.tracks?.[0] && (playlist.tracks[0].track_id?._id || playlist.tracks[0]._id || playlist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? "Pause" : "Play"}
+            title={isPlaying && currentTrack && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? "Pause" : "Play"}
             onClick={(e) => {
               e.stopPropagation();
-              if (playlist.tracks && playlist.tracks.length > 0) {
-                const firstTrack = playlist.tracks[0].track_id && typeof playlist.tracks[0].track_id === 'object' ? playlist.tracks[0].track_id : playlist.tracks[0];
+              if (localPlaylist.tracks && localPlaylist.tracks.length > 0) {
+                const firstTrack = localPlaylist.tracks[0].track_id && typeof localPlaylist.tracks[0].track_id === 'object' ? localPlaylist.tracks[0].track_id : localPlaylist.tracks[0];
                 togglePlay(firstTrack);
               } else {
                 alert('No tracks to play in this playlist!');
               }
             }}
           >
-            {isPlaying && currentTrack && playlist.tracks?.[0] && (playlist.tracks[0].track_id?._id || playlist.tracks[0]._id || playlist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? (
+            {isPlaying && currentTrack && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16" />
                 <rect x="14" y="4" width="4" height="16" />
@@ -236,7 +237,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
 
           <div className="pulsify-card-info">
             <span className="pulsify-card-artist">{creatorName}</span>
-            <Link to={`/playlists/${plId}`} className="pulsify-card-name">{playlist.title}</Link>
+            <Link to={`/playlists/${plId}`} className="pulsify-card-name">{localPlaylist.title}</Link>
           </div>
 
           <span className="pulsify-card-time">2 hours ago</span>
@@ -255,9 +256,9 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           ))}
         </div>
 
-        {playlist.tracks && playlist.tracks.length > 0 && (
+        {localPlaylist.tracks && localPlaylist.tracks.length > 0 && (
           <div className="pulsify-card-tracklist">
-            {playlist.tracks.slice(0, 5).map((t, i) => {
+            {localPlaylist.tracks.slice(0, 5).map((t, i) => {
               const trackData = t.track_id && typeof t.track_id === 'object' ? t.track_id : t;
               return (
                 <PulsifyCardTrackEntry
@@ -269,15 +270,15 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
                 />
               );
             })}
-            {playlist.tracks.length > 5 && (
+            {localPlaylist.tracks.length > 5 && (
               <Link to={`/playlists/${plId}`} className="pulsify-card-view-all">
-                View all {playlist.tracks.length} tracks
+                View all {localPlaylist.tracks.length} tracks
               </Link>
             )}
           </div>
         )}
 
-        {playlist.is_private && (
+        {localPlaylist.is_private && (
           <div className="pulsify-card-badges">
             <span className="pulsify-badge-secret">Secret</span>
             <span className="pulsify-track-count">{trackCount} tracks</span>
@@ -291,7 +292,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           <button className="pulsify-card-action-btn" title="Copy Link">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="Edit">
+          <button className="pulsify-card-action-btn" title="Edit" onClick={() => setIsEditModalOpen(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
           <button className="pulsify-card-action-btn" title="Like">
@@ -347,6 +348,18 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           </div>
         </div>
       </div>
+
+      <PulsifyEditPlaylistModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        playlist={localPlaylist}
+        onSaveSuccess={(updated) => setLocalPlaylist(updated)}
+      />
+      <PulsifyShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        playlist={localPlaylist}
+      />
     </div>
   );
 };

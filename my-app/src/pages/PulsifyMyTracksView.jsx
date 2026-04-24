@@ -15,6 +15,8 @@ export const PulsifyMyTracksView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [visibilityFilter, setVisibilityFilter] = useState('all');
+
   const [playlistSidebarOpen, setPlaylistSidebarOpen] = useState(false);
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState(null);
   const [hoveredTrack, setHoveredTrack] = useState(null);
@@ -25,7 +27,7 @@ export const PulsifyMyTracksView = () => {
     try {
       setLoading(true);
       const userId = user?._id || user?.id;
-      const result = await PulsifyTrackService.getArtistTracks(userId || 'me');
+      const result = await PulsifyTrackService.getArtistTracks(userId || 'me', 1, 100);
       setTracks(result.tracks || []);
     } catch (err) {
       setError(err.message || 'Failed to load tracks.');
@@ -79,7 +81,11 @@ export const PulsifyMyTracksView = () => {
         title: newPlaylistName,
         visibility: 'public'
       });
-      await PulsifyPlaylistService.addTrackToPlaylist(newPlaylist._id, selectedTrackForPlaylist._id);
+      
+      const playlistId = newPlaylist.data?._id || newPlaylist._id;
+      if (!playlistId) throw new Error("Could not retrieve new playlist ID from server response.");
+      
+      await PulsifyPlaylistService.addTrackToPlaylist(playlistId, selectedTrackForPlaylist._id);
       alert('Playlist created and track added!');
       setNewPlaylistName('');
       setIsCreatingPlaylist(false);
@@ -120,6 +126,11 @@ export const PulsifyMyTracksView = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const filteredTracks = tracks.filter(t => {
+    if (visibilityFilter === 'all') return true;
+    return t.visibility === visibilityFilter;
+  });
 
   return (
     <div className="artist-dashboard">
@@ -239,11 +250,22 @@ export const PulsifyMyTracksView = () => {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
                 <input type="text" placeholder="Search tracks" />
               </div>
-              <button className="pill-btn">Public</button>
-              <button className="pill-btn">Private</button>
+              <button 
+                className={`pill-btn ${visibilityFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setVisibilityFilter('all')}
+              >All</button>
+              <button 
+                className={`pill-btn ${visibilityFilter === 'public' ? 'active' : ''}`}
+                onClick={() => setVisibilityFilter('public')}
+              >Public</button>
+              <button 
+                className={`pill-btn ${visibilityFilter === 'private' ? 'active' : ''}`}
+                onClick={() => setVisibilityFilter('private')}
+              >Private</button>
             </div>
             <div className="sort-group">
-              <span className="track-count">{tracks.length} tracks</span>
+              <span className="track-count">{filteredTracks.length} tracks</span>
+
               <button className="sort-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
                 Date
@@ -265,11 +287,11 @@ export const PulsifyMyTracksView = () => {
 
             {loading ? (
               <div className="table-loading">Loading tracks...</div>
-            ) : tracks.length === 0 ? (
-              <div className="table-empty">No tracks found. Upload some tracks to get started.</div>
+            ) : filteredTracks.length === 0 ? (
+              <div className="table-empty">No tracks found.</div>
             ) : (
               <div className="table-body">
-                {tracks.map(track => (
+                {filteredTracks.map(track => (
                   <div 
                     key={track._id} 
                     className={`table-row ${hoveredTrack === track._id ? 'hovered' : ''}`}
@@ -330,7 +352,18 @@ export const PulsifyMyTracksView = () => {
                             <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Distribute</div>
                             <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Track insights</div>
                             <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download file</div>
-                            <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Copy link</div>
+                            <div 
+                              className="menu-item" 
+                              onClick={() => {
+                                const url = `${window.location.origin}/tracks/${track._id}`;
+                                navigator.clipboard.writeText(url);
+                                alert("Link copied to clipboard!");
+                                setActiveMenu(null);
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 
+                              Copy link
+                            </div>
                             <div className="menu-divider"></div>
                             <div className="menu-item text-danger" onClick={() => handleDelete(track._id)}>
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 

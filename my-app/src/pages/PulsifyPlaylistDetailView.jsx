@@ -4,6 +4,8 @@ import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyTrackRow } from '../components/playlists/PulsifyTrackRow';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import { usePlayer } from '../hooks/usePlayer';
+import { PulsifyEditPlaylistModal } from '../components/playlists/PulsifyEditPlaylistModal';
+import { PulsifyShareModal } from '../components/playlists/PulsifyShareModal';
 
 const waveformBars = Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
@@ -19,6 +21,9 @@ export const PulsifyPlaylistDetailView = () => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
   const { togglePlay, isPlaying, currentTrack, playerProgress, playerCurrentTime } = usePlayer();
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const formatTime = (secs) => {
     if (!secs || isNaN(secs)) return '0:00';
     const m = Math.floor(secs / 60);
@@ -31,7 +36,21 @@ export const PulsifyPlaylistDetailView = () => {
     const fetchTarget = async () => {
       try {
         setIsLoading(true);
-        const data = await PulsifyPlaylistService.retrievePlaylistById(playlistId);
+        const urlParams = new URLSearchParams(window.location.search);
+        const secretToken = urlParams.get('token');
+
+        let data;
+        if (/^[a-fA-F0-9]{24}$/.test(playlistId)) {
+          data = await PulsifyPlaylistService.getPlaylistById(playlistId, secretToken);
+        } else {
+          data = await PulsifyPlaylistService.getByPermalink(playlistId, secretToken);
+        }
+        
+        // Handle unwrapping of data depending on the service response format
+        if (data && data.success && data.data) {
+          data = data.data;
+        }
+
         if (isMounted) setPlaylistDetail(data);
 
         // Fetch user's other playlists
@@ -41,7 +60,8 @@ export const PulsifyPlaylistDetailView = () => {
         } catch (e) { console.error('Failed to fetch user playlists', e); }
         
       } catch (err) {
-        if (isMounted) setFetchError(err.message || 'Error occurred fetching this set.');
+        const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Error occurred fetching this set.';
+        if (isMounted) setFetchError(errorMsg);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -64,20 +84,14 @@ export const PulsifyPlaylistDetailView = () => {
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
     try {
       const trackIds = newTracks.map(t => t.track_id?._id || t.track_id || t.id);
-      await PulsifyPlaylistService.reorderTracks(playlistId, trackIds);
+      await PulsifyPlaylistService.reorderTracks(playlistDetail._id, trackIds);
     } catch (err) {
       setFetchError('Failed to persist sequence order.');
     }
   };
 
-  const copyEmbedCode = async () => {
-    try {
-      const embedResult = await PulsifyPlaylistService.getEmbedCode(playlistId);
-      const embedData = embedResult.data || embedResult;
-      const code = embedData.embedCode || embedData.html || 'No embed string resolved';
-      navigator.clipboard.writeText(code);
-      alert('Embed iframe copied to clipboard!');
-    } catch (err) { alert('Failed to generate embed code.'); }
+  const handleShareClick = () => {
+    setIsShareModalOpen(true);
   };
 
   const handleRemoveTrack = async (indexToRemove) => {
@@ -87,14 +101,14 @@ export const PulsifyPlaylistDetailView = () => {
     newTracks.splice(indexToRemove, 1);
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks, track_count: newTracks.length });
     try {
-      await PulsifyPlaylistService.removeTrackFromPlaylist(playlistId, trackId);
+      await PulsifyPlaylistService.removeTrackFromPlaylist(playlistDetail._id, trackId);
     } catch (err) { alert('Failed to remove track.'); }
   };
 
   const handleDeleteSet = async () => {
     if (!window.confirm('Permanently delete this set?')) return;
     try {
-      await PulsifyPlaylistService.deletePlaylist(playlistId);
+      await PulsifyPlaylistService.deletePlaylist(playlistDetail._id);
       navigate('/playlists');
     } catch (err) { alert('Delete failed.'); }
   };
@@ -103,7 +117,7 @@ export const PulsifyPlaylistDetailView = () => {
     const newPrivacy = !playlistDetail.is_private;
     setPlaylistDetail(prev => ({ ...prev, is_private: newPrivacy }));
     try {
-      await PulsifyPlaylistService.togglePrivacy(playlistId, newPrivacy);
+      await PulsifyPlaylistService.togglePrivacy(playlistDetail._id, newPrivacy);
     } catch (err) {
       setPlaylistDetail(prev => ({ ...prev, is_private: !newPrivacy }));
       alert('Failed to toggle privacy.');
@@ -118,6 +132,15 @@ export const PulsifyPlaylistDetailView = () => {
     }
     alert('Starting offline cache download...');
   };
+
+  const openEditModal = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveSuccess = (updatedPlaylist) => {
+    setPlaylistDetail(updatedPlaylist);
+  };
+
 
   if (isLoading) return <div style={loadingStyle}>Loading...</div>;
   if (fetchError) return <div style={{ ...loadingStyle, color: '#f44' }}>Error: {fetchError}</div>;
@@ -241,13 +264,13 @@ export const PulsifyPlaylistDetailView = () => {
 
         {/* ─── ACTION BUTTONS ─── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px', backgroundColor: '#111' }}>
-          <CircleBtn onClick={copyEmbedCode}>
+          <CircleBtn onClick={handleShareClick}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
           </CircleBtn>
           <CircleBtn onClick={() => { }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
           </CircleBtn>
-          <CircleBtn onClick={() => { }}>
+          <CircleBtn onClick={openEditModal}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </CircleBtn>
           <CircleBtn onClick={() => { }}>
@@ -284,6 +307,22 @@ export const PulsifyPlaylistDetailView = () => {
           </div>
 
           <div style={{ flex: 1, borderLeft: 'none', paddingLeft: '0' }}>
+            
+            {/* Playlist Description & Tags Area */}
+            {playlistDetail.description && (
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ color: '#fff', fontSize: '14px', lineHeight: '1.5', margin: '0 0 10px 0', whiteSpace: 'pre-wrap' }}>
+                  {playlistDetail.description}
+                </p>
+                {/* Mock Tags to match screenshot */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ backgroundColor: '#222', color: '#ccc', padding: '4px 10px', borderRadius: '12px', fontSize: '12px' }}># Hip Hop</span>
+                  <span style={{ backgroundColor: '#222', color: '#ccc', padding: '4px 10px', borderRadius: '12px', fontSize: '12px' }}># Gangsta Rap</span>
+                  <span style={{ backgroundColor: '#222', color: '#ccc', padding: '4px 10px', borderRadius: '12px', fontSize: '12px' }}># Rap</span>
+                </div>
+              </div>
+            )}
+
             {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
               playlistDetail.tracks.map((track, idx) => {
                 const trackData = track.track_id && typeof track.track_id === 'object' ? track.track_id : track;
@@ -340,6 +379,18 @@ export const PulsifyPlaylistDetailView = () => {
 
         </div>
       </div>
+
+      <PulsifyEditPlaylistModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        playlist={playlistDetail}
+        onSaveSuccess={handleSaveSuccess}
+      />
+      <PulsifyShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        playlist={playlistDetail}
+      />
     </div>
   );
 };
