@@ -174,8 +174,8 @@ const Navbar = () => {
                     Likes
                   </Link>
 
-                  {/* Playlists — Module 7 */}
-                  <Link to="/playlists" className="auth-user-dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
+                  {/* Playlists - Module 7 */}
+                  <Link to="/library" className="auth-user-dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 8h14v14H8z" /><path d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4v12z" /></svg>
                     Playlists
                   </Link>

@@ -442,14 +442,15 @@ const recordMockPlay = (trackId, durationPlayedMs) => {
   ].slice(0, 5);
 };
 
-export const getTrack = async (trackId) => {
+export const getTrack = async (trackId, secretToken) => {
   if (useMock) {
     const track = getMockTrackOrThrow(trackId);
     getMockEngagementOrCreate(trackId);
     return clone(normalizeTrack(track));
   }
 
-  const payload = await request(`/tracks/${trackId}`);
+  const query = secretToken ? `?token=${secretToken}` : "";
+  const payload = await request(`/tracks/${trackId}${query}`);
   return normalizeTrack(payload);
 };
 
@@ -517,7 +518,7 @@ const getMockTrackPlaylistsData = (trackId) => {
 const getMockFanLeaderboardData = (trackId) =>
   clone(getMockEngagementOrCreate(trackId).fans.map(normalizeFanEntry));
 
-export const getStreamUrl = async (trackId) => {
+export const getStreamUrl = async (trackId, secretToken) => {
   if (useMock) {
     const track = getMockTrackOrThrow(trackId);
     return {
@@ -532,7 +533,8 @@ export const getStreamUrl = async (trackId) => {
     };
   }
 
-  return request(`/tracks/${trackId}/stream-url`);
+  const query = secretToken ? `?token=${secretToken}` : "";
+  return request(`/tracks/${trackId}/stream-url${query}`);
 };
 
 export const registerPlay = async (trackId, payload) => {

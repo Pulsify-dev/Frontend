@@ -288,13 +288,17 @@ export const PulsifyPlaylistDetailView = () => {
         <div style={{ display: 'flex', padding: '24px', gap: '24px', backgroundColor: '#111' }}>
 
           <div style={{ width: '140px', flexShrink: 0, textAlign: 'center' }}>
-            <div style={{
-              width: '100px', height: '100px', borderRadius: '50%',
-              backgroundColor: '#252525', margin: '0 auto 10px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '36px', color: '#555',
-              border: '2px solid #333'
-            }}>
+            <div 
+              style={{
+                width: '100px', height: '100px', borderRadius: '50%',
+                backgroundColor: '#252525', margin: '0 auto 10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '36px', color: '#555',
+                border: '2px solid #333',
+                cursor: 'pointer'
+              }}
+              onClick={() => navigate('/playlists')}
+            >
               ♫
             </div>
             <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '2px' }}>

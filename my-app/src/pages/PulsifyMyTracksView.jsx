@@ -65,7 +65,8 @@ export const PulsifyMyTracksView = () => {
   const handleAddToPlaylist = async (playlistId) => {
     if (!selectedTrackForPlaylist) return;
     try {
-      await PulsifyPlaylistService.addTrackToPlaylist(playlistId, selectedTrackForPlaylist._id);
+      const trackId = selectedTrackForPlaylist._id || selectedTrackForPlaylist.id;
+      await PulsifyPlaylistService.addTrackToPlaylist(playlistId, trackId);
       alert('Added to playlist!');
       setPlaylistSidebarOpen(false);
     } catch (e) {
@@ -355,7 +356,9 @@ export const PulsifyMyTracksView = () => {
                             <div 
                               className="menu-item" 
                               onClick={() => {
-                                const url = `${window.location.origin}/tracks/${track._id}`;
+                                const isPrivate = track.is_private || track.visibility === 'private';
+                                const tokenQuery = (isPrivate && track.secret_token) ? `?token=${track.secret_token}` : '';
+                                const url = `${window.location.origin}/tracks/${track._id}${tokenQuery}`;
                                 navigator.clipboard.writeText(url);
                                 alert("Link copied to clipboard!");
                                 setActiveMenu(null);
@@ -417,7 +420,7 @@ export const PulsifyMyTracksView = () => {
                     <span className="pl-title">{pl.title}</span>
                     <span className="pl-tracks">{pl.tracks?.length || 0} tracks</span>
                   </div>
-                  <button className="btn-add-pl" onClick={() => handleAddToPlaylist(pl._id)}>
+                  <button className="btn-add-pl" onClick={() => handleAddToPlaylist(pl._id || pl.id)}>
                     Add to playlist
                   </button>
                 </div>

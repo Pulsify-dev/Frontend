@@ -24,6 +24,7 @@ import TrackPage from "@/pages/TrackPage";
 
 // Module 7 + 12 – Playlists & Premium (Omar Nasser)
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
+import { PulsifyLibraryPlaylists } from "@/pages/PulsifyLibraryPlaylists";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyMyTracksView } from "@/pages/PulsifyMyTracksView";
@@ -121,7 +122,7 @@ const AppRoutes = () => {
                 path="/library"
                 element={
                   <ProtectedRoute>
-                    <PulsifyPlaylistsView />
+                    <PulsifyLibraryPlaylists />
                   </ProtectedRoute>
                 }
               />
