@@ -155,7 +155,6 @@ export const PulsifyTrackService = {
     }
 
     const { data } = await pulsifyAxiosInstance.post('/tracks', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress
     });
     return data;
@@ -239,9 +238,7 @@ export const PulsifyTrackService = {
 
     const formData = new FormData();
     formData.append('file', file);
-    const { data } = await pulsifyAxiosInstance.put(`/tracks/${trackId}/artwork`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const { data } = await pulsifyAxiosInstance.put(`/tracks/${trackId}/artwork`, formData);
     return data;
   },
 
@@ -255,6 +252,26 @@ export const PulsifyTrackService = {
     const { data } = await pulsifyAxiosInstance.get(`/artists/${artistId}/tracks`, {
       params: { page, limit }
     });
+    return data;
+  },
+
+  async getLikedTracks(page = 1, limit = 20) {
+    if (isMock()) {
+      return { success: true, count: 0, data: [] };
+    }
+    const { data } = await pulsifyAxiosInstance.get('/users/me/likes', { params: { page, limit }});
+    return data;
+  },
+
+  async likeTrack(trackId) {
+    if (isMock()) return { success: true, message: 'Track liked' };
+    const { data } = await pulsifyAxiosInstance.post(`/tracks/${trackId}/like`);
+    return data;
+  },
+
+  async unlikeTrack(trackId) {
+    if (isMock()) return { success: true, message: 'Track unliked' };
+    const { data } = await pulsifyAxiosInstance.delete(`/tracks/${trackId}/like`);
     return data;
   },
 

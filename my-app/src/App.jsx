@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import "./App.css";
@@ -39,6 +39,9 @@ import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
 
 const AppRoutes = () => {
+  const location = useLocation();
+  const isUploadPage = location.pathname.startsWith('/upload');
+
   return (
     <NotificationProvider>
       <PlayerProvider>
@@ -156,7 +159,7 @@ const AppRoutes = () => {
             />
           </Routes>
 
-          <PulsifyPlayerBar />
+          {!isUploadPage && <PulsifyPlayerBar />}
         </>
       </PlayerProvider>
     </NotificationProvider>

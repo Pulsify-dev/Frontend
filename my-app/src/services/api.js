@@ -829,5 +829,10 @@ pulsifyAxiosInstance.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = "Bearer " + token;
   }
+  // When sending FormData, remove the default JSON content-type
+  // so the browser can set multipart/form-data with the correct boundary
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
   return config;
 });

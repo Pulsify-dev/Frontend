@@ -201,6 +201,13 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(() => {
+    try {
+      const localStr = localStorage.getItem('pulsifyLikedPlaylists');
+      const local = localStr ? JSON.parse(localStr) : [];
+      return local.includes(plId);
+    } catch { return false; }
+  });
   const menuRef = useRef(null);
 
   // Close menu when clicking outside
@@ -214,7 +221,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
-  const { togglePlay, isPlaying, currentTrack } = usePlayer();
+  const { togglePlay, isPlaying, currentTrack, playerProgress } = usePlayer();
 
   const handlePlaylistShare = () => {
     setIsShareModalOpen(true);
@@ -228,6 +235,37 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
       if (onDelete) onDelete(plId);
     } catch (err) {
       alert('Failed to delete playlist: ' + err.message);
+    }
+  };
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    const prevLiked = isLiked;
+    setIsLiked(!prevLiked);
+    
+    const updateLocalPlaylistState = () => {
+      try {
+        const localStr = localStorage.getItem('pulsifyLikedPlaylists');
+        let currentLocal = localStr ? JSON.parse(localStr) : [];
+        if (prevLiked) {
+          currentLocal = currentLocal.filter(id => id !== plId);
+        } else {
+          currentLocal = [...new Set([plId, ...currentLocal])];
+        }
+        localStorage.setItem('pulsifyLikedPlaylists', JSON.stringify(currentLocal));
+      } catch (e) {}
+    };
+
+    try {
+      if (prevLiked) {
+        await PulsifyPlaylistService.unlikePlaylist(plId);
+      } else {
+        await PulsifyPlaylistService.likePlaylist(plId);
+      }
+      updateLocalPlaylistState();
+    } catch (err) {
+      console.warn('Backend playlist like failed, falling back to local demo state:', err.message);
+      updateLocalPlaylistState();
     }
   };
 
@@ -291,16 +329,25 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
         </div>
 
         <div className="pulsify-card-waveform">
-          {waveform.map((h, i) => (
-            <div
-              key={i}
-              className="pulsify-card-waveform-bar"
-              style={{
-                height: `${h * 100}%`,
-                backgroundColor: i < 60 ? '#f50' : 'rgba(255,255,255,0.35)'
-              }}
-            />
-          ))}
+          {waveform.map((h, i) => {
+            const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+            const isThisPlaylistPlaying = currentTrack && localPlaylist.tracks?.some(t => {
+              const tId = t.track_id?._id || t.track_id || t._id || t.id;
+              return tId === currentId;
+            });
+            const isPlayed = isThisPlaylistPlaying ? (i / waveform.length) * 100 <= (playerProgress || 0) : false;
+            return (
+              <div
+                key={i}
+                className="pulsify-card-waveform-bar"
+                style={{
+                  height: `${Math.max(15, h * 100)}%`,
+                  backgroundColor: isPlayed ? '#f50' : 'rgba(255,255,255,0.7)',
+                  borderRadius: '1px'
+                }}
+              />
+            );
+          })}
         </div>
 
         {localPlaylist.tracks && localPlaylist.tracks.length > 0 && (
@@ -342,8 +389,8 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           <button className="pulsify-card-action-btn" title="Edit" onClick={() => setIsEditModalOpen(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="Like">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <button className="pulsify-card-action-btn" title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick} style={isLiked ? { color: '#f50' } : {}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           </button>
 
           {/* ─── MORE BUTTON WITH DROPDOWN ─── */}

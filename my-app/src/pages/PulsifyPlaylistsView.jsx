@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
+import { PulsifyTrackService } from '../services/pulsifyTrackService';
 import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
 import { PulsifyCreatePlaylistModal } from '../components/playlists/PulsifyCreatePlaylistModal';
 import { Link } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
+import { pulsifyAxiosInstance } from '../services/api';
 import '../components/playlists/css/PulsifyPlaylists.css';
 
 
 
 export const PulsifyPlaylistsView = () => {
   const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);
+  const [likedTracks, setLikedTracks] = useState([]);
+  const [likedCount, setLikedCount] = useState(0);
+  const [socialStats, setSocialStats] = useState({ followers: 0, following: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -61,10 +66,53 @@ export const PulsifyPlaylistsView = () => {
       }
     };
 
+    const fetchLikes = async () => {
+      try {
+        const res = await PulsifyTrackService.getLikedTracks().catch(() => ({ data: [], count: 0 }));
+        if (isMounted) {
+          // Merge remote data with local demo state
+          const remoteTracks = res.data || [];
+          let localTracks = [];
+          try {
+            const localStr = localStorage.getItem('pulsifyLikedTracks');
+            if (localStr) localTracks = JSON.parse(localStr);
+          } catch (e) {}
+          // Simple deduplication by track ID
+          const merged = [...localTracks, ...remoteTracks].filter((v, i, a) => 
+            a.findIndex(t => (t._id || t.id) === (v._id || v.id)) === i
+          );
+          setLikedTracks(merged);
+          setLikedCount(merged.length || res.count || 0);
+        }
+      } catch (err) {
+        console.error('Failed to fetch liked tracks', err);
+      }
+    };
+
+    const fetchSocialCounts = async () => {
+      try {
+        const { data: res } = await pulsifyAxiosInstance.get('/users/me/social-counts');
+        if (isMounted && res?.data) {
+          setSocialStats({
+            followers: res.data.followers_count || 0,
+            following: res.data.following_count || 0
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to fetch social counts', err);
+      }
+    };
+
     loadPulsifyData();
+    fetchLikes();
+    fetchSocialCounts();
+
+    const handleLikesUpdated = () => fetchLikes();
+    window.addEventListener('pulsify-likes-updated', handleLikesUpdated);
 
     return () => {
       isMounted = false;
+      window.removeEventListener('pulsify-likes-updated', handleLikesUpdated);
     };
   }, []);
 
@@ -128,36 +176,44 @@ export const PulsifyPlaylistsView = () => {
           <div className="pulsify-sidebar-stats">
             <div className="pulsify-stat-box">
               <span className="pulsify-stat-label">Followers</span>
-              <span className="pulsify-stat-value">2</span>
+              <span className="pulsify-stat-value">{socialStats.followers}</span>
             </div>
             <div className="pulsify-stat-box">
               <span className="pulsify-stat-label">Following</span>
-              <span className="pulsify-stat-value">2</span>
+              <span className="pulsify-stat-value">{socialStats.following}</span>
             </div>
             <div className="pulsify-stat-box">
               <span className="pulsify-stat-label">Tracks</span>
-              <span className="pulsify-stat-value">12</span>
+              <span className="pulsify-stat-value">{totalTracksMocked}</span>
             </div>
           </div>
 
           <div className="pulsify-sidebar-likes">
             <div className="pulsify-sidebar-likes-header" style={{ borderBottom: 'none' }}>
-              2 LIKES
+              {likedCount} LIKES
               <Link to="/likes" className="view-all">View all</Link>
             </div>
-            <div className="pulsify-liked-track">
-              <img src="https://placehold.co/50x50/333/666?text=+" alt="Liked Track" />
-              <div className="pulsify-liked-track-info">
-                <span className="pulsify-liked-track-artist">Post Malone</span>
-                <Link to="#" className="pulsify-liked-track-title">rockstar (feat. 21 Savage)</Link>
-                <div className="pulsify-liked-track-stats">
-                  <span>▶ 215M</span>
-                  <span>❤️ 2.41M</span>
-                  <span>🔁 120K</span>
-                  <span>💬 25.1K</span>
-                </div>
-              </div>
-            </div>
+            {likedTracks.length === 0 ? (
+              <div style={{ color: '#999', fontSize: '12px', padding: '10px 0' }}>No liked tracks yet.</div>
+            ) : (
+              likedTracks.slice(0, 3).map((trackData, idx) => {
+                const t = trackData.track_id || trackData;
+                return (
+                  <div className="pulsify-liked-track" key={t._id || t.id || idx} style={{ marginBottom: '12px' }}>
+                    <img src={t.artwork_url || t.cover_art_url || 'https://placehold.co/50x50/333/666?text=♫'} alt={t.title} style={{ width: '50px', height: '50px', objectFit: 'cover' }} />
+                    <div className="pulsify-liked-track-info">
+                      <span className="pulsify-liked-track-artist">{t.artist_id?.display_name || t.artist_name || t.artist?.name || 'Unknown Artist'}</span>
+                      <Link to={`/tracks/${t._id || t.id}`} className="pulsify-liked-track-title">{t.title}</Link>
+                      <div className="pulsify-liked-track-stats">
+                        <span>▶ {t.play_count || 0}</span>
+                        <span>❤️ {t.like_count || 0}</span>
+                        <span>🔁 {t.repost_count || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="pulsify-sidebar-promo">

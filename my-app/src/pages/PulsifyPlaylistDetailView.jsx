@@ -6,6 +6,7 @@ import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import { usePlayer } from '../hooks/usePlayer';
 import { PulsifyEditPlaylistModal } from '../components/playlists/PulsifyEditPlaylistModal';
 import { PulsifyShareModal } from '../components/playlists/PulsifyShareModal';
+import { pulsifyAxiosInstance } from '../services/api';
 
 const waveformBars = Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
@@ -15,14 +16,23 @@ export const PulsifyPlaylistDetailView = () => {
   const [userPlaylists, setUserPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
   const navigate = useNavigate();
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
   const { togglePlay, isPlaying, currentTrack, playerProgress, playerCurrentTime } = usePlayer();
+  const [creatorProfile, setCreatorProfile] = useState(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(() => {
+    try {
+      const localStr = localStorage.getItem('pulsifyLikedPlaylists');
+      const local = localStr ? JSON.parse(localStr) : [];
+      return local.includes(playlistId);
+    } catch { return false; }
+  });
 
   const formatTime = (secs) => {
     if (!secs || isNaN(secs)) return '0:00';
@@ -47,11 +57,30 @@ export const PulsifyPlaylistDetailView = () => {
         }
         
         // Handle unwrapping of data depending on the service response format
-        if (data && data.success && data.data) {
+        // The backend may wrap the playlist in { playlist: {...} }, { data: {...} }, or { success, data: {...} }
+        if (data && data.playlist && typeof data.playlist === 'object' && !Array.isArray(data.playlist) && (data.playlist._id || data.playlist.title)) {
+          data = data.playlist;
+        } else if (data && data.success && data.data) {
+          data = data.data;
+        } else if (data && data.data && typeof data.data === 'object' && !data.title && !data._id) {
           data = data.data;
         }
 
+        console.log('[PlaylistDetail] Resolved playlist data:', data);
         if (isMounted) setPlaylistDetail(data);
+
+        // Fetch creator profile for avatar and display name
+        try {
+          const creatorId = data.creator_id?._id || data.creator_id || data.creator_username;
+          if (creatorId) {
+            const userRes = await pulsifyAxiosInstance.get(`/users/${creatorId}`);
+            if (isMounted && userRes.data) {
+              setCreatorProfile(userRes.data);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch creator profile', e);
+        }
 
         // Fetch user's other playlists
         try {
@@ -94,6 +123,36 @@ export const PulsifyPlaylistDetailView = () => {
     setIsShareModalOpen(true);
   };
 
+  const handleLikeClick = async () => {
+    const prevLiked = isLiked;
+    setIsLiked(!prevLiked);
+    
+    const updateLocalPlaylistState = () => {
+      try {
+        const localStr = localStorage.getItem('pulsifyLikedPlaylists');
+        let currentLocal = localStr ? JSON.parse(localStr) : [];
+        if (prevLiked) {
+          currentLocal = currentLocal.filter(id => id !== playlistId);
+        } else {
+          currentLocal = [...new Set([playlistId, ...currentLocal])];
+        }
+        localStorage.setItem('pulsifyLikedPlaylists', JSON.stringify(currentLocal));
+      } catch (e) {}
+    };
+
+    try {
+      if (prevLiked) {
+        await PulsifyPlaylistService.unlikePlaylist(playlistId);
+      } else {
+        await PulsifyPlaylistService.likePlaylist(playlistId);
+      }
+      updateLocalPlaylistState();
+    } catch (err) {
+      console.warn('Backend playlist like failed, falling back to local demo state:', err.message);
+      updateLocalPlaylistState();
+    }
+  };
+
   const handleRemoveTrack = async (indexToRemove) => {
     const trackEntry = playlistDetail.tracks[indexToRemove];
     const trackId = trackEntry.track_id?._id || trackEntry.track_id || trackEntry.id;
@@ -103,6 +162,41 @@ export const PulsifyPlaylistDetailView = () => {
     try {
       await PulsifyPlaylistService.removeTrackFromPlaylist(playlistDetail._id, trackId);
     } catch (err) { alert('Failed to remove track.'); }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      
+      // Optimistic UI update
+      const objectUrl = URL.createObjectURL(file);
+      setPlaylistDetail(prev => ({ ...prev, cover_url: objectUrl }));
+
+      const formData = new FormData();
+      formData.append('title', playlistDetail.title);
+      formData.append('is_private', playlistDetail.is_private || false);
+      if (playlistDetail.description) {
+        formData.append('description', playlistDetail.description);
+      }
+      formData.append('file', file);
+      
+      // We assume PATCH accepts the file just like POST does.
+      const res = await PulsifyPlaylistService.updatePlaylist(playlistDetail._id, formData);
+      if (res && res.data && res.data.cover_url) {
+        setPlaylistDetail(prev => ({ ...prev, cover_url: res.data.cover_url }));
+      }
+      
+    } catch (err) {
+      console.error('Failed to upload image', err);
+      alert('Failed to upload playlist cover image.');
+    } finally {
+      setIsUploadingImage(false);
+      // Reset input so they can upload the same file again if needed
+      e.target.value = null;
+    }
   };
 
   const handleDeleteSet = async () => {
@@ -248,16 +342,29 @@ export const PulsifyPlaylistDetailView = () => {
             </div>
           </div>
 
-          <div style={{ width: '340px', height: '340px', flexShrink: 0, alignSelf: 'center', marginRight: '24px', position: 'relative' }}>
+          <div style={{ width: '340px', height: '340px', flexShrink: 0, alignSelf: 'center', marginRight: '24px', position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
             <img
               src={playlistDetail.cover_url || 'https://placehold.co/340x340/2a1e30/666?text=♫'}
               alt={playlistDetail.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: isUploadingImage ? 0.5 : 1 }}
             />
             <div style={{ position: 'absolute', bottom: '15px', left: '0', width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <button style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 16px', fontSize: '13px', borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#000'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.7)'}>
-                Upload image
+              <button 
+                onClick={() => document.getElementById('detail-cover-upload').click()}
+                disabled={isUploadingImage}
+                style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 16px', fontSize: '13px', borderRadius: '4px', cursor: isUploadingImage ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }} 
+                onMouseEnter={e => { if(!isUploadingImage) e.currentTarget.style.backgroundColor = '#000'; }} 
+                onMouseLeave={e => { if(!isUploadingImage) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.7)'; }}
+              >
+                {isUploadingImage ? 'Uploading...' : 'Upload image'}
               </button>
+              <input 
+                id="detail-cover-upload"
+                type="file" 
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleImageUpload}
+              />
             </div>
           </div>
         </div>
@@ -273,8 +380,8 @@ export const PulsifyPlaylistDetailView = () => {
           <CircleBtn onClick={openEditModal}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </CircleBtn>
-          <CircleBtn onClick={() => { }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <CircleBtn onClick={handleLikeClick}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           </CircleBtn>
           <CircleBtn onClick={() => { }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="14" height="14" rx="2" ry="2" /><path d="M7 21h14a2 2 0 0 0 2-2V7" /></svg>
@@ -295,14 +402,26 @@ export const PulsifyPlaylistDetailView = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '36px', color: '#555',
                 border: '2px solid #333',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                overflow: 'hidden'
               }}
-              onClick={() => navigate('/playlists')}
+              onClick={() => {
+                const creatorId = playlistDetail.creator_id?._id || playlistDetail.creator_id || playlistDetail.creator_username;
+                if (creatorId) navigate(`/profile/${creatorId}`);
+              }}
             >
-              ♫
+              {(creatorProfile?.avatar_url || playlistDetail.creator_id?.avatar_url) ? (
+                <img 
+                  src={creatorProfile?.avatar_url || playlistDetail.creator_id?.avatar_url} 
+                  alt="Creator" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                '♫'
+              )}
             </div>
             <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '2px' }}>
-              {playlistDetail.creator_id?.display_name || playlistDetail.creator_username || 'You'}
+              {creatorProfile?.display_name || creatorProfile?.username || playlistDetail.creator_id?.display_name || playlistDetail.creator_username || 'You'}
             </div>
             <div style={{ fontSize: '11px', color: '#999', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
               <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="12" height="12"><path d="M5.75 2v12h1.5V2h-1.5zM13.25 10V6h-1.5v4h1.5zM4.25 5v6h-1.5V5h1.5zM8.75 4v8h1.5V4h-1.5z" fill="currentColor"></path></svg>

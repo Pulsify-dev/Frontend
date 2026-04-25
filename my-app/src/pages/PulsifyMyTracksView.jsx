@@ -32,6 +32,11 @@ export const PulsifyMyTracksView = () => {
   const [hoveredTrack, setHoveredTrack] = useState(null);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
+  const [newPlaylistPrivacy, setNewPlaylistPrivacy] = useState('public');
+  const [newPlaylistArtwork, setNewPlaylistArtwork] = useState(null);
+  const [newPlaylistArtworkPreview, setNewPlaylistArtworkPreview] = useState(null);
 
   const fetchTracks = useCallback(async () => {
     try {
@@ -83,11 +88,13 @@ export const PulsifyMyTracksView = () => {
     if (!selectedTrackForPlaylist) return;
     try {
       const trackId = selectedTrackForPlaylist._id || selectedTrackForPlaylist.id;
+      console.log('[AddToPlaylist] playlistId:', playlistId, 'trackId:', trackId);
       await PulsifyPlaylistService.addTrackToPlaylist(playlistId, trackId);
       alert('Added to playlist!');
       setPlaylistSidebarOpen(false);
     } catch (e) {
-      alert('Failed to add track: ' + e.message);
+      console.error('[AddToPlaylist] Error:', e.response?.status, e.response?.data);
+      alert('Failed to add track: ' + (e.response?.data?.message || e.message));
     }
   };
 
@@ -97,21 +104,40 @@ export const PulsifyMyTracksView = () => {
       setIsCreatingPlaylist(true);
       const newPlaylist = await PulsifyPlaylistService.createPlaylist({
         title: newPlaylistName,
-        visibility: 'public'
+        description: newPlaylistDescription,
+        is_private: newPlaylistPrivacy === 'private',
+        file: newPlaylistArtwork
       });
       
-      const playlistId = newPlaylist.data?._id || newPlaylist._id;
+      console.log('[CreatePlaylist] Full response:', JSON.stringify(newPlaylist, null, 2));
+      const playlistId = newPlaylist.playlist?._id || newPlaylist.data?._id || newPlaylist._id;
+      const trackId = selectedTrackForPlaylist._id || selectedTrackForPlaylist.id;
+      console.log('[CreatePlaylist] Extracted playlistId:', playlistId, 'trackId:', trackId);
+      
       if (!playlistId) throw new Error("Could not retrieve new playlist ID from server response.");
       
-      await PulsifyPlaylistService.addTrackToPlaylist(playlistId, selectedTrackForPlaylist._id);
-      alert('Playlist created and track added!');
+      // Try adding the track — but don't fail the whole flow if this step errors
+      try {
+        await PulsifyPlaylistService.addTrackToPlaylist(playlistId, trackId);
+        alert('Playlist created and track added!');
+      } catch (addErr) {
+        console.error('[CreatePlaylist] Failed to add track:', addErr.response?.data || addErr.message);
+        alert('Playlist created, but failed to add track: ' + (addErr.response?.data?.message || addErr.message));
+      }
+      
       setNewPlaylistName('');
+      setNewPlaylistDescription('');
+      setNewPlaylistPrivacy('public');
+      setNewPlaylistArtwork(null);
+      setNewPlaylistArtworkPreview(null);
+      setShowCreateForm(false);
       setIsCreatingPlaylist(false);
       fetchPlaylists();
       setPlaylistSidebarOpen(false);
     } catch (e) {
       setIsCreatingPlaylist(false);
-      alert('Error creating playlist: ' + e.message);
+      console.error('[CreatePlaylist] Error:', e.response?.data || e.message);
+      alert('Error creating playlist: ' + (e.response?.data?.message || e.message));
     }
   };
 
@@ -158,9 +184,7 @@ export const PulsifyMyTracksView = () => {
       <div className="studio-top-nav">
         <div className="studio-nav-left">
           <Link to="/" className="studio-logo">
-            <svg viewBox="0 0 48 48" fill="currentColor" width="32" height="32">
-              <path d="M34.9,20.2c-0.2-6.5-5.5-11.8-12.1-11.8c-5.6,0-10.4,3.8-11.8,9C10.3,17.2,9.3,18.8,9,20.8c-3.4,0.6-6,3.6-6,7.1 c0,4,3.2,7.2,7.2,7.2h25.4c3.6,0,6.5-2.9,6.5-6.5C42.1,23.3,38.8,20.3,34.9,20.2z"/>
-            </svg>
+            <span style={{ fontSize: '22px', fontWeight: '800', color: '#fff', letterSpacing: '-0.5px' }}>Pulsify</span>
           </Link>
         </div>
         <div className="studio-nav-right">
@@ -179,7 +203,7 @@ export const PulsifyMyTracksView = () => {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           </button>
           <div className="studio-profile">
-            <img src={user?.avatar_url || 'https://placehold.co/40?text=U'} alt="Profile" />
+            <img src={user?.avatarUrl || user?.avatar_url || user?.avatar || 'https://placehold.co/40?text=U'} alt="Profile" />
           </div>
         </div>
       </div>
@@ -237,15 +261,19 @@ export const PulsifyMyTracksView = () => {
               <span className="stats-updated">All time stats updated daily.</span>
             </div>
             <div className="stats-row">
-              <div className="stat-item"><div className="stat-num">{tracks.reduce((sum, t) => sum + (t.play_count || 0), 0)}</div><div className="stat-label">SC plays</div></div>
-              <div className="stat-item"><div className="stat-num">{tracks.reduce((sum, t) => sum + (t.repost_count || 0), 0)}</div><div className="stat-label">Reposts</div></div>
-              <div className="stat-item"><div className="stat-num">0</div><div className="stat-label">Downloads</div></div>
-              <div className="stat-item"><div className="stat-num">{tracks.reduce((sum, t) => sum + (t.like_count || 0), 0)}</div><div className="stat-label">Likes</div></div>
-              <div className="stat-item"><div className="stat-num">0</div><div className="stat-label">Comments</div></div>
-              <div className="stat-item divider"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg><div className="stat-label">Insights</div></div>
-              <div className="stat-item divider"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-1h-1c-.55 0-1-.45-1-1v-3c0-.55.45-1 1-1h3v-1h-3V8h2V7h2v1h1c.55 0 1 .45 1 1v3c0 .55-.45 1-1 1h-3v1h3v2h-2v1z"/></svg><div className="stat-label">Earnings</div></div>
-              <div className="stat-item divider"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><div className="stat-label">Fans</div></div>
-              <div className="stat-item divider"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg><div className="stat-label">Benefits</div></div>
+              <div className="stats-group-left">
+                <div className="stat-item"><div className="stat-num">{tracks.reduce((sum, t) => sum + (t.play_count || 0), 0)}</div><div className="stat-label">SC plays</div></div>
+                <div className="stat-item divider"><div className="stat-num">{tracks.reduce((sum, t) => sum + (t.repost_count || 0), 0)}</div><div className="stat-label">Reposts</div></div>
+                <div className="stat-item divider"><div className="stat-num">0</div><div className="stat-label">Downloads</div></div>
+                <div className="stat-item divider"><div className="stat-num">{tracks.reduce((sum, t) => sum + (t.like_count || 0), 0)}</div><div className="stat-label">Likes</div></div>
+                <div className="stat-item divider"><div className="stat-num">0</div><div className="stat-label">Comments</div></div>
+              </div>
+              <div className="stats-group-right">
+                <div className="stat-item"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg><div className="stat-label">Insights</div></div>
+                <div className="stat-item"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-1h-1c-.55 0-1-.45-1-1v-3c0-.55.45-1 1-1h3v-1h-3V8h2V7h2v1h1c.55 0 1 .45 1 1v3c0 .55-.45 1-1 1h-3v1h3v2h-2v1z"/></svg><div className="stat-label">Earnings</div></div>
+                <div className="stat-item"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><div className="stat-label">Fans</div></div>
+                <div className="stat-item"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg><div className="stat-label">Benefits</div></div>
+              </div>
             </div>
             
             <div className="panel-tabs">
@@ -313,11 +341,11 @@ export const PulsifyMyTracksView = () => {
           <div className="tracks-table">
             <div className="table-header">
               <div className="col-checkbox"><input type="checkbox" /></div>
-              <div className="col-track">TRACKS</div>
-              <div className="col-duration">DURATION</div>
-              <div className="col-date">DATE</div>
-              <div className="col-engagements">ENGAGEMENTS</div>
-              <div className="col-plays">PLAYS</div>
+              <div className="col-track" style={{color: '#ccc', fontWeight: 800}}>TRACKS</div>
+              <div className="col-duration" style={{color: '#ccc', fontWeight: 800}}>DURATION</div>
+              <div className="col-date" style={{color: '#ccc', fontWeight: 800}}>DATE</div>
+              <div className="col-engagements" style={{color: '#ccc', fontWeight: 800}}>ENGAGEMENTS</div>
+              <div className="col-plays" style={{color: '#ccc', fontWeight: 800}}>PLAYS</div>
               <div className="col-actions"></div>
             </div>
 
@@ -373,7 +401,7 @@ export const PulsifyMyTracksView = () => {
                     
                     <div className="col-actions">
                       <button className="btn-amplify">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Amplify
+                        <svg viewBox="0 0 24 24" fill="none" height="16" width="16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10.7484 15.9224V15.1724H9.99844H3.74199L13.2484 2.76308V7.54738V8.29738H13.9984H20.2413L10.7484 21.2653V15.9224Z" stroke="currentColor" strokeWidth="1" fill="currentColor"></path></svg> Amplify
                       </button>
                       <div className="menu-wrapper">
                         <button 
@@ -470,40 +498,111 @@ export const PulsifyMyTracksView = () => {
             </button>
             <h3>Add to playlist</h3>
           </div>
-          
           <div className="sidebar-content">
-            <div className="create-playlist-btn" onClick={() => {
-              const name = prompt('Playlist name:');
-              if (name) setNewPlaylistName(name);
-            }}>
-              <div className="plus-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-              <span>Create playlist</span>
-            </div>
-            
-            {newPlaylistName && (
-              <div className="new-playlist-prompt">
-                <button onClick={handleCreatePlaylist} disabled={isCreatingPlaylist}>
-                  {isCreatingPlaylist ? 'Creating...' : `Create + Add: "${newPlaylistName}"`}
-                </button>
-                <button onClick={() => setNewPlaylistName('')}>Cancel</button>
-              </div>
-            )}
+            {!showCreateForm ? (
+              <>
+                <div className="create-playlist-btn" onClick={() => setShowCreateForm(true)}>
+                  <div className="plus-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+                  <span>Create playlist</span>
+                </div>
+                
+                <div className="playlists-list">
+                  {playlists.map(pl => (
+                    <div key={pl._id} className="playlist-item">
+                      <img src={pl.artwork_url || pl.cover_url || 'https://placehold.co/48x48/111/333?text=PL'} alt="" />
+                      <div className="playlist-info">
+                        <span className="pl-title">{pl.title}</span>
+                        <span className="pl-tracks">{pl.tracks?.length || 0} tracks</span>
+                      </div>
+                      <button className="btn-add-pl" onClick={() => handleAddToPlaylist(pl._id || pl.id)}>
+                        Add to playlist
+                      </button>
+                    </div>
+                  ))}
+                  {playlists.length === 0 && <div className="no-playlists">No playlists found. Create one above!</div>}
+                </div>
+              </>
+            ) : (
+              <div className="create-playlist-form" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                <div 
+                  className="artwork-upload" 
+                  style={{ 
+                    width: '160px', height: '160px', margin: '0 auto', 
+                    border: '1px dashed #444', display: 'flex', flexDirection: 'column', 
+                    alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                    position: 'relative', overflow: 'hidden'
+                  }}
+                  onClick={() => document.getElementById('sidebar-artwork-upload').click()}
+                >
+                  {newPlaylistArtworkPreview ? (
+                    <img src={newPlaylistArtworkPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" style={{ marginBottom: '12px' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: 'bold' }}>Add new artwork</span>
+                    </>
+                  )}
+                  <input 
+                    id="sidebar-artwork-upload" 
+                    type="file" 
+                    accept="image/jpeg,image/png,image/webp" 
+                    style={{ display: 'none' }} 
+                    onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setNewPlaylistArtwork(file);
+                        setNewPlaylistArtworkPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                </div>
 
-            <div className="playlists-list">
-              {playlists.map(pl => (
-                <div key={pl._id} className="playlist-item">
-                  <img src={pl.artwork_url || pl.cover_url || 'https://placehold.co/48x48/111/333?text=PL'} alt="" />
-                  <div className="playlist-info">
-                    <span className="pl-title">{pl.title}</span>
-                    <span className="pl-tracks">{pl.tracks?.length || 0} tracks</span>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>Playlist title <span style={{color:'#f50'}}>*</span></label>
+                  <input 
+                    type="text" 
+                    value={newPlaylistName} 
+                    onChange={e => setNewPlaylistName(e.target.value)} 
+                    style={{ width: '100%', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#fff', padding: '8px 0', fontSize: '13px', outline: 'none' }} 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>Description</label>
+                  <textarea 
+                    placeholder="Describe your playlist." 
+                    value={newPlaylistDescription} 
+                    onChange={e => setNewPlaylistDescription(e.target.value)} 
+                    style={{ width: '100%', backgroundColor: 'transparent', border: 'none', color: '#aaa', padding: '8px 0', fontSize: '13px', outline: 'none', resize: 'none', minHeight: '60px' }} 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>Playlist privacy</label>
+                  <div style={{ display: 'flex', borderRadius: '24px', overflow: 'hidden', border: '1px solid #333' }}>
+                    <button 
+                      onClick={() => setNewPlaylistPrivacy('public')} 
+                      style={{ flex: 1, padding: '10px 0', fontSize: '12px', fontWeight: 'bold', border: 'none', cursor: 'pointer', backgroundColor: newPlaylistPrivacy === 'public' ? '#fff' : '#111', color: newPlaylistPrivacy === 'public' ? '#000' : '#fff' }}
+                    >Public</button>
+                    <button 
+                      onClick={() => setNewPlaylistPrivacy('private')} 
+                      style={{ flex: 1, padding: '10px 0', fontSize: '12px', fontWeight: 'bold', border: 'none', cursor: 'pointer', backgroundColor: newPlaylistPrivacy === 'private' ? '#fff' : '#111', color: newPlaylistPrivacy === 'private' ? '#000' : '#fff' }}
+                    >Private</button>
                   </div>
-                  <button className="btn-add-pl" onClick={() => handleAddToPlaylist(pl._id || pl.id)}>
-                    Add to playlist
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', gap: '16px' }}>
+                  <button onClick={() => setShowCreateForm(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+                  <button 
+                    onClick={handleCreatePlaylist} 
+                    disabled={isCreatingPlaylist || !newPlaylistName.trim()} 
+                    style={{ backgroundColor: (isCreatingPlaylist || !newPlaylistName.trim()) ? '#555' : '#ccc', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', cursor: (isCreatingPlaylist || !newPlaylistName.trim()) ? 'not-allowed' : 'pointer' }}
+                  >
+                    {isCreatingPlaylist ? 'Saving...' : 'Save'}
                   </button>
                 </div>
-              ))}
-              {playlists.length === 0 && <div className="no-playlists">No playlists found. Create one above!</div>}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

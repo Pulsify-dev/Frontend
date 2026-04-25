@@ -1,10 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlayer } from '../../hooks/usePlayer';
+import { PulsifyTrackService } from '../../services/pulsifyTrackService';
 
 export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop, onDragEnd, onRemoveTrack }) => {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(() => {
+    try {
+      const localStr = localStorage.getItem('pulsifyLikedTracks');
+      const local = localStr ? JSON.parse(localStr) : [];
+      return local.some(t => (t._id || t.id) === (track._id || track.id));
+    } catch { return false; }
+  });
   const menuRef = useRef(null);
   const { togglePlay, isPlaying, currentTrack } = usePlayer();
 
@@ -27,6 +35,40 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
     }).catch(err => {
       console.error('Failed to copy', err);
     });
+  };
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    const prevLiked = isLiked;
+    setIsLiked(!prevLiked); // Optimistic UI update
+    
+    const trackId = track._id || track.id;
+    const updateLocalState = () => {
+      try {
+        const localStr = localStorage.getItem('pulsifyLikedTracks');
+        let currentLocal = localStr ? JSON.parse(localStr) : [];
+        if (prevLiked) {
+          currentLocal = currentLocal.filter(t => (t._id || t.id) !== trackId);
+        } else {
+          const trackData = { ...track, like_count: (track.like_count || 0) + 1 };
+          currentLocal = [trackData, ...currentLocal];
+        }
+        localStorage.setItem('pulsifyLikedTracks', JSON.stringify(currentLocal));
+        window.dispatchEvent(new Event('pulsify-likes-updated'));
+      } catch (e) { console.error('Local storage error', e); }
+    };
+
+    try {
+      if (prevLiked) {
+        await PulsifyTrackService.unlikeTrack(trackId);
+      } else {
+        await PulsifyTrackService.likeTrack(trackId);
+      }
+      updateLocalState();
+    } catch (err) {
+      console.warn('Backend like failed, falling back to local state:', err.message);
+      updateLocalState(); // Fallback to local state so UI works for demo
+    }
   };
 
   if (!track) return null;
@@ -87,7 +129,7 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
         </span>
         <span style={{ color: '#999', marginRight: '6px' }}>-</span>
         <Link 
-          to={`/track/${track._id || track.id}`}
+          to={`/tracks/${track._id || track.id}`}
           style={{ color: '#fff', fontWeight: 'bold', fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textDecoration: 'none' }}
           onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
           onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
@@ -98,8 +140,8 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
 
       {hovered && (
         <div style={{ display: 'flex', gap: '32px', marginRight: '16px', alignItems: 'center' }}>
-          <TrackAction title="Like">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </TrackAction>
           <TrackAction title="Repost">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>

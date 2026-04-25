@@ -105,7 +105,7 @@ export const PulsifyPlaylistService = {
         creator_id: { _id: 'u1', username: 'i_omz', display_name: 'i Omz', avatar_url: '' },
         is_private: payload.is_private || false,
         secret_token: payload.is_private ? 'mock-token-' + Date.now() : null,
-        cover_url: 'default-playlist-cover.png',
+        cover_url: payload.file ? URL.createObjectURL(payload.file) : 'default-playlist-cover.png',
         track_count: 0,
         duration_ms: 0,
         permalink: payload.title.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).slice(2, 10),
@@ -116,7 +116,26 @@ export const PulsifyPlaylistService = {
       mockPlaylists.unshift(newPl);
       return { success: true, data: newPl };
     }
-    const { data } = await pulsifyAxiosInstance.post('/playlists', payload);
+
+    const formData = new FormData();
+    formData.append('title', payload.title);
+    
+    // Only append description if it's a non-empty string
+    if (payload.description && payload.description.trim() !== '') {
+      formData.append('description', payload.description);
+    }
+    
+    // Safely parse is_private
+    const isPrivateVal = payload.is_private !== undefined ? payload.is_private : false;
+    formData.append('is_private', isPrivateVal);
+
+    if (payload.file) {
+      formData.append('file', payload.file);
+    }
+
+    // When passing FormData, Axios automatically removes the default application/json header
+    // and sets multipart/form-data with the correct boundary. We don't need to specify headers.
+    const { data } = await pulsifyAxiosInstance.post('/playlists', formData);
     return data;
   },
 
@@ -124,9 +143,22 @@ export const PulsifyPlaylistService = {
   async updatePlaylist(playlistId, payload) {
     if (isMock()) {
       const idx = mockPlaylists.findIndex(p => p._id === playlistId);
-      if (idx >= 0) Object.assign(mockPlaylists[idx], payload, { updatedAt: new Date().toISOString() });
+      if (idx >= 0) {
+        if (payload instanceof FormData) {
+          if (payload.has('title')) mockPlaylists[idx].title = payload.get('title');
+          if (payload.has('description')) mockPlaylists[idx].description = payload.get('description');
+          if (payload.has('is_private')) mockPlaylists[idx].is_private = payload.get('is_private') === 'true';
+          if (payload.has('file')) {
+            mockPlaylists[idx].cover_url = URL.createObjectURL(payload.get('file'));
+          }
+        } else {
+          Object.assign(mockPlaylists[idx], payload);
+        }
+        mockPlaylists[idx].updatedAt = new Date().toISOString();
+      }
       return { success: true, data: mockPlaylists[idx] || {} };
     }
+
     const { data } = await pulsifyAxiosInstance.patch(`/playlists/${playlistId}`, payload);
     return data;
   },
@@ -154,7 +186,7 @@ export const PulsifyPlaylistService = {
       }
       return { success: true, message: 'Track added to playlist', data: pl };
     }
-    const { data } = await pulsifyAxiosInstance.post(`/playlists/${playlistId}/tracks/${trackId}`);
+    const { data } = await pulsifyAxiosInstance.post(`/playlists/${playlistId}/tracks/${trackId}`, {});
     return data;
   },
 
@@ -214,7 +246,7 @@ export const PulsifyPlaylistService = {
       if (pl) pl.secret_token = newToken;
       return { success: true, message: 'Secret token regenerated successfully', data: { playlistId, secret_token: newToken } };
     }
-    const { data } = await pulsifyAxiosInstance.post(`/playlists/${playlistId}/regenerate-token`);
+    const { data } = await pulsifyAxiosInstance.post(`/playlists/${playlistId}/regenerate-token`, {});
     return data;
   },
 
@@ -261,6 +293,26 @@ export const PulsifyPlaylistService = {
       return { success: true, count: matches.length, data: matches };
     }
     const { data } = await pulsifyAxiosInstance.get('/playlists/search', { params: { q: query, page, limit } });
+    return data;
+  },
+
+  // ──── LIKES ────
+
+  /** POST /playlists/:playlistId/like — Like a playlist */
+  async likePlaylist(playlistId) {
+    if (isMock()) {
+      return { success: true, message: 'Playlist liked successfully' };
+    }
+    const { data } = await pulsifyAxiosInstance.post(`/playlists/${playlistId}/like`);
+    return data;
+  },
+
+  /** DELETE /playlists/:playlistId/like — Unlike a playlist */
+  async unlikePlaylist(playlistId) {
+    if (isMock()) {
+      return { success: true, message: 'Playlist unliked successfully' };
+    }
+    const { data } = await pulsifyAxiosInstance.delete(`/playlists/${playlistId}/like`);
     return data;
   }
 };
