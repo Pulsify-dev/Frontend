@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
+import { pulsifyAxiosInstance } from '../services/api';
+import { PulsifyPremiumService } from '../services/pulsifyPremiumService';
+import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import { useAuth } from '../contexts/AuthContext';
 import { usePlayer } from '../hooks/usePlayer';
 import '../components/upload/css/PulsifyMyTracks.css';
@@ -10,9 +13,16 @@ export const PulsifyMyTracksView = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { togglePlay, isPlaying, currentTrack } = usePlayer();
+  const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
+  const isPro = subscriptionTier === 'PRO';
   const [tracks, setTracks] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [usageData, setUsageData] = useState(null);
+
+  useEffect(() => {
+    PulsifyPremiumService.getMyUsage().then(setUsageData).catch(() => {});
+  }, [subscriptionTier]);
   const [error, setError] = useState(null);
   const [activeMenu, setActiveMenu] = useState(null);
   const [visibilityFilter, setVisibilityFilter] = useState('all');
@@ -26,11 +36,18 @@ export const PulsifyMyTracksView = () => {
   const fetchTracks = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const userId = user?._id || user?.id;
       const result = await PulsifyTrackService.getArtistTracks(userId || 'me', 1, 100);
-      setTracks(result.tracks || []);
+      console.log('[MyTracks] Fetched tracks:', result);
+      // Handle different response shapes from the backend
+      const trackList = result?.tracks || result?.data || (Array.isArray(result) ? result : []);
+      setTracks(trackList);
     } catch (err) {
-      setError(err.message || 'Failed to load tracks.');
+      console.error('[MyTracks] Failed to load tracks:', err);
+      setError(err.response?.status === 429
+        ? 'Rate limited by the server. Please wait a moment and try again.'
+        : (err.message || 'Failed to load tracks.'));
     } finally {
       setLoading(false);
     }
@@ -128,10 +145,12 @@ export const PulsifyMyTracksView = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const filteredTracks = tracks.filter(t => {
-    if (visibilityFilter === 'all') return true;
-    return t.visibility === visibilityFilter;
-  });
+  const filteredTracks = tracks
+    .filter(t => {
+      if (visibilityFilter === 'all') return true;
+      return t.visibility === visibilityFilter;
+    })
+    .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
 
   return (
     <div className="artist-dashboard">
@@ -188,11 +207,27 @@ export const PulsifyMyTracksView = () => {
           <div className="studio-status-bar">
             <div className="status-progress">
               <svg fill="none" viewBox="0 0 24 24" height="24" width="24" className="l652k2i l652k2f" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"><path d="M9 19.5H6.75a5.25 5.25 0 1 1 1.3-10.34"></path><path d="M7.5 12A7.5 7.5 0 1 1 21 16.5"></path><path d="M11.07 15.18 14.25 12l3.18 3.18m-3.18 4.32V12"></path></g></svg>
-              <span className="status-text-light">2% of uploads used</span>
-              <div className="progress-bar-container"><div className="progress-bar-fill" style={{width: '2%'}}></div></div>
-              <span className="status-text-light">5 of 180 minutes</span>
+              {(() => {
+                const used = usageData?.usage?.uploaded_tracks?.used ?? tracks.length;
+                const limit = usageData?.usage?.uploaded_tracks?.limit ?? (isPro ? null : 10);
+                const rawPct = limit ? Math.round((used / limit) * 100) : (isPro ? 100 : 0);
+                const pct = Math.min(rawPct, 100);
+                const isOverLimit = !isPro && limit && used > limit;
+                return (
+                  <>
+                    <span className="status-text-light">
+                      {isPro ? '★ Unlimited uploads' : isOverLimit ? `⚠ Over limit! ${used} tracks (max ${limit})` : `${pct}% of uploads used`}
+                    </span>
+                    <div className="progress-bar-container"><div className="progress-bar-fill" style={{width: isPro ? '100%' : `${pct}%`, backgroundColor: isPro ? '#c9a96e' : isOverLimit ? '#f50' : undefined}}></div></div>
+                    <span className="status-text-light">
+                      {isPro ? 'Artist Pro — No limits' : `${used} of ${limit} tracks`}
+                    </span>
+                  </>
+                );
+              })()}
             </div>
-            <Link to="/premium" className="btn-outline-white">Get unlimited uploads</Link>
+            {!isPro && <Link to="/premium" className="btn-outline-white">Get unlimited uploads</Link>}
+            {isPro && <span className="btn-outline-white" style={{ color: '#c9a96e', borderColor: '#c9a96e33', cursor: 'default' }}>★ PRO</span>}
           </div>
 
           {/* Artist Studio Panel */}
@@ -288,6 +323,13 @@ export const PulsifyMyTracksView = () => {
 
             {loading ? (
               <div className="table-loading">Loading tracks...</div>
+            ) : error ? (
+              <div className="table-empty" style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <p style={{ color: '#f50', marginBottom: '12px' }}>{error}</p>
+                <button onClick={fetchTracks} style={{ padding: '8px 20px', background: '#333', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  Retry
+                </button>
+              </div>
             ) : filteredTracks.length === 0 ? (
               <div className="table-empty">No tracks found.</div>
             ) : (
@@ -352,7 +394,42 @@ export const PulsifyMyTracksView = () => {
                             <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5v14M7 9v6M22 10v4M2 11v2"/></svg> Master</div>
                             <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Distribute</div>
                             <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Track insights</div>
-                            <div className="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download file</div>
+                            {isPro ? (
+                              <div className="menu-item" onClick={async () => {
+                                // Pro user: authenticated download
+                                try {
+                                  const { data } = await pulsifyAxiosInstance.get(`/tracks/${track._id}/download`);
+                                  const audioUrl = data?.url || data?.data?.url;
+                                  if (!audioUrl) throw new Error('No download URL returned');
+                                  const a = document.createElement('a');
+                                  a.href = audioUrl;
+                                  a.download = `${track.title || 'track'}.mp3`;
+                                  a.target = '_blank';
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                } catch (err) {
+                                  console.error('Download failed:', err);
+                                  alert(err?.response?.status === 403
+                                    ? 'Download requires Artist Pro subscription.'
+                                    : 'Download failed. Please try again.');
+                                }
+                                setActiveMenu(null);
+                              }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Download file</span>
+                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '3px', background: 'linear-gradient(135deg, #c9a96e, #e8d5a8)', color: '#1a1a1a', marginLeft: 'auto' }}>PRO</span>
+                              </div>
+                            ) : (
+                              <div className="menu-item" onClick={() => {
+                                setActiveMenu(null);
+                                navigate('/premium');
+                              }} style={{ opacity: 0.6 }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Download file</span>
+                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '3px', background: '#333', color: '#999', marginLeft: 'auto' }}>🔒 PRO</span>
+                              </div>
+                            )}
                             <div 
                               className="menu-item" 
                               onClick={() => {

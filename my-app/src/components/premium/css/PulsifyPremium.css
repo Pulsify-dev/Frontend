@@ -48,6 +48,137 @@
   color: #4caf50;
 }
 
+/* ─── CURRENT PLAN BADGE ─── */
+.pulsify-current-plan-badge {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.plan-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.plan-badge-free {
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid #444;
+  color: #999;
+}
+
+.plan-badge-pro {
+  background: linear-gradient(135deg, #c9a96e 0%, #e8d5a8 100%);
+  color: #1a1a1a;
+  border: none;
+}
+
+.plan-status {
+  font-size: 12px;
+  color: #666;
+}
+
+/* ─── USAGE BAR (HERO) ─── */
+.pulsify-usage-bar-hero {
+  max-width: 400px;
+  margin: 20px auto 0;
+}
+
+.usage-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.usage-bar-track {
+  height: 6px;
+  background-color: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.usage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f50 0%, #ff8c42 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ─── CHECKOUT PROGRESS ─── */
+.pulsify-checkout-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  gap: 0;
+}
+
+.checkout-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.checkout-step.active,
+.checkout-step.done {
+  opacity: 1;
+}
+
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  transition: all 0.3s ease;
+}
+
+.checkout-step.active .step-circle {
+  background-color: #f50;
+  color: #fff;
+  animation: pulse-glow 1.2s infinite;
+}
+
+.checkout-step.done .step-circle {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.checkout-step span {
+  font-size: 13px;
+  color: #999;
+}
+
+.checkout-step.active span {
+  color: #fff;
+}
+
+.checkout-connector {
+  width: 40px;
+  height: 2px;
+  background-color: #333;
+  margin: 0 8px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 85, 0, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 85, 0, 0); }
+}
+
 /* ─── PRICING SECTION ─── */
 .pulsify-pricing-section {
   max-width: 900px;
@@ -68,6 +199,12 @@
   padding: 36px 32px 32px;
   position: relative;
   color: #222;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pulsify-pricing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .pulsify-pricing-featured {
@@ -75,7 +212,11 @@
   box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.2);
 }
 
-/* ─── MOST POPULAR BADGE ─── */
+.pulsify-pricing-current {
+  box-shadow: 0 0 0 2px rgba(255, 85, 0, 0.3), 0 4px 20px rgba(255, 85, 0, 0.1);
+}
+
+/* ─── BADGES ─── */
 .pulsify-featured-badge {
   position: absolute;
   top: -14px;
@@ -88,6 +229,25 @@
   border-radius: 20px;
   letter-spacing: 1.2px;
   text-transform: uppercase;
+}
+
+.pulsify-current-badge {
+  position: absolute;
+  top: -14px;
+  left: 20px;
+  background-color: #f50;
+  color: #fff;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 20px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.pulsify-current-badge-pro {
+  background: linear-gradient(135deg, #c9a96e 0%, #e8d5a8 100%);
+  color: #1a1a1a;
 }
 
 /* ─── TIER NAME ─── */
@@ -136,7 +296,7 @@
   color: #999;
 }
 
-/* ─── CTA BUTTON ─── */
+/* ─── CTA BUTTONS ─── */
 .pulsify-btn-subscribe {
   display: block;
   width: 100%;
@@ -166,6 +326,22 @@
   color: #fff;
 }
 
+.pulsify-btn-outline {
+  background-color: transparent;
+  color: #555;
+  border: 2px solid #ddd;
+}
+
+.pulsify-btn-outline:hover {
+  border-color: #f50;
+  color: #f50;
+}
+
+.pulsify-btn-gold {
+  background: linear-gradient(135deg, #c9a96e 0%, #e8d5a8 100%);
+  color: #1a1a1a;
+}
+
 /* ─── PERK LIST ─── */
 .pulsify-perks-divider {
   height: 1px;
@@ -193,6 +369,14 @@
   border-bottom: none;
 }
 
+.pulsify-perk-disabled {
+  opacity: 0.4;
+}
+
+.pulsify-perk-disabled span {
+  text-decoration: line-through;
+}
+
 .pulsify-perk-icon {
   width: 18px;
   height: 18px;
@@ -200,19 +384,21 @@
   color: #888;
 }
 
+.pulsify-perk-icon-pro {
+  color: #c9a96e;
+}
+
 .pulsify-perk-list li span:first-of-type {
   flex: 1;
 }
 
-/* ─── BADGES ─── */
+/* ─── PERK BADGES ─── */
 .pulsify-perk-badge {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.8px;
   padding: 3px 10px;
   border-radius: 4px;
-  background-color: #f5f0ff;
-  color: #7c5cbf;
   flex-shrink: 0;
   text-transform: uppercase;
 }
@@ -220,6 +406,11 @@
 .pulsify-badge-unlimited {
   background-color: #f5f0ff;
   color: #7c5cbf;
+}
+
+.pulsify-badge-pro {
+  background-color: #fdf5e9;
+  color: #c9a96e;
 }
 
 /* ─── SEE ALL LINK ─── */
@@ -260,9 +451,131 @@
   color: #fff;
 }
 
+/* ─── UPLOAD PAYWALL ─── */
+.pulsify-upload-usage {
+  max-width: 500px;
+  margin: 0 auto 24px;
+  padding: 16px 20px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.pulsify-upload-usage.usage-pro {
+  border-color: #c9a96e33;
+  background-color: #1a1810;
+}
+
+.upload-usage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.upload-usage-header span {
+  font-size: 13px;
+  color: #999;
+}
+
+.upload-usage-header .pro-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #c9a96e 0%, #e8d5a8 100%);
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
+}
+
+.pulsify-paywall-overlay {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 40px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, #1a1020 0%, #111 100%);
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.paywall-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.pulsify-paywall-overlay h2 {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.pulsify-paywall-overlay p {
+  color: #888;
+  font-size: 14px;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.paywall-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #c9a96e 0%, #e8d5a8 100%);
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.paywall-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ─── NAVBAR PRO BADGE ─── */
+.navbar-pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #c9a96e 0%, #e8d5a8 100%);
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+}
+
+.navbar-upgrade-item {
+  background: linear-gradient(135deg, #1a1040 0%, #2a1060 100%) !important;
+  border: 1px solid #c9a96e33 !important;
+  border-radius: 6px !important;
+  margin-top: 4px !important;
+}
+
+.navbar-upgrade-item:hover {
+  border-color: #c9a96e !important;
+}
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 700px) {
   .pulsify-pricing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pulsify-checkout-progress {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checkout-connector {
+    width: 2px;
+    height: 20px;
+    margin: 0;
   }
 }

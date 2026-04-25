@@ -2,13 +2,39 @@ import React, { useState, useRef, useContext, useCallback, useEffect } from 'rea
 import { Link, useNavigate } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
+import { PulsifyPremiumService } from '../services/pulsifyPremiumService';
 import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
 import '../components/upload/css/PulsifyUploads.css';
+import '../components/premium/css/PulsifyPremium.css';
 
 export const PulsifyTrackUploadScreen = () => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
-  const isProUser = true;
+  const isPro = subscriptionTier === 'PRO';
   const navigate = useNavigate();
+
+  // Usage state
+  const [usageData, setUsageData] = useState(null);
+  const [usageLoading, setUsageLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const data = await PulsifyPremiumService.getMyUsage();
+        console.log('[Upload] Usage data:', data);
+        setUsageData(data);
+      } catch (e) {
+        console.warn('[Upload] Failed to fetch usage:', e);
+      }
+      setUsageLoading(false);
+    };
+    fetchUsage();
+  }, [subscriptionTier]);
+
+  const trackUsed = usageData?.usage?.uploaded_tracks?.used ?? 0;
+  const trackLimit = usageData?.usage?.uploaded_tracks?.limit ?? (isPro ? null : 10);
+  const trackRemaining = usageData?.usage?.uploaded_tracks?.remaining ?? (isPro ? null : Math.max(0, 10 - trackUsed));
+  const isAtLimit = !isPro && trackLimit !== null && trackRemaining !== null && trackRemaining <= 0;
+  const isProUser = isPro || !isAtLimit;
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [artworkFile, setArtworkFile] = useState(null);
@@ -168,7 +194,7 @@ export const PulsifyTrackUploadScreen = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  if (!isProUser) {
+  if (isAtLimit) {
     return (
       <div className="pulsify-upload-page">
         <div className="pulsify-upload-header">
@@ -178,14 +204,14 @@ export const PulsifyTrackUploadScreen = () => {
           </h1>
           <Link to="/" className="pulsify-upload-close">✕</Link>
         </div>
-        <div className="pulsify-locked-upload">
-          <div className="lock-icon">🔒</div>
-          <h2>Upload Limit Reached (3/3)</h2>
+        <div className="pulsify-paywall-overlay">
+          <div className="paywall-icon">🔒</div>
+          <h2>Upload Limit Reached ({trackUsed}/{trackLimit})</h2>
           <p>
-            Free tier allows a maximum of 3 tracks.<br />
+            Free tier allows a maximum of {trackLimit} tracks.<br />
             Upgrade to Artist Pro for unlimited uploads.
           </p>
-          <Link to="/premium" className="upgrade-btn">Upgrade to Artist Pro</Link>
+          <Link to="/premium" className="paywall-btn">Upgrade to Artist Pro →</Link>
         </div>
       </div>
     );
@@ -329,6 +355,20 @@ export const PulsifyTrackUploadScreen = () => {
           <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>Pulsify</span>
           {selectedFile ? 'Track info' : 'Upload'}
         </h1>
+        {/* Usage indicator */}
+        {!isPro && trackLimit && !selectedFile && (
+          <div style={{ fontSize: '12px', color: '#888', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>{trackUsed}/{trackLimit} tracks</span>
+            <div style={{ width: '60px', height: '4px', backgroundColor: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: `${(trackUsed / trackLimit) * 100}%`, height: '100%', backgroundColor: trackRemaining <= 2 ? '#f50' : '#4caf50', borderRadius: '2px' }} />
+            </div>
+          </div>
+        )}
+        {isPro && !selectedFile && (
+          <div style={{ fontSize: '11px', color: '#c9a96e', marginLeft: 'auto', fontWeight: 700, letterSpacing: '0.5px' }}>
+            ★ PRO — Unlimited
+          </div>
+        )}
         {selectedFile && (
           isUploading ? (
             <div className="pulsify-header-upload-progress">
@@ -379,16 +419,28 @@ export const PulsifyTrackUploadScreen = () => {
                   </g>
                 </svg>
                 <div className="usage-text-stack">
-                  <span className="usage-title">0% of uploads used</span>
+                  <span className="usage-title">
+                    {isPro
+                      ? '★ Unlimited uploads'
+                      : trackLimit && trackUsed > trackLimit
+                        ? `⚠ Over limit! ${trackUsed} tracks (max ${trackLimit})`
+                        : `${trackLimit ? Math.min(Math.round((trackUsed / trackLimit) * 100), 100) : 0}% of uploads used`}
+                  </span>
                 </div>
               </div>
               <div className="usage-center">
                 <div className="usage-progress">
-                  <div className="usage-progress-bar" style={{ width: '0.5%' }}></div>
+                  <div className="usage-progress-bar" style={{
+                    width: isPro ? '100%' : `${trackLimit ? Math.min(Math.max((trackUsed / trackLimit) * 100, 0.5), 100) : 0.5}%`,
+                    backgroundColor: isPro ? '#c9a96e' : (trackLimit && trackUsed > trackLimit) ? '#f50' : undefined
+                  }}></div>
                 </div>
-                <span className="usage-minutes">0 of 180 minutes</span>
+                <span className="usage-minutes">
+                  {isPro ? 'Artist Pro — No limits' : `${trackUsed} of ${trackLimit} tracks`}
+                </span>
               </div>
-              <Link to="/premium" className="usage-cta">Get unlimited uploads</Link>
+              {!isPro && <Link to="/premium" className="usage-cta">Get unlimited uploads</Link>}
+              {isPro && <span className="usage-cta" style={{ color: '#c9a96e', cursor: 'default', border: '1px solid #c9a96e33' }}>★ PRO</span>}
             </div>
 
             <h2>Upload your audio files.</h2>

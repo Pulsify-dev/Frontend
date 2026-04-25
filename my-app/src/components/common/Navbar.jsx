@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { PulsifyAuthVaultContext } from "@/store/PulsifyAuthVault";
 import "../../css/navbar-soundcloud.css";
+import "../premium/css/PulsifyPremium.css";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -14,6 +16,8 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isArtist, logout } = useAuth();
+  const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
+  const isPro = subscriptionTier === 'PRO';
   const userMenuRef = useRef(null);
   const overflowMenuRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -117,9 +121,15 @@ const Navbar = () => {
       <div className="auth-navbar-right">
         {isAuthenticated ? (
           <>
-            <Link to="/premium" className="auth-nav-pro">
-              Upgrade now
-            </Link>
+            {isPro ? (
+              <Link to="/premium" className="auth-nav-pro" style={{ background: 'linear-gradient(135deg, #c9a96e, #e8d5a8)', color: '#1a1a1a', border: 'none' }}>
+                ★ Artist Pro
+              </Link>
+            ) : (
+              <Link to="/premium" className="auth-nav-pro">
+                Upgrade now
+              </Link>
+            )}
 
             <Link to="/my-tracks" className="auth-nav-text-link">
               For Artists
@@ -147,7 +157,10 @@ const Navbar = () => {
                     {(user?.displayName?.[0] || "♪").toUpperCase()}
                   </span>
                 )}
-                <span className="auth-user-name">{user?.displayName}</span>
+                <span className="auth-user-name">
+                  {user?.displayName}
+                  {isPro && <span className="navbar-pro-badge">PRO</span>}
+                </span>
                 <svg
                   width="20"
                   height="20"
@@ -192,11 +205,11 @@ const Navbar = () => {
                     Who to follow
                   </Link>
 
-                  {/* Try Artist Pro — Module 12 (non-artists) */}
+                  {/* Try Artist Pro / Manage Pro — Module 12 */}
                   {!isArtist() && (
-                    <Link to="/premium" className="auth-user-dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
+                    <Link to="/premium" className={`auth-user-dropdown-item ${!isPro ? 'navbar-upgrade-item' : ''}`} onClick={() => setIsUserMenuOpen(false)}>
                       <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#f50"/><path d="M12 16.5l4.33 2.6-1.15-4.93L19 10.74l-5.04-.43L12 5.75l-1.96 4.56-5.04.43 3.82 3.43-1.15 4.93z" fill="#fff"/></svg>
-                      Try Artist Pro
+                      {isPro ? '★ Manage Pro' : 'Try Artist Pro'}
                     </Link>
                   )}
 
