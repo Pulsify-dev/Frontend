@@ -7,12 +7,12 @@ import LoadingState from "../components/LoadingState";
 import PlayerCard from "../components/PlayerCard";
 import PlayerDock from "../components/PlayerDock";
 import TrackHeader from "../components/TrackHeader";
-import { trackExperienceMockData } from "../mock/trackExperienceData";
 import {
   clearAuthToken,
   clearListeningHistory,
   createComment,
   deleteComment,
+  updateComment,
   getDownloadUrl,
   getCommentReplies,
   getComments,
@@ -29,11 +29,18 @@ import {
   registerPlay,
   toggleLike,
   toggleRepost,
+  checkTrackLiked,
+  checkTrackReposted,
 } from "../services/api";
 import "../App.css";
 
-const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? "trk-2026-014";
-const mockTrackOrder = Object.keys(trackExperienceMockData.tracks);
+const DEFAULT_TRACK_ID =
+  import.meta.env.VITE_TRACK_ID ?? "69d512462f56034d691e3340";
+const TRACK_ORDER = [
+  "69d512462f56034d691e3340",
+  "69d67db1f279d83706cfbda8",
+  DEFAULT_TRACK_ID,
+].filter((id, index, arr) => arr.indexOf(id) === index); // deduplicate if VITE_TRACK_ID matches one above
 
 const buildTrackPath = (targetTrackId, view) => {
   if (view === "overview") {
@@ -159,10 +166,7 @@ function TrackPage({ view = "overview" }) {
   const previewDurationSeconds =
     streamInfo?.preview_duration_seconds ?? track?.previewDurationSeconds ?? 0;
 
-  const visibleComments = useMemo(
-    () => (view === "overview" ? comments.slice(0, 6) : comments),
-    [comments, view],
-  );
+  const visibleComments = useMemo(() => comments, [comments]);
 
   const sectionConfig = useMemo(
     () =>
@@ -178,7 +182,7 @@ function TrackPage({ view = "overview" }) {
   );
 
   const currentTrackIndex = useMemo(
-    () => mockTrackOrder.indexOf(trackId),
+    () => TRACK_ORDER.indexOf(trackId),
     [trackId],
   );
 
@@ -213,8 +217,13 @@ function TrackPage({ view = "overview" }) {
 
       try {
         nextTrack = await getTrack(trackId);
-      } catch (trackError) {
-        setError("Track unavailable right now.");
+      } catch (err) {
+        const is401 = err?.message?.includes("401");
+        setError(
+          is401
+            ? "Please log in to view this track."
+            : "Track unavailable right now.",
+        );
         setIsLoading(false);
         return;
       }
@@ -230,6 +239,27 @@ function TrackPage({ view = "overview" }) {
       ]);
 
       if (!isMounted) return;
+
+      // Sync viewer like/repost state from the server (track endpoint may not include these)
+      const [likedResult, repostedResult] = await Promise.allSettled([
+        checkTrackLiked(trackId),
+        checkTrackReposted(trackId),
+      ]);
+      if (likedResult.status === "fulfilled" && likedResult.value != null) {
+        nextTrack = {
+          ...nextTrack,
+          viewerHasLiked: Boolean(likedResult.value.liked),
+        };
+      }
+      if (
+        repostedResult.status === "fulfilled" &&
+        repostedResult.value != null
+      ) {
+        nextTrack = {
+          ...nextTrack,
+          viewerHasReposted: Boolean(repostedResult.value.reposted),
+        };
+      }
 
       setTrack(nextTrack);
       setDuration(nextTrack.duration ?? 0);
@@ -519,6 +549,18 @@ function TrackPage({ view = "overview" }) {
     setPlayerMessage("Comment deleted successfully.");
   };
 
+  const handleEditComment = async (commentId, text) => {
+    const updated = await updateComment(commentId, text);
+    setComments((currentComments) =>
+      currentComments.map((comment) =>
+        comment.id === commentId
+          ? { ...comment, text: updated.text, isEdited: true }
+          : comment,
+      ),
+    );
+    setPlayerMessage("Comment updated successfully.");
+  };
+
   const copyShareLink = async (url, successMessage) => {
     if (!navigator?.clipboard?.writeText) {
       setPlayerMessage("Copy is not supported in this browser.");
@@ -639,7 +681,7 @@ function TrackPage({ view = "overview" }) {
   };
 
   const handlePreviousTrack = async () => {
-    if (!mockTrackOrder.length) return;
+    if (!TRACK_ORDER.length) return;
 
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
@@ -648,12 +690,12 @@ function TrackPage({ view = "overview" }) {
 
     const safeIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0;
     const previousIndex =
-      (safeIndex - 1 + mockTrackOrder.length) % mockTrackOrder.length;
-    navigate(buildTrackPath(mockTrackOrder[previousIndex], view));
+      (safeIndex - 1 + TRACK_ORDER.length) % TRACK_ORDER.length;
+    navigate(buildTrackPath(TRACK_ORDER[previousIndex], view));
   };
 
   const handleNextTrack = async () => {
-    if (!mockTrackOrder.length) return;
+    if (!TRACK_ORDER.length) return;
 
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
@@ -661,8 +703,8 @@ function TrackPage({ view = "overview" }) {
     }
 
     const safeIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0;
-    const nextIndex = (safeIndex + 1) % mockTrackOrder.length;
-    navigate(buildTrackPath(mockTrackOrder[nextIndex], view));
+    const nextIndex = (safeIndex + 1) % TRACK_ORDER.length;
+    navigate(buildTrackPath(TRACK_ORDER[nextIndex], view));
   };
 
   if (isLoading) {
@@ -764,6 +806,7 @@ function TrackPage({ view = "overview" }) {
                 comments={visibleComments}
                 totalCount={commentTotal}
                 onDeleteComment={handleDeleteComment}
+                onEditComment={handleEditComment}
                 onJumpToTime={handleSeek}
                 onLoadReplies={handleLoadReplies}
                 onMessage={setPlayerMessage}

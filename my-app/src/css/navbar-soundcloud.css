@@ -1,0 +1,480 @@
+.auth-navbar {
+  padding: 0 max(24px, calc(50vw - 620px)) !important;
+  height: 46px;
+  min-height: 46px;
+  gap: 0;
+  background: var(--sc-bg) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+/* ─── Left side ─── */
+.auth-navbar-left {
+  gap: 0;
+  height: 100%;
+}
+
+/* ─── Logo ─── */
+.navbar-logo-link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 16px 0 0;
+}
+
+.navbar-logo-text {
+  font-size: 19px;
+  font-weight: 800;
+  color: #f50;
+  letter-spacing: -0.5px;
+}
+
+/* ─── Nav links: SoundCloud tab style ─── */
+.auth-nav-links {
+  gap: 0;
+  height: 100%;
+}
+
+.auth-nav-link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: bold !important;
+  color: #999;
+  border-bottom: none;
+  transition: color 0.12s;
+  line-height: 46px;
+  text-decoration: none;
+  position: relative;
+}
+
+.auth-nav-link:hover {
+  color: #fff;
+}
+
+.auth-nav-link.active {
+  color: #fff;
+  font-weight: 700;
+  border-bottom: none;
+}
+
+.auth-nav-link.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 1.5px;
+  background-color: #fff;
+}
+
+/* ─── Right side ─── */
+.auth-navbar-right {
+  gap: 14px;
+  height: 100%;
+  align-items: center;
+}
+
+/* ─── Search: SoundCloud light gray rounded ─── */
+.auth-search-form {
+  background: #333;
+  border: none;
+  border-radius: 3px;
+  height: 34px;
+  transition: background 0.15s;
+  flex-grow: 1;
+  max-width: none;
+  margin: 0 30px;
+}
+
+.auth-search-form:focus-within {
+  background: #444;
+}
+
+.auth-search-input {
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  padding: 0 10px;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+.auth-search-input::placeholder {
+  color: #999;
+  font-size: 13px;
+}
+
+.auth-search-btn {
+  padding: 0 8px;
+  color: #999;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-search-btn:hover {
+  color: #fff;
+}
+
+/* ─── "Upgrade now" SC orange outline ─── */
+.auth-nav-pro {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid #f50;
+  border-radius: 3px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+  opacity: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.auth-nav-pro:hover {
+  background: #f50;
+  color: #fff;
+  opacity: 1;
+}
+
+/* ─── Upload button: plain text like SoundCloud ─── */
+.auth-nav-upload-btn {
+  font-size: 13px;
+  font-weight: 400;
+  color: #ccc;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  transition: color 0.12s;
+}
+
+.auth-nav-upload-btn:hover {
+  color: #fff;
+  background: transparent;
+  opacity: 1;
+}
+
+/* ─── Sign-in / Create account (logged out) ─── */
+.auth-nav-signin {
+  font-size: 13px;
+  font-weight: 500;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+
+.auth-nav-signin:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.auth-nav-register {
+  font-size: 13px;
+  font-weight: 500;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+/* ─── User trigger: SoundCloud compact style ─── */
+.auth-user-menu-container {
+  position: relative;
+}
+
+.auth-user-menu-trigger {
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  height: 34px;
+  background: none;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.auth-user-menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-user-avatar {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Hide username text like SoundCloud - just show avatar + chevron */
+.auth-user-name {
+  display: none;
+}
+
+.auth-user-chevron {
+  color: #fff;
+  transition: transform 0.2s ease;
+}
+
+.auth-user-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ─── Dropdown: darker, tighter ─── */
+.auth-user-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  width: 155px;
+  right: -50px; 
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.auth-user-dropdown-header {
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+.auth-user-dropdown-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.auth-user-dropdown-item {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ccc;
+  transition: color 0.12s, background 0.12s;
+}
+
+.auth-user-dropdown-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-user-dropdown-divider {
+  background: #3a3a3a;
+}
+
+/* ─── Mobile menu refinements ─── */
+.auth-mobile-menu {
+  background: #333;
+  border-top: 1px solid #444;
+  padding: 12px 20px;
+}
+
+.auth-mobile-search {
+  background: #e5e5e5;
+  border: none;
+  border-radius: 3px;
+}
+
+.auth-mobile-search .auth-search-input {
+  color: #333;
+}
+
+.auth-mobile-link {
+  font-size: 13px;
+  padding: 10px 0;
+}
+
+/* Show name in mobile since there's room */
+@media (max-width: 768px) {
+  .auth-user-name {
+    display: inline;
+  }
+}
+
+/* ─── Mobile toggle ─── */
+.auth-mobile-toggle {
+  color: #ccc;
+}
+
+/* ─── "For Artists" / "Upload" plain text links ─── */
+.auth-nav-text-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ccc;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.12s;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+.auth-nav-text-link:hover {
+  color: #fff;
+}
+
+/* ─── Icon buttons (bell, envelope, three-dot) ─── */
+.auth-nav-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+  padding: 0;
+  text-decoration: none;
+}
+
+.auth-nav-icon-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Three-dot overflow dropdown ─── */
+.auth-overflow-menu-container {
+  position: relative;
+}
+
+.auth-overflow-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: dropdownIn 0.15s ease-out;
+  padding: 4px 0;
+}
+
+.auth-overflow-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ccc;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s;
+  font-family: inherit;
+}
+
+.auth-overflow-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* ─── Notification / Messages panel dropdowns ─── */
+.auth-notif-container,
+.auth-messages-container {
+  position: relative;
+}
+
+.auth-nav-icon-btn.active {
+  color: #f50;
+}
+
+.auth-panel-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -40px;
+  width: 340px;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  animation: dropdownIn 0.15s ease-out;
+  overflow: hidden;
+}
+
+.auth-panel-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.auth-panel-dropdown-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.auth-panel-dropdown-settings {
+  font-size: 12px;
+  color: #999;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.auth-panel-dropdown-settings:hover {
+  color: #fff;
+}
+
+.auth-panel-dropdown-body {
+  min-height: 100px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.auth-panel-dropdown-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  gap: 10px;
+}
+
+.auth-panel-dropdown-empty p {
+  color: #777;
+  font-size: 13px;
+  margin: 0;
+}
+
+.auth-panel-dropdown-footer {
+  display: block;
+  text-align: center;
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #999;
+  text-decoration: none;
+  border-top: 1px solid #3a3a3a;
+  transition: color 0.12s, background 0.12s;
+}
+
+.auth-panel-dropdown-footer:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}

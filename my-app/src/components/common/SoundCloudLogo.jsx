@@ -19,7 +19,7 @@ const SoundCloudLogo = ({ className = "", showText = true }) => {
       </div>
       {showText && (
         <span className="text-lg font-bold tracking-tight text-foreground uppercase">
-          SoundCloud
+          Pulsify
         </span>
       )}
     </div>
