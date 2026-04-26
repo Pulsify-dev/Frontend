@@ -113,8 +113,10 @@ export const PulsifyPlaylistDetailView = () => {
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
     try {
       const trackIds = newTracks.map(t => t.track_id?._id || t.track_id || t.id);
+      console.log('[Reorder] playlistId:', playlistDetail._id, 'trackIds:', trackIds);
       await PulsifyPlaylistService.reorderTracks(playlistDetail._id, trackIds);
     } catch (err) {
+      console.error('[Reorder] Failed:', err.response?.status, err.response?.data);
       setFetchError('Failed to persist sequence order.');
     }
   };
