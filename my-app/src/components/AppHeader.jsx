@@ -1,25 +1,31 @@
 import { Link, NavLink } from 'react-router-dom'
+import { DEFAULT_TRACK_ID, HAS_DEFAULT_TRACK_ID } from '../config/defaultTrack'
 
 function AppHeader() {
+  const trackHomePath = HAS_DEFAULT_TRACK_ID ? `/tracks/${DEFAULT_TRACK_ID}` : '/trackpage'
+  const trackCommentsPath = HAS_DEFAULT_TRACK_ID
+    ? `/tracks/${DEFAULT_TRACK_ID}/comments`
+    : '/trackpage'
+
   return (
     <header className="topbar">
       <div className="topbar-inner">
         <div className="topbar-left">
-          <Link className="brand" to="/tracks/trk-2026-014" aria-label="Pulsify home">
+          <Link className="brand" to={trackHomePath} aria-label="Pulsify home">
             <span className="logo-cloud" aria-hidden="true" />
           </Link>
 
           <nav className="main-nav" aria-label="Primary">
             <NavLink
               className={({ isActive }) => (isActive ? 'active' : '')}
-              to="/tracks/trk-2026-014"
+              to={trackHomePath}
               end
             >
               Home
             </NavLink>
             <NavLink
               className={({ isActive }) => (isActive ? 'active' : '')}
-              to="/tracks/trk-2026-014/comments"
+              to={trackCommentsPath}
             >
               Feed
             </NavLink>

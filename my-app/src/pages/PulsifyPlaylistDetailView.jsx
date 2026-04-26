@@ -91,6 +91,15 @@ export const PulsifyPlaylistDetailView = () => {
     alert('Starting offline cache download...');
   };
 
+  const handleOpenFirstTrack = () => {
+    const firstTrack = playlistDetail?.tracks?.[0];
+    const firstTrackId = firstTrack?.id || firstTrack?.track_id || firstTrack?.trackId;
+
+    if (!firstTrackId) return;
+
+    navigate(`/tracks/${firstTrackId}`);
+  };
+
   if (isLoading) return <div style={loadingStyle}>Loading...</div>;
   if (fetchError) return <div style={{ ...loadingStyle, color: '#f44' }}>Error: {fetchError}</div>;
   if (!playlistDetail) return <div style={loadingStyle}>Playlist not found.</div>;
@@ -122,6 +131,8 @@ export const PulsifyPlaylistDetailView = () => {
               }}
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              onClick={handleOpenFirstTrack}
+              disabled={!playlistDetail?.tracks?.length}
               >
                 ▶
               </button>

@@ -4,6 +4,14 @@ import { Link } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import '../components/premium/css/PulsifyPremium.css';
 
+const isMockMode =
+  String(
+    import.meta.env.VITE_USE_MOCKS ??
+      import.meta.env.VITE_USE_MOCK_API ??
+      import.meta.env.VITE_USE_MOCK ??
+      'false',
+  ).toLowerCase() === 'true';
+
 export const PulsifyPremiumUpgradePage = () => {
   const [loadingPro, setLoadingPro] = useState(false);
   const [loadingGoPlus, setLoadingGoPlus] = useState(false);
@@ -18,7 +26,7 @@ export const PulsifyPremiumUpgradePage = () => {
       if (planType === 'pro') setLoadingPro(true);
       if (planType === 'goplus') setLoadingGoPlus(true);
       
-      if (String(import.meta.env.VITE_USE_MOCKS) === 'true') {
+      if (isMockMode) {
         // Simulate Stripe processing delay
         await new Promise(resolve => setTimeout(resolve, 2000));
         

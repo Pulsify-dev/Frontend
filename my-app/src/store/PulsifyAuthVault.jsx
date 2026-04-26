@@ -3,6 +3,14 @@ import { pulsifyAxiosInstance } from "../services/api";
 
 export const PulsifyAuthVaultContext = createContext();
 
+const isMockMode =
+  String(
+    import.meta.env.VITE_USE_MOCKS ??
+      import.meta.env.VITE_USE_MOCK_API ??
+      import.meta.env.VITE_USE_MOCK ??
+      "false",
+  ).toLowerCase() === "true";
+
 export const PulsifyAuthVaultProvider = ({ children }) => {
   const [activeSessionToken, setActiveSessionToken] = useState(
     localStorage.getItem("pulsify_access_token") || null,
@@ -15,7 +23,7 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
     let isMounted = true;
     const verifyPremiumStatus = async () => {
       if (!activeSessionToken) return;
-      if (String(import.meta.env.VITE_USE_MOCKS) === "true") {
+      if (isMockMode) {
         // In mock mode, read from localStorage (set by the Premium page mock checkout)
         const savedTier = localStorage.getItem("pulsify_mock_tier");
         if (isMounted && savedTier) setSubscriptionTier(savedTier);
@@ -38,7 +46,7 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
 
   const handleTierChange = (newTier) => {
     setSubscriptionTier(newTier);
-    if (String(import.meta.env.VITE_USE_MOCKS) === "true") {
+    if (isMockMode) {
       localStorage.setItem("pulsify_mock_tier", newTier);
     }
   };

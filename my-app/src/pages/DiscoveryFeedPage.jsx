@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import serviceLocator from '../utils/serviceLocator';
 import PulsifyTrackRow from '../components/common/PulsifyTrackRow';
+import { usePlayer } from '../hooks/usePlayer';
 import './DiscoveryFeedPage.css';
 
 // Container Pattern: SoundCloud "Stream" page
 const DiscoveryFeedPage = () => {
+  const { setQueueTrackIds } = usePlayer();
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [likedTracks, setLikedTracks] = useState(new Set());
@@ -24,6 +26,10 @@ const DiscoveryFeedPage = () => {
     loadFeed();
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    setQueueTrackIds(feedData.map((track) => track.trackId));
+  }, [feedData, setQueueTrackIds]);
 
   const handleLike = async (trackId) => {
     try {

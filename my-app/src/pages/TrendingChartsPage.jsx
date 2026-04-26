@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import serviceLocator from '../utils/serviceLocator';
 import PulsifyTrackRow from '../components/common/PulsifyTrackRow';
+import { usePlayer } from '../hooks/usePlayer';
 import './TrendingChartsPage.css';
 
 const GENRE_TABS = ['All music genres', 'Electronic', 'Hip-hop & Rap', 'Pop', 'R&B & Soul', 'Rock', 'Classical'];
 
 const TrendingChartsPage = () => {
+  const { setQueueTrackIds } = usePlayer();
   const [trendingData, setTrendingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeGenre, setActiveGenre] = useState('All music genres');
@@ -26,6 +28,10 @@ const TrendingChartsPage = () => {
     loadCharts();
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    setQueueTrackIds(trendingData.map((track) => track.trackId));
+  }, [setQueueTrackIds, trendingData]);
 
   const handleLike = async (trackId) => {
     try {

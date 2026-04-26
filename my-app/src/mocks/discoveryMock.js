@@ -1,112 +1,97 @@
-// Handcrafted fake data to mimic production backend
-export const mockFeedData = [
-  {
-    trackId: 'pulsify-tr-891',
-    title: 'Midnight Syntax',
-    artist: { id: 'art-22', name: 'Dr. Loop', avatarUrl: 'https://i.pravatar.cc/150?u=drloop' },
-    plays: 1420,
-    likes: 340,
-    reposts: 12,
-    coverArt: 'https://picsum.photos/seed/midnight/400/400',
-    durationSeconds: 214,
-    uploadedAt: '2 hours ago'
-  },
-  {
-    trackId: 'pulsify-tr-904',
-    title: 'Glassmorphic Bass',
-    artist: { id: 'art-88', name: 'UI/UX Mafia', avatarUrl: 'https://i.pravatar.cc/150?u=mafia' },
-    plays: 8900,
-    likes: 1205,
-    reposts: 89,
-    coverArt: 'https://picsum.photos/seed/glass/400/400',
-    durationSeconds: 180,
-    uploadedAt: '5 hours ago'
-  },
-  {
-    trackId: 'pulsify-tr-102',
-    title: 'Async Await Lullaby',
-    artist: { id: 'art-01', name: 'Node Ninja', avatarUrl: 'https://i.pravatar.cc/150?u=ninja' },
-    plays: 350,
-    likes: 42,
-    reposts: 3,
-    coverArt: 'https://picsum.photos/seed/code/400/400',
-    durationSeconds: 310,
-    uploadedAt: '1 day ago'
+import { trackExperienceMockData } from '../mock/trackExperienceData'
+
+const baseFeedData = ['trk-2026-014', 'trk-2026-011', 'trk-2026-009'].map((trackId, index) => {
+  const track = trackExperienceMockData.tracks[trackId]
+
+  return {
+    trackId: track.id,
+    title: track.title,
+    artist: {
+      id: `${track.id}-artist`,
+      name: track.artist,
+      avatarUrl: track.artistAvatar,
+    },
+    plays: track.playCount,
+    likes: track.likeCount,
+    reposts: track.repostCount,
+    coverArt: track.cover,
+    audioUrl: track.audioUrl,
+    playbackState: track.playbackState,
+    previewDurationSeconds: track.previewDurationSeconds,
+    durationSeconds: track.duration,
+    uploadedAt: ['2 hours ago', '5 hours ago', '1 day ago'][index] ?? 'Recently',
   }
-];
+})
+
+export const mockFeedData = baseFeedData
 
 export const mockTrendingData = [
   { rank: 1, ...mockFeedData[1] },
   { rank: 2, ...mockFeedData[0] },
-  { rank: 3, ...mockFeedData[2] }
-];
+  { rank: 3, ...mockFeedData[2] },
+]
 
-export const fetchFeed = async () => {
-  return new Promise((resolve) => {
-    // simulating network sluggishness
-    setTimeout(() => resolve(mockFeedData), 600); 
-  });
-};
+export const fetchFeed = async () =>
+  new Promise((resolve) => {
+    setTimeout(() => resolve(mockFeedData), 600)
+  })
 
-export const fetchTrending = async () => {
-  return new Promise((resolve) => setTimeout(() => resolve(mockTrendingData), 450));
-};
+export const fetchTrending = async () =>
+  new Promise((resolve) => setTimeout(() => resolve(mockTrendingData), 450))
 
-export const searchTracks = async (term) => {
-  return new Promise(resolve => {
+export const searchTracks = async (term) =>
+  new Promise((resolve) => {
     setTimeout(() => {
-      if (!term.trim()) return resolve([]);
-      const lowerTerm = term.toLowerCase();
-      const results = [...mockFeedData, ...mockTrendingData].filter(t => 
-        t.title.toLowerCase().includes(lowerTerm) || 
-        t.artist.name.toLowerCase().includes(lowerTerm)
-      );
-      // Remove duplicates by trackId
-      const unique = Array.from(new Map(results.map(item => [item.trackId, item])).values());
-      resolve(unique);
-    }, 400); // 400ms network delay
-  });
-};
+      if (!term.trim()) return resolve([])
 
-// --- New Mutations for Interactive Features ---
-export const likeTrack = async (trackId) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      // In a real mock we might toggle a boolean, here we just resolve success
-      resolve({ success: true, trackId, action: 'liked' });
-    }, 200);
-  });
-};
+      const lowerTerm = term.toLowerCase()
+      const results = [...mockFeedData, ...mockTrendingData].filter(
+        (track) =>
+          track.title.toLowerCase().includes(lowerTerm) ||
+          track.artist.name.toLowerCase().includes(lowerTerm),
+      )
 
-export const repostTrack = async (trackId) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({ success: true, trackId, action: 'reposted' });
-    }, 200);
-  });
-};
+      resolve(
+        Array.from(new Map(results.map((item) => [item.trackId, item])).values()),
+      )
+    }, 400)
+  })
 
-export const recordPlay = async (trackId) => {
-  return new Promise(resolve => {
+export const likeTrack = async (trackId) =>
+  new Promise((resolve) => {
     setTimeout(() => {
-      resolve({ success: true, trackId, action: 'played' });
-    }, 200);
-  });
-};
+      resolve({ success: true, trackId, action: 'liked' })
+    }, 200)
+  })
 
-// Resource Resolver: resolve a permalink URL into a resource object
-export const resolveUrl = async (permalink) => {
-  return new Promise(resolve => {
+export const repostTrack = async (trackId) =>
+  new Promise((resolve) => {
     setTimeout(() => {
-      // Mock resolution: check if link matches a known track
-      const match = mockFeedData.find(t =>
-        permalink.includes(t.trackId) || permalink.includes(t.title.toLowerCase().replace(/\s+/g, '-'))
-      );
+      resolve({ success: true, trackId, action: 'reposted' })
+    }, 200)
+  })
+
+export const recordPlay = async (trackId) =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, trackId, action: 'played' })
+    }, 200)
+  })
+
+export const resolveUrl = async (permalink) =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      const match = mockFeedData.find(
+        (track) =>
+          permalink.includes(track.trackId) ||
+          permalink.includes(track.title.toLowerCase().replace(/\s+/g, '-')),
+      )
+
       if (match) {
-        resolve({ type: 'track', id: match.trackId, data: match, resolved: true });
-      } else {
-        resolve({ type: 'unknown', id: null, resolved: false });
+        resolve({ type: 'track', id: match.trackId, data: match, resolved: true })
+        return
       }
-    }, 200);
-  });
-};
+
+      resolve({ type: 'unknown', id: null, resolved: false })
+    }, 200)
+  })

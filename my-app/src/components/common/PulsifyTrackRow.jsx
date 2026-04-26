@@ -5,7 +5,7 @@ import { usePlayer } from '../../hooks/usePlayer';
 // SoundCloud-style track card with waveform placeholder
 const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
   const { currentTrack, isPlaying, togglePlay } = usePlayer();
-  const isActive = currentTrack?.trackId === track.trackId;
+  const isActive = currentTrack?.id === track.trackId;
 
   const formatDuration = (secs) => {
     if (!secs) return '0:00';
@@ -17,7 +17,10 @@ const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
   return (
     <div className={`sc-track-card ${isActive ? 'sc-track-active' : ''}`} data-testid={`track-row-${track.trackId}`}>
       {/* Cover Art with Play Overlay */}
-      <div className="sc-track-art-wrap" onClick={() => togglePlay(track)}>
+      <div
+        className="sc-track-art-wrap"
+        onClick={() => togglePlay(track, { playbackContext: 'discovery' })}
+      >
         <img src={track.coverArt} alt={track.title} className="sc-track-art" />
         <div className="sc-play-overlay">
           <div className="sc-play-circle">

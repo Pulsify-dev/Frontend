@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import serviceLocator from '../utils/serviceLocator';
 import PulsifyTrackRow from '../components/common/PulsifyTrackRow';
+import { usePlayer } from '../hooks/usePlayer';
 import './SearchHubPage.css';
 
 const FILTER_TABS = ['Everything', 'Tracks', 'People', 'Albums', 'Playlists'];
 
 const SearchHubPage = () => {
+  const { setQueueTrackIds } = usePlayer();
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
 
@@ -32,6 +34,10 @@ const SearchHubPage = () => {
     }, 400);
     return () => { mounted = false; clearTimeout(debounce); };
   }, [searchTerm]);
+
+  useEffect(() => {
+    setQueueTrackIds(results.map((track) => track.trackId));
+  }, [results, setQueueTrackIds]);
 
   const handleLike = async (trackId) => {
     try {

@@ -19,6 +19,7 @@ import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
+import PlaybackHistoryPage from "@/pages/PlaybackHistoryPage";
 
 // Profile
 import ProfilePage from "@/profile/pages/ProfilePage";
@@ -60,6 +61,7 @@ const AppRoutes = () => {
         <Route path="/discover" element={<DiscoveryFeedPage />} />
         <Route path="/search" element={<SearchHubPage />} />
         <Route path="/trending" element={<TrendingChartsPage />} />
+        <Route path="/history" element={<PlaybackHistoryPage />} />
 
         {/* Track - Module 4/5 */}
         <Route path="/track/:id" element={<TrackPage />} />

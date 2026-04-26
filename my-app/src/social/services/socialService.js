@@ -27,13 +27,14 @@ import {
   getSuggestedUsersMock,
   getMutualFollowersMock,
 } from "./socialMockApi";
-console.log(
-  "SOCIAL MOCKS CHECK:",
-  import.meta.env.VITE_USE_MOCKS,
-  typeof import.meta.env.VITE_USE_MOCKS,
-);
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
+const USE_MOCKS =
+  String(
+    import.meta.env.VITE_USE_MOCKS ??
+      import.meta.env.VITE_USE_MOCK_API ??
+      import.meta.env.VITE_USE_MOCK ??
+      "false",
+  ).toLowerCase() === "true";
 
 export const socialService = {
   followUser: USE_MOCKS ? followUserMock : followUserApi,
