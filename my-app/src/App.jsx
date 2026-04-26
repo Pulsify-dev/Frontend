@@ -31,6 +31,9 @@ import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyMyTracksView } from "@/pages/PulsifyMyTracksView";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
 
+// Module 13 – Albums (Omar Nasser)
+import { PulsifyAlbumDetailView } from "@/pages/PulsifyAlbumDetailView";
+
 // Module 8/10 – Discovery & Notifications (Ahmed Ali)
 import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
@@ -121,6 +124,12 @@ const AppRoutes = () => {
               <Route
                 path="/playlists/:playlistId"
                 element={<PulsifyPlaylistDetailView />}
+              />
+
+              {/* Albums - Module 13 (detail view only, list lives on profile) */}
+              <Route
+                path="/albums/:albumId"
+                element={<PulsifyAlbumDetailView />}
               />
 
               {/* Library (Protected) */}

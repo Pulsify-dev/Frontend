@@ -6,7 +6,10 @@ import { profileService } from "../services/profileService";
 import { useAuth } from "@/contexts/AuthContext";
 import { PulsifyPlaylistService } from "../../services/pulsifyPlaylistService";
 import { PulsifyPlaylistCard } from "../../components/playlists/PulsifyPlaylistCard";
+import { PulsifyAlbumService } from "../../services/pulsifyAlbumService";
+import { PulsifyAlbumCard } from "../../components/albums/PulsifyAlbumCard";
 import "../../components/playlists/css/PulsifyPlaylists.css";
+import "../../components/albums/css/PulsifyAlbums.css";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
@@ -20,6 +23,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("All");
   const [playlists, setPlaylists] = useState([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [albums, setAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(false);
 
   // Viewing own profile if no userId in URL or userId matches logged-in user
   const isOwnProfile = !userId || userId === authUser?.id;
@@ -73,6 +78,43 @@ export default function ProfilePage() {
     return () => { cancelled = true; };
   }, [activeTab]);
 
+  // Fetch albums when the Albums tab is activated
+  useEffect(() => {
+    if (activeTab !== "Albums") return;
+    if (!profile?.id) return;
+    let cancelled = false;
+    const fetchAlbums = async () => {
+      setAlbumsLoading(true);
+      try {
+        console.log('[ProfilePage] Fetching albums for artist:', profile.id);
+        // Use the artist-specific endpoint (the one the backend actually supports)
+        const data = await PulsifyAlbumService.getArtistAlbums(profile.id);
+        console.log('[ProfilePage] getArtistAlbums response:', data);
+        const rawAlbums = data.albums || data.data || (Array.isArray(data) ? data : []);
+        console.log('[ProfilePage] rawAlbums:', rawAlbums);
+        // Fetch detailed data for each album to get track info
+        const detailedAlbums = await Promise.all(
+          rawAlbums.map(async (alb) => {
+            try {
+              const detailed = await PulsifyAlbumService.getAlbumById(alb._id || alb.id);
+              const resolved = detailed.album || detailed.data || detailed;
+              return resolved;
+            } catch {
+              return alb;
+            }
+          })
+        );
+        if (!cancelled) setAlbums(detailedAlbums);
+      } catch (err) {
+        console.error("Failed to load albums for profile:", err);
+      } finally {
+        if (!cancelled) setAlbumsLoading(false);
+      }
+    };
+    fetchAlbums();
+    return () => { cancelled = true; };
+  }, [activeTab, profile?.id]);
+
   async function handleSave(payload) {
     try {
       const updated = await profileService.updateMyProfile(payload);
@@ -113,31 +155,55 @@ export default function ProfilePage() {
 
   // Build tab content for the Playlists tab
   const getTabContent = () => {
-    if (activeTab !== "Playlists") return null;
-
-    if (playlistsLoading) {
-      return <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>Loading playlists...</div>;
-    }
-
-    if (playlists.length === 0) {
+    if (activeTab === "Playlists") {
+      if (playlistsLoading) {
+        return <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>Loading playlists...</div>;
+      }
+      if (playlists.length === 0) {
+        return (
+          <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>
+            <p>No playlists yet.</p>
+          </div>
+        );
+      }
       return (
-        <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>
-          <p>No playlists yet.</p>
+        <div className="pulsify-grid-container">
+          {playlists.map((pl) => (
+            <PulsifyPlaylistCard
+              key={pl._id || pl.id}
+              playlist={pl}
+              onDelete={(id) => setPlaylists((prev) => prev.filter((p) => (p._id || p.id) !== id))}
+            />
+          ))}
         </div>
       );
     }
 
-    return (
-      <div className="pulsify-grid-container">
-        {playlists.map((pl) => (
-          <PulsifyPlaylistCard
-            key={pl._id || pl.id}
-            playlist={pl}
-            onDelete={(id) => setPlaylists((prev) => prev.filter((p) => (p._id || p.id) !== id))}
-          />
-        ))}
-      </div>
-    );
+    if (activeTab === "Albums") {
+      if (albumsLoading) {
+        return <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>Loading albums...</div>;
+      }
+      if (albums.length === 0) {
+        return (
+          <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>
+            <p>No albums yet.</p>
+          </div>
+        );
+      }
+      return (
+        <div className="pulsify-grid-container">
+          {albums.map((alb) => (
+            <PulsifyAlbumCard
+              key={alb._id || alb.id}
+              album={alb}
+              onDelete={(id) => setAlbums((prev) => prev.filter((a) => (a._id || a.id) !== id))}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   if (isLoading) return <div className="sc-loading">Loading profile...</div>;
