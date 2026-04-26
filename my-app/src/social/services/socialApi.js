@@ -154,6 +154,7 @@ export async function getRelationshipApi(userId) {
     isFollowing: inner.is_following || false,
     isFollowedBy: inner.is_followed_by || false,
     isBlocked: inner.is_blocked || false,
+    isBlockedBy: inner.is_blocked_by || false,
   };
 }
 
