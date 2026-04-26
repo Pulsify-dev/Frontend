@@ -123,12 +123,22 @@ const withMockFallback = async (requester, fallback) => {
 };
 
 const normalizeUser = (user = {}) => ({
-  id: user.id ?? `user-${Math.random().toString(16).slice(2, 10)}`,
-  name: user.name ?? user.username ?? "Unknown listener",
-  handle: user.handle ?? (user.username ? `@${user.username}` : "@listener"),
+  id:
+    user.id ??
+    user._id ??
+    user.user_id ??
+    `user-${Math.random().toString(16).slice(2, 10)}`,
+  name: user.name ?? user.display_name ?? user.username ?? "Unknown listener",
+  handle:
+    user.handle ??
+    (user.username ? `@${user.username}` : null) ??
+    (user.display_name ? `@${user.display_name}` : "@listener"),
   avatar:
     user.avatar ??
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
+    user.avatar_url ??
+    user.profile_picture ??
+    user.profile_image ??
+    null,
 });
 
 const normalizeComment = (comment = {}) => {
@@ -161,7 +171,10 @@ const normalizeComment = (comment = {}) => {
     timestamp_ms: timestampMs,
     created_at: comment.created_at ?? formatIsoNow(),
     user,
-    repliesCount: comment.replies_count ?? comment.repliesCount ?? 0,
+    repliesCount: Math.max(
+      0,
+      comment.replies_count ?? comment.repliesCount ?? 0,
+    ),
     likesCount: comment.likes_count ?? comment.likesCount ?? 0,
     isEdited: comment.is_edited ?? comment.isEdited ?? false,
     isOwnedByViewer: Boolean(viewer.userId && commentUserId === viewer.userId),
@@ -175,38 +188,103 @@ const createWaveform = (seed) =>
     return Number((0.16 + primary * 0.5 + secondary * 0.14).toFixed(3));
   });
 
-const normalizeTrack = (track = {}) => ({
-  id: track.id ?? "trk-2026-014",
-  title: track.title ?? "Untitled track",
-  artist: track.artist ?? "Unknown artist",
-  artistHandle: track.artistHandle ?? "@artist",
-  artistAvatar: track.artistAvatar ?? track.cover ?? "",
-  cover: track.cover ?? "",
-  audioUrl: track.audioUrl ?? "",
-  duration: track.duration ?? 0,
-  description: track.description ?? "",
-  genre: track.genre ?? "Electronic",
-  location: track.location ?? "Cairo, Egypt",
-  postedAt: track.postedAt ?? formatIsoNow(),
-  playCount: track.playCount ?? track.plays ?? 0,
-  likeCount: track.likeCount ?? track.likes ?? 0,
-  repostCount: track.repostCount ?? track.reposts ?? 0,
-  commentCount:
-    track.commentCount ??
-    track.comment_count ??
-    track.comments_count ??
-    track.commentsCount ??
-    (Array.isArray(track.comments) ? track.comments.length : 0),
-  viewerHasLiked: Boolean(track.viewerHasLiked),
-  viewerHasReposted: Boolean(track.viewerHasReposted),
-  playbackState: track.playbackState ?? "Playable",
-  previewDurationSeconds: track.previewDurationSeconds ?? 0,
-  waveform:
-    Array.isArray(track.waveform) && track.waveform.length
-      ? track.waveform
-      : createWaveform((track.id ?? "track").length),
-  typeLabel: track.typeLabel ?? "Music",
-});
+const normalizeTrack = (track = {}) => {
+  const id =
+    track._id ?? track.id ?? track.track_id ?? track.trackId ?? "trk-2026-014";
+
+  const artist =
+    track.artist ??
+    track.uploader?.username ??
+    track.uploader?.display_name ??
+    track.user?.username ??
+    track.user?.display_name ??
+    "Unknown artist";
+
+  const cover =
+    track.cover ??
+    track.cover_url ??
+    track.artwork_url ??
+    track.thumbnail_url ??
+    "";
+
+  const audioUrl =
+    track.audioUrl ??
+    track.audio_url ??
+    track.stream_url ??
+    track.file_url ??
+    "";
+
+  const duration =
+    track.duration ?? track.duration_seconds ?? track.length ?? 0;
+
+  return {
+    id,
+    title: track.title ?? "Untitled track",
+    artist,
+    artistHandle:
+      track.artistHandle ??
+      (track.uploader?.username ? `@${track.uploader.username}` : null) ??
+      (track.user?.username ? `@${track.user.username}` : null) ??
+      "@artist",
+    artistAvatar:
+      track.artistAvatar ??
+      track.uploader?.avatar_url ??
+      track.user?.avatar_url ??
+      cover,
+    cover,
+    audioUrl,
+    duration,
+    description: track.description ?? "",
+    genre: track.genre ?? "Electronic",
+    location: track.location ?? "Cairo, Egypt",
+    postedAt:
+      track.postedAt ??
+      track.created_at ??
+      track.uploaded_at ??
+      track.release_date ??
+      formatIsoNow(),
+    playCount: track.playCount ?? track.plays ?? track.play_count ?? 0,
+    likeCount:
+      track.likeCount ??
+      track.likes ??
+      track.likes_count ??
+      track.like_count ??
+      0,
+    repostCount:
+      track.repostCount ??
+      track.reposts ??
+      track.reposts_count ??
+      track.repost_count ??
+      0,
+    commentCount:
+      track.commentCount ??
+      track.comment_count ??
+      track.comments_count ??
+      track.commentsCount ??
+      (Array.isArray(track.comments) ? track.comments.length : 0),
+    viewerHasLiked:
+      Boolean(track.viewerHasLiked) ||
+      Boolean(track.viewer_has_liked) ||
+      Boolean(track.is_liked) ||
+      Boolean(track.liked),
+    viewerHasReposted:
+      Boolean(track.viewerHasReposted) ||
+      Boolean(track.viewer_has_reposted) ||
+      Boolean(track.is_reposted) ||
+      Boolean(track.reposted),
+    playbackState:
+      track.playbackState ??
+      normalizePlaybackState(track.playback_state) ??
+      "Playable",
+    previewDurationSeconds:
+      track.previewDurationSeconds ?? track.preview_duration_seconds ?? 0,
+    waveform:
+      Array.isArray(track.waveform) && track.waveform.length
+        ? track.waveform
+        : createWaveform(id.length),
+    typeLabel: track.typeLabel ?? track.type ?? track.track_type ?? "Music",
+  };
+};
 
 const normalizeTrackCard = (track = {}) => {
   const normalizedTrack = normalizeTrack(track);
@@ -256,6 +334,9 @@ const unwrapCollection = (payload) => {
   if (Array.isArray(payload?.history)) return payload.history;
   if (Array.isArray(payload?.playlists)) return payload.playlists;
   if (Array.isArray(payload?.fans)) return payload.fans;
+  if (Array.isArray(payload?.likers)) return payload.likers;
+  if (Array.isArray(payload?.reposters)) return payload.reposters;
+  if (Array.isArray(payload?.replies)) return payload.replies;
   return [];
 };
 
@@ -624,7 +705,16 @@ export const toggleLike = async (trackId, shouldLike) => {
   }
 
   const method = shouldLike ? "POST" : "DELETE";
-  return request(`/tracks/${trackId}/like`, { method });
+  try {
+    return await request(`/tracks/${trackId}/like`, {
+      method,
+      body: shouldLike ? {} : undefined,
+    });
+  } catch (err) {
+    // 409 = already in the requested state — treat as success
+    if (err?.message?.includes("409")) return { success: true };
+    throw err;
+  }
 };
 
 export const getLikers = async (trackId) => {
@@ -632,8 +722,16 @@ export const getLikers = async (trackId) => {
     return clone(getMockEngagementOrCreate(trackId).likers.map(normalizeUser));
   }
 
-  const payload = await request(`/tracks/${trackId}/likers`, { auth: false });
+  const payload = await request(`/tracks/${trackId}/likes`, { auth: false });
   return unwrapCollection(payload).map(normalizeUser);
+};
+
+export const checkTrackLiked = async (trackId) => {
+  if (useMock) {
+    return { liked: Boolean(getMockTrackOrThrow(trackId).viewerHasLiked) };
+  }
+
+  return request(`/tracks/${trackId}/liked`);
 };
 
 export const toggleRepost = async (trackId, shouldRepost) => {
@@ -666,7 +764,16 @@ export const toggleRepost = async (trackId, shouldRepost) => {
   }
 
   const method = shouldRepost ? "POST" : "DELETE";
-  return request(`/tracks/${trackId}/repost`, { method });
+  try {
+    return await request(`/tracks/${trackId}/repost`, {
+      method,
+      body: shouldRepost ? {} : undefined,
+    });
+  } catch (err) {
+    // 409 = already in the requested state — treat as success
+    if (err?.message?.includes("409")) return { success: true };
+    throw err;
+  }
 };
 
 export const getReposters = async (trackId) => {
@@ -676,13 +783,23 @@ export const getReposters = async (trackId) => {
     );
   }
 
-  const payload = await request(`/tracks/${trackId}/reposters`, {
+  const payload = await request(`/tracks/${trackId}/reposts`, {
     auth: false,
   });
   return unwrapCollection(payload).map(normalizeUser);
 };
 
-export const getComments = async (trackId, { skip = 0, limit = 20 } = {}) => {
+export const checkTrackReposted = async (trackId) => {
+  if (useMock) {
+    return {
+      reposted: Boolean(getMockTrackOrThrow(trackId).viewerHasReposted),
+    };
+  }
+
+  return request(`/tracks/${trackId}/reposted`);
+};
+
+export const getComments = async (trackId, { page = 1, limit = 20 } = {}) => {
   if (useMock) {
     const comments = clone(getMockEngagementOrCreate(trackId).comments).map(
       normalizeComment,
@@ -691,7 +808,7 @@ export const getComments = async (trackId, { skip = 0, limit = 20 } = {}) => {
   }
 
   const payload = await request(
-    `/tracks/${trackId}/comments?skip=${skip}&limit=${limit}`,
+    `/tracks/${trackId}/comments?page=${page}&limit=${limit}`,
     { auth: false },
   );
   const comments = unwrapCollection(payload).map(normalizeComment);
@@ -719,7 +836,16 @@ export const createComment = async (trackId, payload) => {
 
   const response = await request(`/tracks/${trackId}/comments`, {
     method: "POST",
-    body: payload,
+    body: {
+      text: payload.text,
+      timestamp_seconds:
+        payload.timestamp_ms != null && payload.timestamp_ms > 0
+          ? Math.round(payload.timestamp_ms / 1000)
+          : 0,
+      ...(payload.parent_comment_id != null
+        ? { parent_comment_id: payload.parent_comment_id }
+        : {}),
+    },
   });
 
   return normalizeComment(response);
@@ -736,16 +862,36 @@ export const deleteComment = async (commentId, trackId) => {
   return request(`/comments/${commentId}`, { method: "DELETE" });
 };
 
+export const updateComment = async (commentId, text) => {
+  if (useMock) {
+    for (const engagement of Object.values(mockStore.engagement)) {
+      const comment = engagement.comments.find((c) => c.id === commentId);
+      if (comment) {
+        comment.text = text;
+        comment.isEdited = true;
+        return clone(normalizeComment(comment));
+      }
+    }
+    throw new Error("Comment not found");
+  }
+
+  const payload = await request(`/comments/${commentId}`, {
+    method: "PATCH",
+    body: { text },
+  });
+  return normalizeComment(payload);
+};
+
 export const getCommentReplies = async (
   commentId,
-  { skip = 0, limit = 20 } = {},
+  { page = 1, limit = 20 } = {},
 ) => {
   if (useMock) {
     return { replies: [], totalCount: 0 };
   }
 
   const payload = await request(
-    `/comments/${commentId}/replies?skip=${skip}&limit=${limit}`,
+    `/comments/${commentId}/replies?page=${page}&limit=${limit}`,
     {
       auth: false,
     },
@@ -769,8 +915,15 @@ export const getRelatedTracks = async (trackId) => {
     );
   }
 
-  const payload = await request(`/tracks/${trackId}/related`, { auth: false });
-  return unwrapCollection(payload).map(normalizeTrackCard);
+  try {
+    const payload = await request(`/tracks/${trackId}/related`, {
+      auth: false,
+    });
+    return unwrapCollection(payload).map(normalizeTrackCard);
+  } catch (err) {
+    if (err?.message?.includes("404")) return [];
+    throw err;
+  }
 };
 
 export const getDownloadUrl = async (trackId) => {
@@ -780,6 +933,100 @@ export const getDownloadUrl = async (trackId) => {
   }
 
   return request(`/tracks/${trackId}/download-url`);
+};
+
+// ── Module 4: Track Management ─────────────────────────────────────────────
+
+export const TRACK_GENRES = [
+  "Electronic",
+  "Hip-Hop",
+  "Rock",
+  "Pop",
+  "Jazz",
+  "R&B",
+  "Classical",
+  "Country",
+  "Reggae",
+  "Metal",
+  "Folk",
+  "Blues",
+  "Latin",
+  "Punk",
+  "Soul",
+];
+
+/**
+ * POST /tracks — multipart form upload.
+ * @param {Object} fields - { title, genre, description?, tags?, preview_start_seconds?, lyrics? }
+ * @param {File} audioFile
+ * @param {File} artworkFile
+ */
+export const createTrack = async (fields, audioFile, artworkFile) => {
+  const formData = new FormData();
+  formData.append("audio_file", audioFile);
+  formData.append("artwork_file", artworkFile);
+  formData.append("title", fields.title);
+  formData.append("genre", fields.genre);
+  if (fields.description) formData.append("description", fields.description);
+  if (fields.lyrics) formData.append("lyrics", fields.lyrics);
+  if (fields.preview_start_seconds != null)
+    formData.append(
+      "preview_start_seconds",
+      String(fields.preview_start_seconds),
+    );
+  const tags = Array.isArray(fields.tags) ? fields.tags : [];
+  tags.forEach((tag) => formData.append("tags", tag));
+
+  return request("/tracks", { method: "POST", body: formData });
+};
+
+/** GET /tracks/:id/status — poll transcoding state */
+export const getTrackStatus = async (trackId) => {
+  return request(`/tracks/${trackId}/status`);
+};
+
+/** PATCH /tracks/:id — update metadata (owner only) */
+export const updateTrackMetadata = async (trackId, fields) => {
+  return request(`/tracks/${trackId}`, { method: "PATCH", body: fields });
+};
+
+/** DELETE /tracks/:id */
+export const deleteTrack = async (trackId) => {
+  return request(`/tracks/${trackId}`, { method: "DELETE" });
+};
+
+/** PUT /tracks/:id/artwork — replace cover image */
+export const updateTrackArtwork = async (trackId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request(`/tracks/${trackId}/artwork`, {
+    method: "PUT",
+    body: formData,
+  });
+};
+
+/** GET /artists/:id/tracks */
+export const getArtistTracks = async (
+  artistId,
+  { page = 1, limit = 20 } = {},
+) => {
+  const payload = await request(
+    `/artists/${artistId}/tracks?page=${page}&limit=${limit}`,
+  );
+  return {
+    tracks: unwrapCollection(payload).map(normalizeTrack),
+    total: payload?.total ?? 0,
+  };
+};
+
+/** GET /tracks/:id/lyrics */
+export const getTrackLyrics = async (trackId) => {
+  try {
+    const payload = await request(`/tracks/${trackId}/lyrics`);
+    return payload?.lyrics ?? null;
+  } catch {
+    return null;
+  }
 };
 
 export const getTrackPlaylists = async (trackId) => {
@@ -794,10 +1041,107 @@ export const getTrackPlaylists = async (trackId) => {
     );
   }
 
-  const payload = await request(`/tracks/${trackId}/playlists`, {
-    auth: false,
-  });
-  return unwrapCollection(payload).map(normalizePlaylist);
+  try {
+    const payload = await request(`/tracks/${trackId}/playlists`, {
+      auth: false,
+    });
+    return unwrapCollection(payload).map(normalizePlaylist);
+  } catch (err) {
+    if (err?.message?.includes("404")) return [];
+    throw err;
+  }
+};
+
+// Album engagement endpoints (Module 6)
+
+export const toggleAlbumLike = async (albumId, shouldLike) => {
+  if (useMock) {
+    return {
+      success: true,
+      message: shouldLike
+        ? "Album liked successfully."
+        : "Album unliked successfully.",
+    };
+  }
+
+  const method = shouldLike ? "POST" : "DELETE";
+  return request(`/albums/${albumId}/like`, { method });
+};
+
+export const getAlbumLikers = async (
+  albumId,
+  { page = 1, limit = 20 } = {},
+) => {
+  if (useMock) {
+    return {
+      likers: [],
+      likes_count: 0,
+      pagination: { page, limit, total: 0, pages: 0 },
+    };
+  }
+
+  const payload = await request(
+    `/albums/${albumId}/likes?page=${page}&limit=${limit}`,
+    { auth: false },
+  );
+  return {
+    likers: unwrapCollection(payload).map(normalizeUser),
+    likes_count: payload?.likes_count ?? 0,
+    pagination: payload?.pagination ?? { page, limit, total: 0, pages: 0 },
+  };
+};
+
+export const checkAlbumLiked = async (albumId) => {
+  if (useMock) {
+    return { album_id: albumId, liked: false };
+  }
+
+  return request(`/albums/${albumId}/liked`);
+};
+
+export const toggleAlbumRepost = async (albumId, shouldRepost) => {
+  if (useMock) {
+    return {
+      success: true,
+      message: shouldRepost
+        ? "Album reposted successfully."
+        : "Album unreposted successfully.",
+    };
+  }
+
+  const method = shouldRepost ? "POST" : "DELETE";
+  return request(`/albums/${albumId}/repost`, { method });
+};
+
+export const getAlbumReposters = async (
+  albumId,
+  { page = 1, limit = 20 } = {},
+) => {
+  if (useMock) {
+    return {
+      reposters: [],
+      reposts_count: 0,
+      pagination: { page, limit, total: 0, pages: 0 },
+    };
+  }
+
+  const payload = await request(
+    `/albums/${albumId}/reposts?page=${page}&limit=${limit}`,
+    { auth: false },
+  );
+  return {
+    reposters: unwrapCollection(payload).map(normalizeUser),
+    reposts_count: payload?.reposts_count ?? 0,
+    pagination: payload?.pagination ?? { page, limit, total: 0, pages: 0 },
+  };
+};
+
+export const checkAlbumReposted = async (albumId) => {
+  if (useMock) {
+    return { album_id: albumId, reposted: false };
+  }
+
+  return request(`/albums/${albumId}/reposted`);
 };
 
 export const getFanLeaderboard = async (trackId) => {
@@ -807,8 +1151,13 @@ export const getFanLeaderboard = async (trackId) => {
     );
   }
 
-  const payload = await request(`/tracks/${trackId}/fans`, { auth: false });
-  return unwrapCollection(payload).map(normalizeFanEntry);
+  try {
+    const payload = await request(`/tracks/${trackId}/fans`, { auth: false });
+    return unwrapCollection(payload).map(normalizeFanEntry);
+  } catch (err) {
+    if (err?.message?.includes("404")) return [];
+    throw err;
+  }
 };
 
 // -- Axios instance for Omar's playlist/premium modules --

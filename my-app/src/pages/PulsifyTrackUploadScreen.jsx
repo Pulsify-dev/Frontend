@@ -556,7 +556,67 @@ export const PulsifyTrackUploadScreen = () => {
             {isUploading ? 'Uploading...' : 'Upload'}
           </button>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // ── Step: Done ───────────────────────────────────────────────
+  return (
+    <div
+      style={{
+        padding: "20px",
+        maxWidth: "500px",
+        margin: "0 auto",
+        textAlign: "center",
+        paddingTop: "80px",
+      }}
+    >
+      <div style={{ fontSize: "64px", marginBottom: "16px" }}>🎉</div>
+      <h2 style={{ marginBottom: "8px" }}>Track Published!</h2>
+      <p style={{ color: "#aaa", marginBottom: "32px" }}>
+        <strong style={{ color: "#fff" }}>{title}</strong> is live and ready to
+        play.
+      </p>
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          justifyContent: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        {createdTrackId && (
+          <button
+            onClick={() => navigate(`/tracks/${createdTrackId}`)}
+            style={{
+              padding: "12px 24px",
+              backgroundColor: "#f50",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            View Track
+          </button>
+        )}
+        <button
+          onClick={resetAll}
+          style={{
+            padding: "12px 24px",
+            backgroundColor: "#333",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          Upload Another
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import ProfileCard from "../components/ProfileCard";
 import EditProfileForm from "../components/EditProfileForm";
 import { profileService } from "../services/profileService";
+import { useAuth } from "@/contexts/AuthContext";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
+  const { userId } = useParams();
+  const { user: authUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Viewing own profile if no userId in URL or userId matches logged-in user
+  const isOwnProfile = !userId || userId === authUser?.id;
+
   useEffect(() => {
     async function loadProfile() {
       try {
         setIsLoading(true);
-        const data = await profileService.getMyProfile();
+        const data = isOwnProfile
+          ? await profileService.getMyProfile()
+          : await profileService.getPublicProfile(userId);
         setProfile(data);
       } catch {
         setErrorMessage("Failed to load profile.");
@@ -24,7 +33,7 @@ export default function ProfilePage() {
       }
     }
     loadProfile();
-  }, []);
+  }, [userId, isOwnProfile]);
 
   async function handleSave(payload) {
     try {
@@ -72,9 +81,10 @@ export default function ProfilePage() {
     <div className="sc-profile-page">
       <ProfileCard
         profile={profile}
-        onEditClick={openModal}
-        onCoverUpload={handleCoverUpload}
-        onAvatarUpload={handleAvatarUpload}
+        isOwnProfile={isOwnProfile}
+        onEditClick={isOwnProfile ? openModal : undefined}
+        onCoverUpload={isOwnProfile ? handleCoverUpload : undefined}
+        onAvatarUpload={isOwnProfile ? handleAvatarUpload : undefined}
       />
 
       {isOpen && (

@@ -9,6 +9,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Unauthorized from "@/pages/Unauthorized";
 import Home from "@/pages/Home";
+import LandingPage from "@/pages/LandingPage";
 import { ProtectedRoute, ArtistRoute } from "@/components/auth";
 
 // Module 2 – Profile (Ahmad Hisham)
@@ -55,9 +56,11 @@ const AppRoutes = () => {
               <Route path="/unauthorized" element={<Unauthorized />} />
             </Route>
 
+            {/* Landing – no layout wrapper, manages its own navbar */}
+            <Route path="/" element={<LandingPage />} />
+
             {/* App pages – full navbar */}
             <Route element={<MainLayout />}>
-              <Route path="/" element={<DiscoveryFeedPage />} />
               <Route path="/home" element={<Home />} />
 
               {/* Profile - Module 2 (Protected) */}
