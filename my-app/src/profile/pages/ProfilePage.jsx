@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import ProfileCard from "../components/ProfileCard";
 import EditProfileForm from "../components/EditProfileForm";
 import { profileService } from "../services/profileService";
 import { useAuth } from "@/contexts/AuthContext";
+import { PulsifyPlaylistService } from "../../services/pulsifyPlaylistService";
+import { PulsifyPlaylistCard } from "../../components/playlists/PulsifyPlaylistCard";
+import "../../components/playlists/css/PulsifyPlaylists.css";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
@@ -14,6 +17,9 @@ export default function ProfilePage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [activeTab, setActiveTab] = useState("All");
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
 
   // Viewing own profile if no userId in URL or userId matches logged-in user
   const isOwnProfile = !userId || userId === authUser?.id;
@@ -34,6 +40,38 @@ export default function ProfilePage() {
     }
     loadProfile();
   }, [userId, isOwnProfile]);
+
+  // Fetch playlists when the Playlists tab is activated
+  useEffect(() => {
+    if (activeTab !== "Playlists") return;
+    let cancelled = false;
+    const fetchPlaylists = async () => {
+      setPlaylistsLoading(true);
+      try {
+        const data = await PulsifyPlaylistService.retrieveAllPlaylists('me');
+        const rawPlaylists = Array.isArray(data) ? data : data.playlists || [];
+        // Fetch detailed data for each playlist to get track info
+        const detailedPlaylists = await Promise.all(
+          rawPlaylists.map(async (pl) => {
+            try {
+              const detailed = await PulsifyPlaylistService.getPlaylistById(pl._id || pl.id);
+              const resolved = detailed.playlist || detailed.data || detailed;
+              return resolved;
+            } catch {
+              return pl;
+            }
+          })
+        );
+        if (!cancelled) setPlaylists(detailedPlaylists);
+      } catch (err) {
+        console.error("Failed to load playlists for profile:", err);
+      } finally {
+        if (!cancelled) setPlaylistsLoading(false);
+      }
+    };
+    fetchPlaylists();
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   async function handleSave(payload) {
     try {
@@ -73,6 +111,35 @@ export default function ProfilePage() {
     setTimeout(() => setIsOpen(false), 400);
   }
 
+  // Build tab content for the Playlists tab
+  const getTabContent = () => {
+    if (activeTab !== "Playlists") return null;
+
+    if (playlistsLoading) {
+      return <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>Loading playlists...</div>;
+    }
+
+    if (playlists.length === 0) {
+      return (
+        <div style={{ color: '#999', padding: '40px 0', textAlign: 'center' }}>
+          <p>No playlists yet.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="pulsify-grid-container">
+        {playlists.map((pl) => (
+          <PulsifyPlaylistCard
+            key={pl._id || pl.id}
+            playlist={pl}
+            onDelete={(id) => setPlaylists((prev) => prev.filter((p) => (p._id || p.id) !== id))}
+          />
+        ))}
+      </div>
+    );
+  };
+
   if (isLoading) return <div className="sc-loading">Loading profile...</div>;
   if (errorMessage) return <div className="sc-error">{errorMessage}</div>;
   if (!profile) return <div className="sc-error">No profile found.</div>;
@@ -85,6 +152,9 @@ export default function ProfilePage() {
         onEditClick={isOwnProfile ? openModal : undefined}
         onCoverUpload={isOwnProfile ? handleCoverUpload : undefined}
         onAvatarUpload={isOwnProfile ? handleAvatarUpload : undefined}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabContent={getTabContent()}
       />
 
       {isOpen && (
