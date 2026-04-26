@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
 import { PulsifyTrackRow } from '../components/playlists/PulsifyTrackRow';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
+import { useMessaging } from '@/hooks/useMessaging';
 
 const waveformBars = Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
@@ -14,6 +15,7 @@ export const PulsifyPlaylistDetailView = () => {
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
   const navigate = useNavigate();
+  const { openConversation, sharePlaylistToConversation } = useMessaging();
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
 
   useEffect(() => {
@@ -23,8 +25,8 @@ export const PulsifyPlaylistDetailView = () => {
         setIsLoading(true);
         const data = await PulsifyPlaylistService.retrievePlaylistById(playlistId);
         if (isMounted) setPlaylistDetail(data);
-      } catch (err) {
-        if (isMounted) setFetchError(err.message || 'Error occurred fetching this set.');
+      } catch {
+        if (isMounted) setFetchError('Error occurred fetching this set.');
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -47,7 +49,7 @@ export const PulsifyPlaylistDetailView = () => {
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
     try {
       await PulsifyPlaylistService.reorderTracks(playlistId, newTracks.map(t => t.id));
-    } catch (err) {
+    } catch {
       setFetchError('Failed to persist sequence order.');
     }
   };
@@ -57,7 +59,31 @@ export const PulsifyPlaylistDetailView = () => {
       const embedData = await PulsifyPlaylistService.generateEmbed(playlistId);
       navigator.clipboard.writeText(embedData.html || embedData.embed_html || 'No embed string resolved');
       alert('Embed iframe copied to clipboard!');
-    } catch (err) { alert('Failed to generate embed code.'); }
+    } catch { alert('Failed to generate embed code.'); }
+  };
+
+  const handleShareToMessages = async () => {
+    const recipientId = window.prompt('Enter recipient user ID');
+    if (!recipientId?.trim()) return;
+
+    const conversation = await openConversation(recipientId.trim());
+    if (!conversation?.id) {
+      alert('Could not open conversation.');
+      return;
+    }
+
+    const sent = await sharePlaylistToConversation({
+      conversationId: conversation.id,
+      playlistId,
+      text: `Check this playlist: ${playlistDetail?.title || ''}`.trim(),
+    });
+
+    if (!sent) {
+      alert('Could not share playlist in messages.');
+      return;
+    }
+
+    navigate(`/messages/${conversation.id}`);
   };
 
   const handleRemoveTrack = async (indexToRemove) => {
@@ -66,7 +92,7 @@ export const PulsifyPlaylistDetailView = () => {
     setPlaylistDetail({ ...playlistDetail, tracks: newTracks });
     try {
       await PulsifyPlaylistService.reorderTracks(playlistId, newTracks.map(t => t.id));
-    } catch (err) { alert('Failed to sync trace removal.'); }
+    } catch { alert('Failed to sync trace removal.'); }
   };
 
   const handleDeleteSet = async () => {
@@ -74,7 +100,7 @@ export const PulsifyPlaylistDetailView = () => {
     try {
       await PulsifyPlaylistService.deletePlaylist(playlistId);
       navigate('/playlists');
-    } catch (err) { alert('Delete failed.'); }
+    } catch { alert('Delete failed.'); }
   };
 
   const handleTogglePrivacy = () => {
@@ -178,6 +204,9 @@ export const PulsifyPlaylistDetailView = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', borderBottom: '1px solid #222', backgroundColor: '#111' }}>
           <CircleBtn label="Share" onClick={copyEmbedCode}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </CircleBtn>
+          <CircleBtn label="Message" onClick={handleShareToMessages}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </CircleBtn>
           <CircleBtn onClick={() => {}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
