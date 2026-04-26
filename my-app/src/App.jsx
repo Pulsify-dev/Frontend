@@ -31,17 +31,20 @@ import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
 // Module 8/10 – Discovery & Notifications (Ahmed Ali)
 import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
+import { MessagingProvider } from "./context/MessagingContext";
 import PulsifyPlayerBar from "./components/common/PulsifyPlayerBar";
 import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
 import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
+import MessagesPage from "./pages/MessagesPage";
 
 const AppRoutes = () => {
   return (
     <NotificationProvider>
-      <PlayerProvider>
-        <>
-          <Routes>
+      <MessagingProvider>
+        <PlayerProvider>
+          <>
+            <Routes>
             {/* Auth pages – minimal navbar */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
@@ -143,12 +146,31 @@ const AppRoutes = () => {
               <Route path="/discover" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
+
+              {/* Messaging - Module 9 */}
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <MessagesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/messages/:conversationId"
+                element={
+                  <ProtectedRoute>
+                    <MessagesPage />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
 
           <PulsifyPlayerBar />
         </>
       </PlayerProvider>
+    </MessagingProvider>
     </NotificationProvider>
   );
 };
