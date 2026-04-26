@@ -1,6 +1,7 @@
 import { envConfig } from '../config/environment';
 import * as discoveryMock from '../mocks/discoveryMock';
 import * as discoveryReal from '../services/discoveryService';
+import * as messagingReal from '../services/messagingService';
 import * as notificationMock from '../mocks/notificationMock';
 import * as notificationReal from '../services/notificationService';
 
@@ -9,6 +10,7 @@ import * as notificationReal from '../services/notificationService';
 const serviceLocator = {
   discovery: envConfig.useMockApi ? discoveryMock : discoveryReal,
   notifications: envConfig.useMockApi ? notificationMock : notificationReal,
+  messaging: messagingReal,
 };
 
 export default serviceLocator;
