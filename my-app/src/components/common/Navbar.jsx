@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMessaging } from "@/hooks/useMessaging";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -10,6 +11,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isArtist, logout } = useAuth();
+  const { unreadTotal } = useMessaging();
   const userMenuRef = useRef(null);
 
   useEffect(() => {
@@ -50,6 +52,8 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const unreadLabel = unreadTotal > 99 ? "99+" : unreadTotal;
+
   return (
     <nav className="auth-navbar">
       <div className="auth-navbar-left">
@@ -66,6 +70,14 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
+          {isAuthenticated && (
+            <Link
+              to="/messages"
+              className={`auth-nav-link${location.pathname.startsWith("/messages") ? " active" : ""}`}
+            >
+              Messages{unreadTotal > 0 ? ` (${unreadLabel})` : ""}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -320,6 +332,13 @@ const Navbar = () => {
                 className="auth-mobile-link"
               >
                 Following
+              </Link>
+              <Link
+                to="/messages"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="auth-mobile-link"
+              >
+                Messages{unreadTotal > 0 ? ` (${unreadLabel})` : ""}
               </Link>
               {isArtist() && (
                 <Link
