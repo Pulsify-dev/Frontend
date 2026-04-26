@@ -10,7 +10,6 @@ import TrackHeader from "../components/TrackHeader";
 import { trackExperienceMockData } from "../mock/trackExperienceData";
 import {
   clearAuthToken,
-  clearListeningHistory,
   createComment,
   deleteComment,
   getDownloadUrl,
@@ -30,6 +29,7 @@ import {
   toggleLike,
   toggleRepost,
 } from "../services/api";
+import { useMessaging } from "@/hooks/useMessaging";
 import "../App.css";
 
 const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? "trk-2026-014";
@@ -43,9 +43,13 @@ const buildTrackPath = (targetTrackId, view) => {
   return `/tracks/${targetTrackId}/${view}`;
 };
 
+const INVALID_FILENAME_CHARS = /[<>:"/\\|?*]/g;
+const CONTROL_CHARACTERS = new RegExp(String.raw`[\x00-\x1f]`, "g");
+
 const sanitizeFilenamePart = (value) =>
   String(value ?? "")
-    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+    .replace(INVALID_FILENAME_CHARS, "")
+    .replace(CONTROL_CHARACTERS, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -129,6 +133,7 @@ const getSectionConfig = (
 
 function TrackPage({ view = "overview" }) {
   const navigate = useNavigate();
+  const { openConversation, shareTrackToConversation } = useMessaging();
   const { id: routeTrackId, trackId: legacyTrackId } = useParams();
   const trackId = routeTrackId ?? legacyTrackId ?? DEFAULT_TRACK_ID;
   const audioRef = useRef(null);
@@ -213,7 +218,7 @@ function TrackPage({ view = "overview" }) {
 
       try {
         nextTrack = await getTrack(trackId);
-      } catch (trackError) {
+      } catch {
         setError("Track unavailable right now.");
         setIsLoading(false);
         return;
@@ -565,6 +570,32 @@ function TrackPage({ view = "overview" }) {
     await copyShareLink(window.location.href, "Track link copied.");
   };
 
+  const handleShareToMessage = async () => {
+    if (!track || typeof window === "undefined") return;
+
+    const recipientId = window.prompt("Enter recipient user ID");
+    if (!recipientId?.trim()) return;
+
+    const conversation = await openConversation(recipientId.trim());
+    if (!conversation?.id) {
+      setPlayerMessage("Could not open conversation.");
+      return;
+    }
+
+    const sent = await shareTrackToConversation({
+      conversationId: conversation.id,
+      trackId: track.id,
+      text: `Check this track: ${track.title}`,
+    });
+
+    if (!sent) {
+      setPlayerMessage("Could not share track in messages.");
+      return;
+    }
+
+    navigate(`/messages/${conversation.id}`);
+  };
+
   const handleDownload = async () => {
     if (!track || typeof document === "undefined") return;
 
@@ -748,6 +779,7 @@ function TrackPage({ view = "overview" }) {
               onLikeToggle={handleLikeToggle}
               onRepostToggle={handleRepostToggle}
               onShare={handleShare}
+              onShareToMessage={handleShareToMessage}
               onCopyLink={handleCopyLink}
               view={view}
             />
