@@ -98,3 +98,6 @@ dist-ssr
 # Documentation
 *.pdf
 .cursorrules
+
+# Postman collections
+*.postman_collection.json

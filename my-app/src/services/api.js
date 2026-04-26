@@ -523,24 +523,16 @@ const recordMockPlay = (trackId, durationPlayedMs) => {
   ].slice(0, 5);
 };
 
-export const getTrack = async (trackId) => {
+export const getTrack = async (trackId, secretToken) => {
   if (useMock) {
     const track = getMockTrackOrThrow(trackId);
     getMockEngagementOrCreate(trackId);
     return clone(normalizeTrack(track));
   }
 
-  try {
-    const payload = await request(`/tracks/${trackId}`);
-    return normalizeTrack(payload);
-  } catch (err) {
-    // Token expired or missing — retry without auth so public tracks still load
-    if (err?.message?.includes("401")) {
-      const payload = await request(`/tracks/${trackId}`, { auth: false });
-      return normalizeTrack(payload);
-    }
-    throw err;
-  }
+  const query = secretToken ? `?token=${secretToken}` : "";
+  const payload = await request(`/tracks/${trackId}${query}`);
+  return normalizeTrack(payload);
 };
 
 export const getWaveform = async (trackId) => {
@@ -607,7 +599,7 @@ const getMockTrackPlaylistsData = (trackId) => {
 const getMockFanLeaderboardData = (trackId) =>
   clone(getMockEngagementOrCreate(trackId).fans.map(normalizeFanEntry));
 
-export const getStreamUrl = async (trackId) => {
+export const getStreamUrl = async (trackId, secretToken) => {
   if (useMock) {
     const track = getMockTrackOrThrow(trackId);
     return {
@@ -622,7 +614,8 @@ export const getStreamUrl = async (trackId) => {
     };
   }
 
-  return request(`/tracks/${trackId}/stream-url`);
+  const query = secretToken ? `?token=${secretToken}` : "";
+  return request(`/tracks/${trackId}/stream-url${query}`);
 };
 
 export const registerPlay = async (trackId, payload) => {
@@ -1184,6 +1177,11 @@ pulsifyAxiosInstance.interceptors.request.use((config) => {
     "";
   if (token) {
     config.headers.Authorization = "Bearer " + token;
+  }
+  // When sending FormData, remove the default JSON content-type
+  // so the browser can set multipart/form-data with the correct boundary
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
   }
   return config;
 });

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import "./App.css";
@@ -25,8 +25,10 @@ import TrackPage from "@/pages/TrackPage";
 
 // Module 7 + 12 – Playlists & Premium (Omar Nasser)
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
+import { PulsifyLibraryPlaylists } from "@/pages/PulsifyLibraryPlaylists";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
+import { PulsifyMyTracksView } from "@/pages/PulsifyMyTracksView";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
 
 // Module 8/10 – Discovery & Notifications (Ahmed Ali)
@@ -38,6 +40,9 @@ import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
 
 const AppRoutes = () => {
+  const location = useLocation();
+  const isUploadPage = location.pathname.startsWith('/upload');
+
   return (
     <NotificationProvider>
       <PlayerProvider>
@@ -123,18 +128,8 @@ const AppRoutes = () => {
                 path="/library"
                 element={
                   <ProtectedRoute>
-                    <PulsifyPlaylistsView />
+                    <PulsifyLibraryPlaylists />
                   </ProtectedRoute>
-                }
-              />
-
-              {/* Upload - Module 4 (Artist Only) */}
-              <Route
-                path="/upload"
-                element={
-                  <ArtistRoute>
-                    <PulsifyTrackUploadScreen />
-                  </ArtistRoute>
                 }
               />
 
@@ -147,9 +142,27 @@ const AppRoutes = () => {
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
             </Route>
+
+            {/* Upload & My Tracks (standalone, no navbar) */}
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <PulsifyTrackUploadScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-tracks"
+              element={
+                <ProtectedRoute>
+                  <PulsifyMyTracksView />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
 
-          <PulsifyPlayerBar />
+          {!isUploadPage && <PulsifyPlayerBar />}
         </>
       </PlayerProvider>
     </NotificationProvider>

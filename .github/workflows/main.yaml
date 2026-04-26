@@ -27,6 +27,9 @@ jobs:
             --build-arg VITE_USE_MOCK_API=false \
             --build-arg VITE_RECAPTCHA_SITE_KEY="${{secrets.VITE_RECAPTCHA_SITE_KEY}}" \
             --build-arg VITE_GOOGLE_CLIENT_ID="${{secrets.VITE_GOOGLE_CLIENT_ID}}" \
+            --build-arg VITE_TRACK_ID="${{secrets.VITE_TRACK_ID}}" \
+            --build-arg VITE_FACEBOOK_APP_ID="${{secrets.VITE_FACEBOOK_APP_ID}}" \
+            --build-arg VITE_APPLE_CLIENT_ID="${{secrets.VITE_APPLE_CLIENT_ID}}" \
             -t ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest \
             ./my-app
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest

@@ -1,0 +1,273 @@
+/* AddToPlaylistModal.css */
+
+.add-playlist-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.add-playlist-modal-content {
+  background: #111;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header & Tabs */
+.add-playlist-modal-header {
+  display: flex;
+  border-bottom: 1px solid #333;
+  padding: 0 20px;
+  position: relative;
+}
+
+.add-playlist-tab {
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px 20px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.12s;
+}
+
+.add-playlist-tab:hover {
+  color: #fff;
+}
+
+.add-playlist-tab.active {
+  color: #fff;
+}
+
+.add-playlist-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #f50;
+}
+
+.add-playlist-close-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s;
+}
+
+.add-playlist-close-btn:hover {
+  color: #fff;
+}
+
+/* Body Area */
+.add-playlist-modal-body {
+  padding: 20px;
+  min-height: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add to existing playlist tab */
+.add-playlist-filter {
+  width: 100%;
+  background: #222;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.add-playlist-filter:focus {
+  outline: none;
+  border-color: #666;
+}
+
+.add-playlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-playlist-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+}
+
+.add-playlist-row:last-child {
+  border-bottom: none;
+}
+
+.add-playlist-row-img {
+  width: 40px;
+  height: 40px;
+  background: #333;
+  margin-right: 12px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.add-playlist-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.add-playlist-row-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.add-playlist-row-meta {
+  color: #999;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-playlist-action-btn {
+  background: transparent;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.add-playlist-action-btn:hover {
+  border-color: #999;
+}
+
+.add-playlist-action-btn.added {
+  color: #f50;
+  border-color: #f50;
+}
+
+.add-playlist-empty, .add-playlist-loading {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+/* Create new playlist tab */
+.create-playlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create-playlist-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.create-playlist-group label {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.create-playlist-input {
+  width: 100%;
+  background: #222;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.create-playlist-input:focus {
+  outline: none;
+  border-color: #f50;
+}
+
+.create-playlist-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.create-playlist-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.create-playlist-save-btn {
+  background: #f50;
+  color: #fff;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.create-playlist-save-btn:hover {
+  background: #ff661a;
+}
+
+.create-playlist-save-btn:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Toast Notification inside Modal */
+.add-playlist-toast {
+  background: #333;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 4px solid #f50;
+}
