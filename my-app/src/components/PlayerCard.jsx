@@ -26,6 +26,7 @@ function PlayerCard({
   onLikeToggle,
   onRepostToggle,
   onShare,
+  onShareToMessage,
   onCopyLink,
   view,
 }) {
@@ -100,6 +101,11 @@ function PlayerCard({
           <button className="action-square" type="button" onClick={onShare}>
             Share
           </button>
+          {onShareToMessage ? (
+            <button className="action-square" type="button" onClick={onShareToMessage}>
+              Message
+            </button>
+          ) : null}
           <button className="action-square" type="button" onClick={onCopyLink}>
             Copy
           </button>
