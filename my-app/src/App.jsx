@@ -9,6 +9,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Unauthorized from "@/pages/Unauthorized";
 import Home from "@/pages/Home";
+import LandingPage from "@/pages/LandingPage";
 import { ProtectedRoute, ArtistRoute, AdminRoute } from "@/components/auth";
 
 // Module 2 – Profile (Ahmad Hisham)
@@ -54,7 +55,7 @@ import ResourceResolverPage from "./pages/ResourceResolverPage";
 
 const AppRoutes = () => {
   const location = useLocation();
-  const isUploadPage = location.pathname.startsWith('/upload');
+  const isUploadPage = location.pathname.startsWith("/upload");
 
   return (
     <NotificationProvider>
@@ -136,7 +137,6 @@ const AppRoutes = () => {
                 element={<PulsifyPlaylistDetailView />}
               />
 
-
               {/* Library (Protected) */}
               <Route
                 path="/library"
@@ -156,38 +156,56 @@ const AppRoutes = () => {
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
-              
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <AdminDashboardPage />
-                </AdminRoute>
-              } />
-              <Route path="/admin/moderation" element={
-                <AdminRoute>
-                  <AdminContentModerationPage />
-                </AdminRoute>
-              } />
-              <Route path="/admin/users" element={
-                <AdminRoute>
-                  <AdminUserManagementPage />
-                </AdminRoute>
-              } />
-              <Route path="/admin/tracks" element={
-                <AdminRoute>
-                  <AdminTracksManagementPage />
-                </AdminRoute>
-              } />
-              <Route path="/admin/albums" element={
-                <AdminRoute>
-                  <AdminAlbumsManagementPage />
-                </AdminRoute>
-              } />
-              <Route path="/admin/logs" element={
-                <AdminRoute>
-                  <AdminSystemLogsPage />
-                </AdminRoute>
-              } />
-              
+
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminDashboardPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/moderation"
+                element={
+                  <AdminRoute>
+                    <AdminContentModerationPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <AdminRoute>
+                    <AdminUserManagementPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/tracks"
+                element={
+                  <AdminRoute>
+                    <AdminTracksManagementPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/albums"
+                element={
+                  <AdminRoute>
+                    <AdminAlbumsManagementPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/logs"
+                element={
+                  <AdminRoute>
+                    <AdminSystemLogsPage />
+                  </AdminRoute>
+                }
+              />
+
               {/* Resource Resolver (Wildcard) - MUST BE LAST IN MAIN LAYOUT */}
               <Route path="/*" element={<ResourceResolverPage />} />
             </Route>
