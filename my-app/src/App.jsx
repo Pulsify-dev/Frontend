@@ -18,7 +18,9 @@ import ProfilePage from "@/profile/pages/ProfilePage";
 // Module 3 – Social Graph (Ahmad Hisham)
 import FollowingPage from "@/social/pages/FollowingPage";
 import FollowersPage from "@/social/pages/FollowersPage";
-import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
+
+// Settings
+import SettingsPage from "@/pages/SettingsPage";
 
 // Module 4/5/6 – Tracks, Playback & Engagement (Mayar Ayman)
 import TrackPage from "@/pages/TrackPage";
@@ -93,7 +95,13 @@ const AppRoutes = () => {
               <Route path="/following/:userId" element={<FollowingPage />} />
               <Route path="/followers" element={<FollowersPage />} />
               <Route path="/followers/:userId" element={<FollowersPage />} />
-              <Route path="/blocked" element={<BlockedUsersPage />} />
+              <Route
+                path="/blocked"
+                element={<Navigate to="/settings" replace />}
+              />
+
+              {/* Settings */}
+              <Route path="/settings" element={<SettingsPage />} />
 
               {/* Tracks & Engagement - Module 4/5/6 */}
               <Route

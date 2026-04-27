@@ -1,16 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchTrending } from "@/services/discoveryService";
 import "./LandingPage.css";
-
-const TRENDING = [
-  { id: 1, title: "DAH", artist: "Noche", color: "#2a1a0a" },
-  { id: 2, title: "do you love me?", artist: "K.ONE", color: "#0a1a2a" },
-  { id: 3, title: "BBFL", artist: "GRiZ", color: "#1a1a2a" },
-  { id: 4, title: "come die with me", artist: "anhero", color: "#0a1a1a" },
-  { id: 5, title: "Teach You Desire", artist: "IDEMI", color: "#1a0a0a" },
-  { id: 6, title: "Milzy – Mastermind", artist: "Milzy", color: "#1a1a1a" },
-];
 
 const HERO_SLIDES = [0, 1, 2];
 
@@ -19,6 +11,13 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [activeSlide, setActiveSlide] = useState(0);
   const [query, setQuery] = useState("");
+  const [trending, setTrending] = useState([]);
+
+  useEffect(() => {
+    fetchTrending(1, 6)
+      .then((tracks) => setTrending(tracks.slice(0, 6)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -157,26 +156,56 @@ export default function LandingPage() {
           Hear what's trending for free in the Pulsify community
         </h2>
         <div className="landing-trending-grid">
-          {TRENDING.map((track) => (
-            <Link to="/discover" key={track.id} className="landing-track-card">
-              <div
-                className="landing-track-artwork"
-                style={{ background: track.color }}
-              >
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="var(--sc-orange)"
-                  opacity="0.4"
+          {trending.map((track) => (
+            <Link
+              to="/discover"
+              key={track.trackId}
+              className="landing-track-card"
+            >
+              <div className="landing-track-artwork">
+                {track.coverArt ? (
+                  <img
+                    src={track.coverArt}
+                    alt={track.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextSibling.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <div
+                  style={{
+                    display: track.coverArt ? "none" : "flex",
+                    width: "100%",
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#1a1a1a",
+                  }}
                 >
-                  <path d="M9 18V5l12-2v13" />
-                  <circle cx="6" cy="18" r="3" />
-                  <circle cx="18" cy="16" r="3" />
-                </svg>
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="var(--sc-orange)"
+                    opacity="0.4"
+                  >
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                  </svg>
+                </div>
               </div>
               <p className="landing-track-title">{track.title}</p>
-              <p className="landing-track-artist">{track.artist}</p>
+              <p className="landing-track-artist">
+                {track.artist?.name || track.artist?.username || ""}
+              </p>
             </Link>
           ))}
         </div>

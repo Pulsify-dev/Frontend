@@ -1,0 +1,167 @@
+/* ── Settings Page ───────────────────────────────────────── */
+.settings-page {
+  background-color: #111;
+  min-height: 100vh;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.settings-page__inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+
+.settings-page__heading {
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 28px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.settings-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #222;
+  margin-bottom: 36px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.settings-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #999;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px 20px;
+  transition: color 0.15s;
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+.settings-tab:hover {
+  color: #ccc;
+}
+.settings-tab--active {
+  color: #fff;
+  border-bottom-color: #f50;
+}
+
+/* ── Section ──────────────────────────────────────────────── */
+.settings-section-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-section__title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ── Toggle rows ──────────────────────────────────────────── */
+.settings-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid #1e1e1e;
+}
+.settings-toggle-row:last-child {
+  border-bottom: none;
+}
+
+.settings-toggle-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.settings-toggle-row__label {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-toggle-row__desc {
+  color: #888;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 620px;
+}
+
+/* ── Toggle switch ────────────────────────────────────────── */
+.settings-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: #444;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  padding: 0;
+  margin-top: 2px;
+}
+.settings-toggle--on {
+  background: #f50;
+}
+
+.settings-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+.settings-toggle--on .settings-toggle__thumb {
+  transform: translateX(20px);
+}
+
+/* ── Blocked users ────────────────────────────────────────── */
+.settings-blocked-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-blocked-skeleton__row {
+  height: 56px;
+  border-radius: 6px;
+  background: #1e1e1e;
+}
+
+.settings-blocked-empty,
+.settings-blocked-error {
+  color: #888;
+  font-size: 14px;
+  margin: 0;
+}
+.settings-blocked-error {
+  color: #f50;
+}

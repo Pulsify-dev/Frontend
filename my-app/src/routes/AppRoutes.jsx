@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 
@@ -29,7 +29,9 @@ import ProfilePage from "@/profile/pages/ProfilePage";
 // Module 3 – Social Graph
 import FollowingPage from "@/social/pages/FollowingPage";
 import FollowersPage from "@/social/pages/FollowersPage";
-import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
+
+// Settings
+import SettingsPage from "@/pages/SettingsPage";
 
 const AppRoutes = () => {
   return (
@@ -56,7 +58,8 @@ const AppRoutes = () => {
         <Route path="/following/:userId" element={<FollowingPage />} />
         <Route path="/followers" element={<FollowersPage />} />
         <Route path="/followers/:userId" element={<FollowersPage />} />
-        <Route path="/blocked" element={<BlockedUsersPage />} />
+        <Route path="/blocked" element={<Navigate to="/settings" replace />} />
+        <Route path="/settings" element={<SettingsPage />} />
 
         {/* Feed - Module 8 */}
         <Route path="/feed" element={<FeedPage />} />

@@ -6,7 +6,7 @@ import SuggestedUsers from "../components/SuggestedUsers";
 import BlockModal from "../components/BlockModal";
 import "../pages/SocialPages.css";
 
-export default function FollowingPage() {
+export default function FollowingPage({ hideNav = false }) {
   const [users, setUsers] = useState([]);
   const [counts, setCounts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,11 +89,24 @@ export default function FollowingPage() {
           </h2>
         </div>
 
-        <SocialHeader
-          counts={counts}
-          filterValue={filter}
-          onFilterChange={setFilter}
-        />
+        {!hideNav && (
+          <SocialHeader
+            counts={counts}
+            filterValue={filter}
+            onFilterChange={setFilter}
+          />
+        )}
+        {hideNav && (
+          <div className="sc-social-filter" style={{ marginBottom: "16px" }}>
+            <input
+              type="text"
+              className="sc-social-filter__input"
+              placeholder="Filter"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+        )}
 
         <div className="sc-social-page__body">
           <div className="sc-social-page__main">
@@ -175,9 +188,11 @@ export default function FollowingPage() {
             )}
           </div>
 
-          <aside className="sc-social-page__sidebar">
-            <SuggestedUsers />
-          </aside>
+          {!hideNav && (
+            <aside className="sc-social-page__sidebar">
+              <SuggestedUsers />
+            </aside>
+          )}
         </div>
       </div>
 

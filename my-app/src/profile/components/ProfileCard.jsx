@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { socialService } from "../../social/services/socialService";
 import FollowButton from "../../social/components/FollowButton";
+import BlockModal from "../../social/components/BlockModal";
 import { PlatformIcon, detectPlatform } from "./SocialPlatforms";
 
 const TABS = [
@@ -30,6 +31,30 @@ export default function ProfileCard({
     blockedCount: 0,
   });
 
+  /* ── Block state ── */
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const moreMenuRef = useRef(null);
+
+  /* Close more-menu on outside click */
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    function handleClickOutside(e) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMoreMenu]);
+
+  async function handleBlockConfirm(userId, reason) {
+    await socialService.blockUser(userId, reason);
+    setIsBlocked(true);
+    setShowBlockModal(false);
+  }
+
   useEffect(() => {
     async function loadCounts() {
       try {
@@ -54,210 +79,279 @@ export default function ProfileCard({
   }
 
   return (
-    <div className="sc-profile-card">
-      {/* Cover */}
-      <div
-        className="sc-cover"
-        style={
-          profile.coverUrl
-            ? { backgroundImage: `url(${profile.coverUrl})` }
-            : {}
-        }
-      >
-        <div className="sc-cover-overlay" />
-        <label className="sc-upload-header-btn">
-          Upload header image
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleCoverChange}
-          />
-        </label>
-
-        <div className="sc-avatar-wrap">
-          <img
-            src={profile.avatarUrl}
-            alt={profile.displayName}
-            className="sc-avatar"
-          />
-          <label className="sc-upload-avatar-btn">
-            Upload image
+    <>
+      <div className="sc-profile-card">
+        {/* Cover */}
+        <div
+          className="sc-cover"
+          style={
+            profile.coverUrl
+              ? { backgroundImage: `url(${profile.coverUrl})` }
+              : {}
+          }
+        >
+          <div className="sc-cover-overlay" />
+          <label className="sc-upload-header-btn">
+            Upload header image
             <input
               type="file"
               accept="image/*"
               hidden
-              onChange={handleAvatarChange}
+              onChange={handleCoverChange}
             />
           </label>
-        </div>
 
-        <div className="sc-cover-info">
-          <h1 className="sc-display-name">{profile.displayName}</h1>
-          {profile.location && (
-            <p className="sc-location">{profile.location}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Tabs bar */}
-      <div className="sc-tabs-bar">
-        <div className="sc-tabs">
-          {TABS.map((tab) =>
-            tab.path ? (
-              <Link key={tab.label} to={tab.path} className="sc-tab">
-                {tab.label}
-              </Link>
-            ) : (
-              <button
-                key={tab.label}
-                className={`sc-tab ${tab.label === activeTab ? "sc-tab--active" : ""}`}
-                onClick={() => onTabChange?.(tab.label)}
-              >
-                {tab.label}
-              </button>
-            ),
-          )}
-        </div>
-        <div className="sc-actions">
-          <button className="sc-action-btn sc-share-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
-            </svg>
-            Share
-          </button>
-          <button className="sc-action-btn sc-edit-btn" onClick={onEditClick}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-            </svg>
-            Edit
-          </button>
-        </div>
-      </div>
-
-      {/* Content area */}
-      <div className="sc-content-area">
-        <div className="sc-main-content">
-          {tabContent ? (
-            tabContent
-          ) : (
-            <div className="sc-empty-state">
-              <p>Seems a little quiet over here</p>
-              <button
-                className="sc-upload-now-btn"
-                onClick={() => navigate("/upload")}
-              >
-                Upload now
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <aside className="sc-sidebar">
-          <div className="sc-stats">
-            <div
-              className="sc-stat sc-stat-link"
-              onClick={() => navigate(`/followers`)}
-              style={{ cursor: "pointer" }}
-            >
-              <span className="sc-stat-label">Followers</span>
-              <span className="sc-stat-value">
-                {socialCounts.followersCount}
-              </span>
-            </div>
-            <div
-              className="sc-stat sc-stat-link"
-              onClick={() => navigate(`/following`)}
-              style={{ cursor: "pointer" }}
-            >
-              <span className="sc-stat-label">Following</span>
-              <span className="sc-stat-value">
-                {socialCounts.followingCount}
-              </span>
-            </div>
-            <div className="sc-stat">
-              <span className="sc-stat-label">Tracks</span>
-              <span className="sc-stat-value">0</span>
-            </div>
+          <div className="sc-avatar-wrap">
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName}
+              className="sc-avatar"
+            />
+            <label className="sc-upload-avatar-btn">
+              Upload image
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleAvatarChange}
+              />
+            </label>
           </div>
 
-          {profile.bio && (
-            <div className="sc-sidebar-bio">
-              <p>{profile.bio}</p>
-            </div>
-          )}
-
-          {profile.favoriteGenres?.length > 0 && (
-            <div className="sc-sidebar-genres">
-              {profile.favoriteGenres.map((g) => (
-                <span key={g} className="sc-genre-tag">
-                  {g}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="sc-sidebar-links">
-            {[
-              ...(profile.socialLinks?.instagram
-                ? [
-                    {
-                      platform: "instagram",
-                      url: profile.socialLinks.instagram,
-                    },
-                  ]
-                : []),
-              ...(profile.socialLinks?.twitter
-                ? [{ platform: "twitter", url: profile.socialLinks.twitter }]
-                : []),
-              ...(profile.socialLinks?.website
-                ? [{ platform: "website", url: profile.socialLinks.website }]
-                : []),
-              ...(profile.socialLinks?.links?.filter((l) => l.url) ?? []),
-            ].map((link, i) => (
-              <a
-                key={i}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                className="sc-social-link"
-              >
-                <PlatformIcon
-                  platform={link.platform ?? detectPlatform(link.url)}
-                  size={14}
-                />
-                <span>
-                  {link.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
-                </span>
-              </a>
-            ))}
+          <div className="sc-cover-info">
+            <h1 className="sc-display-name">{profile.displayName}</h1>
+            {profile.location && (
+              <p className="sc-location">{profile.location}</p>
+            )}
           </div>
+        </div>
 
-          {/* Upgrade card */}
-          <div className="sc-upgrade-card">
-            <div className="sc-upgrade-card-header">
-              <span className="sc-upgrade-card-label">ARTIST PRO</span>
+        {/* Tabs bar */}
+        <div className="sc-tabs-bar">
+          <div className="sc-tabs">
+            {TABS.map((tab) =>
+              tab.path ? (
+                <Link key={tab.label} to={tab.path} className="sc-tab">
+                  {tab.label}
+                </Link>
+              ) : (
+                <button
+                  key={tab.label}
+                  className={`sc-tab ${tab.label === activeTab ? "sc-tab--active" : ""}`}
+                  onClick={() => onTabChange?.(tab.label)}
+                >
+                  {tab.label}
+                </button>
+              ),
+            )}
+          </div>
+          <div className="sc-actions">
+            <button className="sc-action-btn sc-share-btn">
               <svg
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                opacity="0.6"
               >
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
               </svg>
-            </div>
-            <p className="sc-upgrade-card-desc">
-              With an Artist Pro account, you can upload more tracks, access
-              advanced analytics, and promote your music.
-            </p>
-            <Link to="/premium" className="sc-upgrade-card-btn">
-              Upgrade to Artist Pro
-            </Link>
+              Share
+            </button>
+            <button className="sc-action-btn sc-edit-btn" onClick={onEditClick}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+              </svg>
+              Edit
+            </button>
+
+            {/* ⋯ More menu — only on other users' profiles */}
+            {!isOwnProfile && (
+              <div className="sc-more-menu-wrap" ref={moreMenuRef}>
+                <button
+                  className="sc-action-btn sc-more-btn"
+                  onClick={() => setShowMoreMenu((v) => !v)}
+                  title="More options"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
+                  </svg>
+                </button>
+
+                {showMoreMenu && (
+                  <div className="sc-more-dropdown">
+                    <button
+                      className="sc-more-dropdown__item sc-more-dropdown__item--danger"
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        setShowBlockModal(true);
+                      }}
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9A7.902 7.902 0 014 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1A7.902 7.902 0 0120 12c0 4.42-3.58 8-8 8z" />
+                      </svg>
+                      {isBlocked
+                        ? `Unblock ${profile.displayName}`
+                        : `Block ${profile.displayName}`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </aside>
+        </div>
+
+        {/* Content area */}
+        <div className="sc-content-area">
+          <div className="sc-main-content">
+            {tabContent ? (
+              tabContent
+            ) : (
+              <div className="sc-empty-state">
+                <p>Seems a little quiet over here</p>
+                <button
+                  className="sc-upload-now-btn"
+                  onClick={() => navigate("/upload")}
+                >
+                  Upload now
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="sc-sidebar">
+            <div className="sc-stats">
+              <div
+                className="sc-stat sc-stat-link"
+                onClick={() => navigate(`/followers`)}
+                style={{ cursor: "pointer" }}
+              >
+                <span className="sc-stat-label">Followers</span>
+                <span className="sc-stat-value">
+                  {socialCounts.followersCount}
+                </span>
+              </div>
+              <div
+                className="sc-stat sc-stat-link"
+                onClick={() => navigate(`/following`)}
+                style={{ cursor: "pointer" }}
+              >
+                <span className="sc-stat-label">Following</span>
+                <span className="sc-stat-value">
+                  {socialCounts.followingCount}
+                </span>
+              </div>
+              <div className="sc-stat">
+                <span className="sc-stat-label">Tracks</span>
+                <span className="sc-stat-value">0</span>
+              </div>
+            </div>
+
+            {profile.bio && (
+              <div className="sc-sidebar-bio">
+                <p>{profile.bio}</p>
+              </div>
+            )}
+
+            {profile.favoriteGenres?.length > 0 && (
+              <div className="sc-sidebar-genres">
+                {profile.favoriteGenres.map((g) => (
+                  <span key={g} className="sc-genre-tag">
+                    {g}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="sc-sidebar-links">
+              {[
+                ...(profile.socialLinks?.instagram
+                  ? [
+                      {
+                        platform: "instagram",
+                        url: profile.socialLinks.instagram,
+                      },
+                    ]
+                  : []),
+                ...(profile.socialLinks?.twitter
+                  ? [{ platform: "twitter", url: profile.socialLinks.twitter }]
+                  : []),
+                ...(profile.socialLinks?.website
+                  ? [{ platform: "website", url: profile.socialLinks.website }]
+                  : []),
+                ...(profile.socialLinks?.links?.filter((l) => l.url) ?? []),
+              ].map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="sc-social-link"
+                >
+                  <PlatformIcon
+                    platform={link.platform ?? detectPlatform(link.url)}
+                    size={14}
+                  />
+                  <span>
+                    {link.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
+                  </span>
+                </a>
+              ))}
+            </div>
+
+            {/* Upgrade card */}
+            <div className="sc-upgrade-card">
+              <div className="sc-upgrade-card-header">
+                <span className="sc-upgrade-card-label">ARTIST PRO</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  opacity="0.6"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                </svg>
+              </div>
+              <p className="sc-upgrade-card-desc">
+                With an Artist Pro account, you can upload more tracks, access
+                advanced analytics, and promote your music.
+              </p>
+              <Link to="/premium" className="sc-upgrade-card-btn">
+                Upgrade to Artist Pro
+              </Link>
+            </div>
+          </aside>
+        </div>
       </div>
-    </div>
+
+      {/* Block modal */}
+      {!isOwnProfile && (
+        <BlockModal
+          isOpen={showBlockModal}
+          onClose={() => setShowBlockModal(false)}
+          onConfirm={handleBlockConfirm}
+          user={{ id: profile.id, displayName: profile.displayName }}
+          mode="block"
+        />
+      )}
+    </>
   );
 }
