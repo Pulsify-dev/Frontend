@@ -51,11 +51,11 @@ export const PulsifyShareModal = ({ isOpen, onClose, playlist }) => {
 
   const getShareLink = () => {
     const baseUrl = window.location.origin;
-    const permalink = playlist.permalink || playlist.title?.toLowerCase().replace(/\s+/g, '-');
+    const identifier = playlist.permalink || playlist._id || playlist.id;
     if (playlist.is_private && playlist.secret_token) {
-      return `${baseUrl}/playlists/${permalink}?token=${playlist.secret_token}`;
+      return `${baseUrl}/playlists/${identifier}?token=${playlist.secret_token}`;
     }
-    return `${baseUrl}/playlists/${permalink}`;
+    return `${baseUrl}/playlists/${identifier}`;
   };
 
   return (

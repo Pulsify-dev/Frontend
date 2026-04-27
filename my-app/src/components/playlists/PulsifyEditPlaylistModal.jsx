@@ -112,7 +112,7 @@ export const PulsifyEditPlaylistModal = ({ isOpen, onClose, playlist, onSaveSucc
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#fff', marginBottom: '6px' }}>Permalink <span style={{ color: '#f50' }}>*</span></label>
               <div style={{ display: 'flex', backgroundColor: '#222', border: '1px solid #333', borderRadius: '4px', overflow: 'hidden' }}>
-                <span style={{ padding: '10px 8px', color: '#999', backgroundColor: '#1a1a1a', fontSize: '13px' }}>soundcloud.com/i-omz/sets/</span>
+                <span style={{ padding: '10px 8px', color: '#999', backgroundColor: '#1a1a1a', fontSize: '13px' }}>pulsify.page/playlists/</span>
                 <input type="text" value={editForm.title.toLowerCase().replace(/\s+/g, '-')} readOnly style={{ flex: 1, backgroundColor: 'transparent', border: 'none', color: '#fff', padding: '10px 8px', outline: 'none' }} />
               </div>
             </div>

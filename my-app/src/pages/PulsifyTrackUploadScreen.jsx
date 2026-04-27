@@ -1,17 +1,12 @@
-import React, {
-  useState,
-  useRef,
-  useContext,
-  useCallback,
-  useEffect,
-} from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { PulsifyAuthVaultContext } from "../store/PulsifyAuthVault";
-import { PulsifyTrackService } from "../services/pulsifyTrackService";
-import { PulsifyPremiumService } from "../services/pulsifyPremiumService";
-import { PulsifyMetadataForm } from "../components/upload/PulsifyMetadataForm";
-import "../components/upload/css/PulsifyUploads.css";
-import "../components/premium/css/PulsifyPremium.css";
+import React, { useState, useRef, useContext, useCallback, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
+import { PulsifyTrackService } from '../services/pulsifyTrackService';
+import { PulsifyAlbumService } from '../services/pulsifyAlbumService';
+import { PulsifyPremiumService } from '../services/pulsifyPremiumService';
+import { PulsifyMetadataForm } from '../components/upload/PulsifyMetadataForm';
+import '../components/upload/css/PulsifyUploads.css';
+import '../components/premium/css/PulsifyPremium.css';
 
 export const PulsifyTrackUploadScreen = () => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {
@@ -64,6 +59,21 @@ export const PulsifyTrackUploadScreen = () => {
   const fileInputRef = useRef(null);
   const pollingRef = useRef(null);
 
+  // Album mode: triggered when multiple files are dropped
+  const [albumMode, setAlbumMode] = useState(false);
+  const [albumFiles, setAlbumFiles] = useState([]);
+  const [albumTitle, setAlbumTitle] = useState('');
+  const [albumGenre, setAlbumGenre] = useState('');
+  const [albumType, setAlbumType] = useState('Album');
+  const [albumDescription, setAlbumDescription] = useState('');
+  const [albumVisibility, setAlbumVisibility] = useState('public');
+  const [albumArtwork, setAlbumArtwork] = useState(null);
+  const [albumArtworkPreview, setAlbumArtworkPreview] = useState(null);
+  const [albumUploading, setAlbumUploading] = useState(false);
+  const [albumUploadProgress, setAlbumUploadProgress] = useState(0);
+  const [albumUploadedResult, setAlbumUploadedResult] = useState(null);
+  const albumArtworkInputRef = useRef(null);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
@@ -112,12 +122,33 @@ export const PulsifyTrackUploadScreen = () => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragActive(false);
-    const file = e.dataTransfer.files[0];
+    const files = Array.from(e.dataTransfer.files);
+    const audioFiles = files.filter(f => /\.(mp3|wav|flac|aac|ogg|m4a)$/i.test(f.name) || f.type.startsWith('audio/'));
+
+    if (audioFiles.length > 1) {
+      // Multiple audio files → album mode
+      setAlbumMode(true);
+      setAlbumFiles(audioFiles);
+      setAlbumTitle('');
+      return;
+    }
+
+    const file = audioFiles[0] || files[0];
     if (file) handleFileSelect(file);
   };
 
   const handleInputChange = (e) => {
-    const file = e.target.files[0];
+    const files = Array.from(e.target.files);
+    const audioFiles = files.filter(f => /\.(mp3|wav|flac|aac|ogg|m4a)$/i.test(f.name) || f.type.startsWith('audio/'));
+
+    if (audioFiles.length > 1) {
+      setAlbumMode(true);
+      setAlbumFiles(audioFiles);
+      setAlbumTitle('');
+      return;
+    }
+
+    const file = audioFiles[0] || files[0];
     if (file) handleFileSelect(file);
   };
 
@@ -219,6 +250,84 @@ export const PulsifyTrackUploadScreen = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
+  // ──── ALBUM UPLOAD HANDLERS ────
+  const handleAlbumArtworkSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAlbumArtwork(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setAlbumArtworkPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleAlbumSubmit = async () => {
+    if (!albumTitle.trim()) {
+      alert('Please enter an album title.');
+      return;
+    }
+    if (!albumGenre) {
+      alert('Please select a genre.');
+      return;
+    }
+    try {
+      setAlbumUploading(true);
+      setAlbumUploadProgress(0);
+
+      // Step 1: Upload each track individually first
+      const trackIds = [];
+      for (let i = 0; i < albumFiles.length; i++) {
+        const file = albumFiles[i];
+        setAlbumUploadProgress(Math.round(((i) / albumFiles.length) * 80));
+        const formData = new FormData();
+        formData.append('audio_file', file);
+        formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
+        formData.append('genre', albumGenre);
+        const result = await PulsifyTrackService.createTrack(formData);
+        const trackId = result._id || result.id || result.data?._id;
+        if (trackId) trackIds.push(trackId);
+      }
+
+      setAlbumUploadProgress(85);
+
+      // Step 2: Create the album with those track IDs
+      const albumPayload = {
+        title: albumTitle.trim(),
+        genre: albumGenre,
+        type: albumType,
+        visibility: albumVisibility,
+        track_ids: trackIds,
+      };
+      if (albumDescription.trim()) albumPayload.description = albumDescription.trim();
+      if (albumArtwork) albumPayload.artwork = albumArtwork;
+
+      const albumResult = await PulsifyAlbumService.createAlbum(albumPayload);
+      setAlbumUploadProgress(100);
+
+      const created = albumResult.album || albumResult.data || albumResult;
+      setAlbumUploadedResult(created);
+    } catch (err) {
+      console.error('[AlbumUpload] Failed:', err);
+      alert('Album upload failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setAlbumUploading(false);
+    }
+  };
+
+  const handleAlbumReset = () => {
+    setAlbumMode(false);
+    setAlbumFiles([]);
+    setAlbumTitle('');
+    setAlbumGenre('');
+    setAlbumType('Album');
+    setAlbumDescription('');
+    setAlbumVisibility('public');
+    setAlbumArtwork(null);
+    setAlbumArtworkPreview(null);
+    setAlbumUploading(false);
+    setAlbumUploadProgress(0);
+    setAlbumUploadedResult(null);
+  };
+
   if (isAtLimit) {
     return (
       <div className="pulsify-upload-page">
@@ -258,7 +367,300 @@ export const PulsifyTrackUploadScreen = () => {
     );
   }
 
-  if (transcodingStatus === "finished" && uploadedTrack) {
+  // ──── ALBUM MODE RENDER ────
+  if (albumMode) {
+    // Success state
+    if (albumUploadedResult) {
+      return (
+        <div className="pulsify-upload-page">
+          <div className="pulsify-upload-header">
+            <h1>
+              <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>Pulsify</span>
+              Album
+            </h1>
+            <Link to="/" className="pulsify-upload-close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z" /></svg>
+            </Link>
+          </div>
+          <div className="pulsify-upload-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 40px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>💿</div>
+            <h2 style={{ color: '#fff', marginBottom: '8px' }}>Album Created!</h2>
+            <p style={{ color: '#999', marginBottom: '24px' }}>"{albumUploadedResult.title}" with {albumFiles.length} tracks has been uploaded.</p>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <button onClick={() => navigate(`/albums/${albumUploadedResult._id || albumUploadedResult.id}`)} className="success-btn-outline" style={{ padding: '10px 24px', fontSize: '14px' }}>View Album</button>
+              <button onClick={handleAlbumReset} className="success-btn-outline" style={{ padding: '10px 24px', fontSize: '14px' }}>Upload More</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="pulsify-upload-page">
+        <div className="pulsify-upload-header">
+          <h1>
+            <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '18px', letterSpacing: '-0.5px' }}>Pulsify</span>
+            Album info
+          </h1>
+          {albumUploading && (
+            <div className="pulsify-header-upload-progress">
+              <span className="replace-name">{albumFiles.length} tracks</span>
+              <div className="usage-progress-small">
+                <div className="usage-progress-bar-small" style={{ width: `${albumUploadProgress}%`, backgroundColor: '#38d13b' }}></div>
+              </div>
+              <span className="upload-pct">Uploading {albumUploadProgress}%</span>
+            </div>
+          )}
+          {!albumUploading && (
+            <div className="pulsify-replace-track">
+              <div className="replace-icon">💿</div>
+              <span className="replace-name">{albumFiles.length} tracks selected</span>
+              <button onClick={handleAlbumReset} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '12px' }}>Start over</button>
+            </div>
+          )}
+          <Link to="/" className="pulsify-upload-close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z" /></svg>
+          </Link>
+        </div>
+
+        <div className="pulsify-upload-body" style={{ padding: '0' }}>
+          {/* Top section: Artwork + Form side by side */}
+          <div style={{ display: 'flex', gap: '40px', padding: '30px 40px 0' }}>
+            {/* Artwork */}
+            <div style={{ flexShrink: 0 }}>
+              <div className="artwork-preview" onClick={() => albumArtworkInputRef.current?.click()} style={{ width: '260px', height: '260px', border: '2px dashed #333', borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backgroundColor: '#1a1a1a', transition: 'border-color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#555'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#333'}
+              >
+                {albumArtworkPreview ? (
+                  <img src={albumArtworkPreview} alt="Album artwork" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                ) : (
+                  <>
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span style={{ color: '#888', fontSize: '13px', marginTop: '12px' }}>Add new artwork</span>
+                  </>
+                )}
+                <input ref={albumArtworkInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAlbumArtworkSelect} style={{ display: 'none' }} />
+              </div>
+            </div>
+
+            {/* Form fields */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Album title */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Album title <span style={{ color: '#e22134' }}>*</span></label>
+                <input type="text" required maxLength={100} value={albumTitle} onChange={(e) => setAlbumTitle(e.target.value)} placeholder="" style={{ width: '100%', padding: '8px 0', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#fff', fontSize: '14px', outline: 'none' }} />
+              </div>
+
+              {/* Album link */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Album link</label>
+                <input type="text" disabled value={`https://pulsify.page/${albumTitle ? albumTitle.toLowerCase().replace(/\\s+/g, '-') : 'your-album'}/sets/`} style={{ width: '100%', padding: '8px 0', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #333', color: '#666', fontSize: '13px', outline: 'none', cursor: 'default' }} />
+              </div>
+
+              {/* Main Artist(s) */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
+                  Main Artist(s)
+                  <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #666', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#666', cursor: 'help' }} title="Put your name and any featured artists you want to give primary credit to here.">?</span>
+                </label>
+                <input type="text" defaultValue="" placeholder="" style={{ width: '100%', padding: '8px 0', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#fff', fontSize: '13px', outline: 'none' }} />
+                <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>Tip: Use commas to add multiple artist names.</div>
+              </div>
+
+              {/* Genre + Album Type side by side */}
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Genre</label>
+                  <select required value={albumGenre} onChange={(e) => setAlbumGenre(e.target.value)} style={{ width: '100%', padding: '8px 10px', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#ccc', fontSize: '13px', outline: 'none', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'%23888\'%3E%3Cpath d=\'M7 10l5 5 5-5z\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center' }}>
+                    <option value="" disabled>Add or search for genre</option>
+                    {PulsifyTrackService.GENRE_OPTIONS.map(g => (<option key={g} value={g}>{g}</option>))}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Album Type</label>
+                  <select value={albumType} onChange={(e) => setAlbumType(e.target.value)} style={{ width: '100%', padding: '8px 10px', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#ccc', fontSize: '13px', outline: 'none', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'%23888\'%3E%3Cpath d=\'M7 10l5 5 5-5z\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center' }}>
+                    <option>Album</option><option>EP</option><option>Single</option><option>Compilation</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
+                  Tags
+                  <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #666', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#666', cursor: 'help' }} title="Tags help identify what kind of sound your track is.">?</span>
+                </label>
+                <input type="text" placeholder="Add styles, moods, tempo." style={{ width: '100%', padding: '8px 0', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#ccc', fontSize: '13px', outline: 'none' }} />
+              </div>
+
+              {/* Album Description */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Album Description</label>
+                <textarea rows={1} maxLength={200} value={albumDescription} onChange={(e) => setAlbumDescription(e.target.value)} placeholder="Tracks with descriptions tend to get more plays and engagements." style={{ width: '100%', padding: '8px 0', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid #444', color: '#ccc', fontSize: '13px', outline: 'none', resize: 'none', fontFamily: 'inherit' }} />
+              </div>
+
+              {/* Album Privacy */}
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '10px' }}>Album Privacy</label>
+                <div style={{ display: 'flex', gap: '24px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#ccc' }}>
+                    <input type="radio" name="album-privacy" checked={albumVisibility === 'public'} onChange={() => setAlbumVisibility('public')} style={{ accentColor: '#f50' }} />
+                    Public
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#ccc' }}>
+                    <input type="radio" name="album-privacy" checked={albumVisibility === 'private'} onChange={() => setAlbumVisibility('private')} style={{ accentColor: '#f50' }} />
+                    Private
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Full-width Tracks Section ── */}
+          <div style={{ padding: '30px 40px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '16px' }}>Tracks</h3>
+
+            {/* Recommend banner */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#1a1a1a', borderRadius: '6px', padding: '16px 20px', marginBottom: '20px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #5b21b6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#fff', fontSize: '14px', marginBottom: '4px' }}>Recommend tracks to new listeners</div>
+                <div style={{ color: '#888', fontSize: '12px', lineHeight: '1.4' }}>
+                  Sorry, these tracks cannot be recommended because either the tracks are private, you've exceeded your daily limit or the track length does not meet the criteria. <a href="#" style={{ color: '#888', textDecoration: 'underline' }}>See how it works.</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Track rows */}
+            {albumFiles.map((file, idx) => {
+              const trackName = file.name.replace(/\.[^/.]+$/, '');
+              return (
+                <div key={idx} style={{
+                  display: 'flex', alignItems: 'center',
+                  borderBottom: '1px solid #2a2a2a',
+                  padding: '12px 0',
+                }}>
+                  {/* Drag handle */}
+                  <div style={{ cursor: 'grab', padding: '0 10px 0 0', color: '#555', flexShrink: 0 }}>
+                    <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor">
+                      <circle cx="2" cy="2" r="1.2" /><circle cx="6" cy="2" r="1.2" />
+                      <circle cx="2" cy="7" r="1.2" /><circle cx="6" cy="7" r="1.2" />
+                      <circle cx="2" cy="12" r="1.2" /><circle cx="6" cy="12" r="1.2" />
+                    </svg>
+                  </div>
+
+                  {/* Play button — dark circle */}
+                  <button style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    backgroundColor: '#333', border: 'none', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', flexShrink: 0, marginRight: '12px',
+                    transition: 'background-color 0.15s'
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f50'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#333'}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                  </button>
+
+                  {/* Track number */}
+                  <span style={{ color: '#888', fontSize: '14px', fontWeight: 500, minWidth: '24px', marginRight: '14px', textAlign: 'center' }}>{idx + 1}</span>
+
+                  {/* Editable title input */}
+                  <input
+                    type="text"
+                    defaultValue={trackName}
+                    style={{
+                      flex: 1, maxWidth: '420px',
+                      background: '#1a1a1a', border: '1px solid #333',
+                      borderRadius: '3px', color: '#fff', padding: '8px 12px',
+                      fontSize: '14px', outline: 'none', minWidth: 0,
+                      transition: 'border-color 0.15s'
+                    }}
+                    onFocus={e => e.currentTarget.style.borderColor = '#f50'}
+                    onBlur={e => e.currentTarget.style.borderColor = '#333'}
+                  />
+
+                  {/* Original filename */}
+                  <span style={{ color: '#666', fontSize: '12px', marginLeft: '16px', flexShrink: 0, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {file.name}
+                  </span>
+
+                  {/* Spacer */}
+                  <div style={{ flex: '0 0 1', marginLeft: 'auto' }} />
+
+                  {/* Duration */}
+                  <span style={{ color: '#1db954', fontSize: '13px', fontWeight: 600, marginLeft: '16px', flexShrink: 0, minWidth: '36px', fontFamily: 'monospace' }}>
+                    0:00
+                  </span>
+
+                  {/* Action buttons */}
+                  <div style={{ display: 'flex', gap: '8px', marginLeft: '16px', flexShrink: 0 }}>
+                    {/* Spotlight/Pin */}
+                    <button style={{ background: 'none', border: '1px solid #444', borderRadius: '50%', width: '32px', height: '32px', color: '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#888'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#888'; }}
+                      title="Spotlight"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" /></svg>
+                    </button>
+                    {/* Edit */}
+                    <button style={{ background: 'none', border: '1px solid #444', borderRadius: '50%', width: '32px', height: '32px', color: '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#888'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#888'; }}
+                      title="Edit"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                    </button>
+                    {/* Delete */}
+                    <button style={{ background: 'none', border: '1px solid #444', borderRadius: '50%', width: '32px', height: '32px', color: '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#e22134'; e.currentTarget.style.color = '#e22134'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#888'; }}
+                      title="Remove"
+                      onClick={() => setAlbumFiles(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" /></svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add tracks link */}
+            <button style={{ background: 'none', border: 'none', color: '#666', fontSize: '13px', padding: '12px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+              onMouseLeave={e => e.currentTarget.style.color = '#666'}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              Add tracks
+            </button>
+          </div>
+        </div>
+
+        <div className="pulsify-upload-footer">
+          <div className="footer-terms">
+            By uploading, you confirm that your sounds comply with our <a href="/terms">Terms of Use</a> and you don't infringe anyone else's rights.
+          </div>
+          <button
+            className="upload-submit-btn"
+            disabled={albumUploading}
+            onClick={handleAlbumSubmit}
+          >
+            {albumUploading ? `Uploading ${albumUploadProgress}%...` : 'Upload Album'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (transcodingStatus === 'finished' && uploadedTrack) {
     return (
       <div className="pulsify-upload-page">
         <div className="pulsify-upload-header">
@@ -647,15 +1049,7 @@ export const PulsifyTrackUploadScreen = () => {
           </div>
         )}
         {isPro && !selectedFile && (
-          <div
-            style={{
-              fontSize: "11px",
-              color: "#c9a96e",
-              marginLeft: "auto",
-              fontWeight: 700,
-              letterSpacing: "0.5px",
-            }}
-          >
+          <div style={{ fontSize: '11px', color: '#c9a96e', marginLeft: 'auto', marginRight: '40px', fontWeight: 700, letterSpacing: '0.5px' }}>
             ★ PRO — Unlimited
           </div>
         )}
@@ -688,12 +1082,7 @@ export const PulsifyTrackUploadScreen = () => {
           ) : (
             <div className="pulsify-replace-track">
               <div className="replace-icon">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </div>
@@ -713,13 +1102,7 @@ export const PulsifyTrackUploadScreen = () => {
             </div>
           ))}
         <Link to="/" className="pulsify-upload-close">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            style={{ display: "block" }}
-          >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block' }}>
             <path d="M12 10.94 7.05 5.99 5.99 7.05 10.94 12l-4.95 4.95 1.06 1.06L12 13.06l4.95 4.95 1.06-1.06L13.06 12l4.95-4.95-1.06-1.06L12 10.94Z" />
           </svg>
         </Link>
@@ -730,19 +1113,8 @@ export const PulsifyTrackUploadScreen = () => {
           <>
             <div className="pulsify-upload-usage-bar">
               <div className="usage-left">
-                <svg
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  className="usage-cloud-icon"
-                >
-                  <g
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                  >
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="usage-cloud-icon">
+                  <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
                     <path d="M9 19.5H6.75a5.25 5.25 0 1 1 1.3-10.34" />
                     <path d="M7.5 12A7.5 7.5 0 1 1 21 16.5" />
                     <path d="M11.07 15.18 14.25 12l3.18 3.18m-3.18 4.32V12" />
@@ -819,28 +1191,13 @@ export const PulsifyTrackUploadScreen = () => {
               <div className="drop-icon">
                 <svg width="69" height="72" fill="none" viewBox="0 0 69 72">
                   <g clipPath="url(#dropIcon)">
-                    <path
-                      d="M26.405 8.21c.06-.13.13-.26.2-.38.16-.31.33-.61.51-.9.08-.13.15-.25.23-.38.22-.33.44-.66.68-.97.04-.05.08-.11.12-.17.28-.36.57-.69.88-1.02.08-.09.17-.17.26-.26.23-.23.47-.46.71-.67.11-.09.21-.18.32-.27.27-.22.54-.42.82-.61.08-.06.16-.12.24-.17.26-.17.53-.32.81-.47.14-.08.26-.16.4-.23.41-.21.84-.4 1.27-.56l-13.92 5.19c-.43.16-.86.35-1.27.56-.14.07-.27.16-.4.23-.25.14-.5.27-.74.42-.02.02-.05.04-.07.05-.08.05-.16.11-.24.17-.28.19-.55.4-.82.61-.11.09-.21.18-.32.27-.24.21-.48.44-.71.67-.09.09-.18.17-.26.26-.3.32-.6.66-.88 1.02-.04.05-.08.11-.12.17a13.928 13.928 0 0 0-.91 1.34c-.18.29-.35.59-.51.9-.07.13-.14.25-.2.38-.21.43-.13.27-.31.73M56.155 51.7l-17.09-3.93-9.77-2.24c-5.7-1.31-10.64-6.41-13.08-12.75-1.02-2.66-1.6-5.55-1.61-8.46-.01-5.97 2.38-10.7 6.07-13.09.65-.42 1.34-.77 2.06-1.04l-13.92 5.19c-.72.27-1.41.62-2.06 1.04-3.69 2.39-6.08 7.12-6.06 13.09 0 2.91.58 5.8 1.61 8.46 2.43 6.34 7.38 11.44 13.08 12.75l9.77 2.24 17.09 3.93c1.94.45 3.77.32 5.4-.29l13.92-5.19c-1.63.61-3.46.74-5.4.29h-.01z"
-                      stroke="currentColor"
-                      strokeMiterlimit="10"
-                    />
-                    <path
-                      d="M58.395 22.75c-1.12-10.48-8.3-20.01-16.99-22.01-6.98-1.6-12.96 2.11-15.61 8.8-6.44.4-11.21 6.36-11.19 14.78.02 9.86 6.59 19.35 14.68 21.21l9.77 2.24v-5.43l4.88 1.12v-5.43l4.88 1.12v5.43l-4.88-1.12v5.43l12.21 2.81c6.74 1.55 12.19-3.85 12.18-12.07-.01-7.25-4.29-14.28-9.94-16.88h.01zm-9.06 8.9-5.39-7.79v14.18l-4.88-1.12V22.74l-5.36 5.31-3.46-5 7.65-7.59c1.87-1.85 4.83-1.76 7.33 1.85l7.56 10.93-3.44 3.41h-.01zM4.895 42.95l12.13-4.52c-.77-1.14-1.46-2.36-2.05-3.65L2.845 39.3c.58 1.29 1.27 2.51 2.04 3.65h.01zM34.185 52.09l4.88 1.12v5.43l-4.88-1.12v-5.43zM39.065 66.43l3.45.79v3.84l-3.45-.79v-3.84z"
-                      fill="currentColor"
-                    />
-                    <path
-                      d="M58.395 22.75c-1.11-10.48-8.3-20.01-16.99-22.01-6.98-1.6-12.96 2.11-15.61 8.8-6.44.4-11.21 6.36-11.19 14.78.02 9.86 6.59 19.35 14.68 21.21l9.77 2.24 4.88 1.12 12.22 2.81c6.74 1.55 12.19-3.85 12.18-12.07-.01-7.25-4.29-14.28-9.94-16.88z"
-                      stroke="currentColor"
-                      strokeMiterlimit="10"
-                    />
+                    <path d="M26.405 8.21c.06-.13.13-.26.2-.38.16-.31.33-.61.51-.9.08-.13.15-.25.23-.38.22-.33.44-.66.68-.97.04-.05.08-.11.12-.17.28-.36.57-.69.88-1.02.08-.09.17-.17.26-.26.23-.23.47-.46.71-.67.11-.09.21-.18.32-.27.27-.22.54-.42.82-.61.08-.06.16-.12.24-.17.26-.17.53-.32.81-.47.14-.08.26-.16.4-.23.41-.21.84-.4 1.27-.56l-13.92 5.19c-.43.16-.86.35-1.27.56-.14.07-.27.16-.4.23-.25.14-.5.27-.74.42-.02.02-.05.04-.07.05-.08.05-.16.11-.24.17-.28.19-.55.4-.82.61-.11.09-.21.18-.32.27-.24.21-.48.44-.71.67-.09.09-.18.17-.26.26-.3.32-.6.66-.88 1.02-.04.05-.08.11-.12.17a13.928 13.928 0 0 0-.91 1.34c-.18.29-.35.59-.51.9-.07.13-.14.25-.2.38-.21.43-.13.27-.31.73M56.155 51.7l-17.09-3.93-9.77-2.24c-5.7-1.31-10.64-6.41-13.08-12.75-1.02-2.66-1.6-5.55-1.61-8.46-.01-5.97 2.38-10.7 6.07-13.09.65-.42 1.34-.77 2.06-1.04l-13.92 5.19c-.72.27-1.41.62-2.06 1.04-3.69 2.39-6.08 7.12-6.06 13.09 0 2.91.58 5.8 1.61 8.46 2.43 6.34 7.38 11.44 13.08 12.75l9.77 2.24 17.09 3.93c1.94.45 3.77.32 5.4-.29l13.92-5.19c-1.63.61-3.46.74-5.4.29h-.01z" stroke="currentColor" strokeMiterlimit="10" />
+                    <path d="M58.395 22.75c-1.12-10.48-8.3-20.01-16.99-22.01-6.98-1.6-12.96 2.11-15.61 8.8-6.44.4-11.21 6.36-11.19 14.78.02 9.86 6.59 19.35 14.68 21.21l9.77 2.24v-5.43l4.88 1.12v-5.43l4.88 1.12v5.43l-4.88-1.12v5.43l12.21 2.81c6.74 1.55 12.19-3.85 12.18-12.07-.01-7.25-4.29-14.28-9.94-16.88h.01zm-9.06 8.9-5.39-7.79v14.18l-4.88-1.12V22.74l-5.36 5.31-3.46-5 7.65-7.59c1.87-1.85 4.83-1.76 7.33 1.85l7.56 10.93-3.44 3.41h-.01zM4.895 42.95l12.13-4.52c-.77-1.14-1.46-2.36-2.05-3.65L2.845 39.3c.58 1.29 1.27 2.51 2.04 3.65h.01zM34.185 52.09l4.88 1.12v5.43l-4.88-1.12v-5.43zM39.065 66.43l3.45.79v3.84l-3.45-.79v-3.84z" fill="currentColor" />
+                    <path d="M58.395 22.75c-1.11-10.48-8.3-20.01-16.99-22.01-6.98-1.6-12.96 2.11-15.61 8.8-6.44.4-11.21 6.36-11.19 14.78.02 9.86 6.59 19.35 14.68 21.21l9.77 2.24 4.88 1.12 12.22 2.81c6.74 1.55 12.19-3.85 12.18-12.07-.01-7.25-4.29-14.28-9.94-16.88z" stroke="currentColor" strokeMiterlimit="10" />
                   </g>
                   <defs>
                     <clipPath id="dropIcon">
-                      <path
-                        fill="#fff"
-                        transform="translate(.315)"
-                        d="M0 0h68.4v71.06H0z"
-                      />
+                      <path fill="#fff" transform="translate(.315)" d="M0 0h68.4v71.06H0z" />
                     </clipPath>
                   </defs>
                 </svg>
@@ -853,6 +1210,7 @@ export const PulsifyTrackUploadScreen = () => {
                 ref={fileInputRef}
                 type="file"
                 accept=".mp3,.wav,.flac,.aac,audio/mpeg,audio/wav,audio/flac,audio/aac"
+                multiple
                 onChange={handleInputChange}
               />
             </div>
@@ -865,23 +1223,11 @@ export const PulsifyTrackUploadScreen = () => {
 
             <div className="pulsify-mic-section">
               <div className="mic-icon-area">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                   <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                 </svg>
-                <svg
-                  width="8"
-                  height="8"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </div>
@@ -892,17 +1238,8 @@ export const PulsifyTrackUploadScreen = () => {
                   releases.
                 </div>
               </div>
-              <svg
-                className="mic-chevron"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="m10 3.94 7.53 7.53a.75.75 0 0 1 0 1.06L10 20.06 8.94 19l7-7-7-7L10 3.94Z"
-                  transform="rotate(90, 12, 12)"
-                />
+              <svg className="mic-chevron" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="m10 3.94 7.53 7.53a.75.75 0 0 1 0 1.06L10 20.06 8.94 19l7-7-7-7L10 3.94Z" transform="rotate(90, 12, 12)" />
               </svg>
             </div>
 

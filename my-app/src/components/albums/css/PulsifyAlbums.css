@@ -1,0 +1,37 @@
+/* PulsifyAlbums.css — Reuses the same visual design as playlists.
+   All classes are shared from PulsifyPlaylists.css so we just import that.
+   This file exists as a namespace for any album-specific overrides. */
+
+/* Album type badge (shown on cards) */
+.pulsify-album-type-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: #333;
+  color: #ccc;
+  margin-right: 6px;
+}
+
+.pulsify-album-type-badge.type-album {
+  background: linear-gradient(135deg, #7122a3, #a24bcf);
+  color: #fff;
+}
+
+.pulsify-album-type-badge.type-ep {
+  background: linear-gradient(135deg, #1d6fa5, #2ea3f2);
+  color: #fff;
+}
+
+.pulsify-album-type-badge.type-single {
+  background: linear-gradient(135deg, #a56b1d, #f2a62e);
+  color: #fff;
+}
+
+.pulsify-album-type-badge.type-compilation {
+  background: linear-gradient(135deg, #1da55e, #2ef29a);
+  color: #111;
+}
