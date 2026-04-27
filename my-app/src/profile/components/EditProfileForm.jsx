@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PlatformIcon, detectPlatform } from "./SocialPlatforms";
 
 export default function EditProfileForm({
   profile,
@@ -13,13 +14,34 @@ export default function EditProfileForm({
   const [favoriteGenres, setFavoriteGenres] = useState(
     profile.favoriteGenres.join(", "),
   );
-  const [instagram, setInstagram] = useState(
-    profile.socialLinks.instagram ?? "",
-  );
-  const [twitter, setTwitter] = useState(profile.socialLinks.twitter ?? "");
-  const [website, setWebsite] = useState(profile.socialLinks.website ?? "");
   const [isPrivate, setIsPrivate] = useState(profile.isPrivate);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl);
+  const [links, setLinks] = useState(() => {
+    const sl = profile.socialLinks ?? {};
+    const result = [];
+    if (sl.instagram)
+      result.push({
+        platform: "instagram",
+        url: sl.instagram,
+        isSupport: false,
+      });
+    if (sl.twitter)
+      result.push({ platform: "twitter", url: sl.twitter, isSupport: false });
+    if (sl.website)
+      result.push({ platform: "website", url: sl.website, isSupport: false });
+    if (sl.links) {
+      for (const l of sl.links) {
+        if (!result.some((r) => r.url && r.url === l.url)) {
+          result.push({
+            platform: l.platform ?? detectPlatform(l.url),
+            url: l.url,
+            isSupport: l.isSupport ?? false,
+          });
+        }
+      }
+    }
+    return result;
+  });
 
   // Split location into city/country for SoundCloud-style display
   const locationParts = location.split(",").map((s) => s.trim());
@@ -37,7 +59,12 @@ export default function EditProfileForm({
         .map((g) => g.trim())
         .filter(Boolean),
       isPrivate,
-      socialLinks: { instagram, twitter, website },
+      socialLinks: {
+        instagram: links.find((l) => l.platform === "instagram")?.url ?? "",
+        twitter: links.find((l) => l.platform === "twitter")?.url ?? "",
+        website: links.find((l) => l.platform === "website")?.url ?? "",
+        links: links.filter((l) => l.url),
+      },
     });
   }
 
@@ -156,43 +183,74 @@ export default function EditProfileForm({
           <span className="sc-edit-label">Your links</span>
         </div>
         <div className="sc-edit-link-fields">
-          {instagram && (
-            <input
-              className="sc-edit-input sc-edit-link-input"
-              value={instagram}
-              onChange={(e) => setInstagram(e.target.value)}
-              placeholder="Instagram URL"
-              type="url"
-            />
-          )}
-          {twitter && (
-            <input
-              className="sc-edit-input sc-edit-link-input"
-              value={twitter}
-              onChange={(e) => setTwitter(e.target.value)}
-              placeholder="Twitter URL"
-              type="url"
-            />
-          )}
-          {website && (
-            <input
-              className="sc-edit-input sc-edit-link-input"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="Website URL"
-              type="url"
-            />
-          )}
+          {links.map((link, i) => (
+            <div key={i} className="sc-link-row">
+              <span className="sc-link-icon">
+                <PlatformIcon platform={link.platform} size={18} />
+              </span>
+              <input
+                className="sc-edit-input sc-edit-link-url-input"
+                value={link.url}
+                onChange={(e) => {
+                  const url = e.target.value;
+                  const updated = [...links];
+                  updated[i] = {
+                    ...updated[i],
+                    url,
+                    platform: link.isSupport
+                      ? link.platform
+                      : detectPlatform(url),
+                  };
+                  setLinks(updated);
+                }}
+                placeholder={
+                  link.isSupport
+                    ? "Support page URL (Patreon, Ko-fi…)"
+                    : "https://"
+                }
+                type="url"
+              />
+              <button
+                type="button"
+                className="sc-link-delete-btn"
+                onClick={() => setLinks(links.filter((_, j) => j !== i))}
+                aria-label="Remove link"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                </svg>
+              </button>
+            </div>
+          ))}
         </div>
         <div className="sc-edit-link-btns">
           <button
             type="button"
             className="sc-add-link-btn"
-            onClick={() => setInstagram(instagram || "https://")}
+            onClick={() =>
+              setLinks([
+                ...links,
+                { platform: "website", url: "", isSupport: false },
+              ])
+            }
           >
             Add link
           </button>
-          <button type="button" className="sc-add-support-btn">
+          <button
+            type="button"
+            className="sc-add-support-btn"
+            onClick={() =>
+              setLinks([
+                ...links,
+                { platform: "patreon", url: "", isSupport: true },
+              ])
+            }
+          >
             Add support link
           </button>
         </div>

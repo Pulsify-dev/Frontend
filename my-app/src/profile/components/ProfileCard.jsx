@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { socialService } from "../../social/services/socialService";
 import FollowButton from "../../social/components/FollowButton";
+import { PlatformIcon, detectPlatform } from "./SocialPlatforms";
 
 const TABS = [
   { label: "All", path: null },
@@ -199,36 +200,39 @@ export default function ProfileCard({
           )}
 
           <div className="sc-sidebar-links">
-            {profile.socialLinks?.instagram && (
+            {[
+              ...(profile.socialLinks?.instagram
+                ? [
+                    {
+                      platform: "instagram",
+                      url: profile.socialLinks.instagram,
+                    },
+                  ]
+                : []),
+              ...(profile.socialLinks?.twitter
+                ? [{ platform: "twitter", url: profile.socialLinks.twitter }]
+                : []),
+              ...(profile.socialLinks?.website
+                ? [{ platform: "website", url: profile.socialLinks.website }]
+                : []),
+              ...(profile.socialLinks?.links?.filter((l) => l.url) ?? []),
+            ].map((link, i) => (
               <a
-                href={profile.socialLinks.instagram}
+                key={i}
+                href={link.url}
                 target="_blank"
                 rel="noreferrer"
                 className="sc-social-link"
               >
-                Instagram
+                <PlatformIcon
+                  platform={link.platform ?? detectPlatform(link.url)}
+                  size={14}
+                />
+                <span>
+                  {link.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
+                </span>
               </a>
-            )}
-            {profile.socialLinks?.twitter && (
-              <a
-                href={profile.socialLinks.twitter}
-                target="_blank"
-                rel="noreferrer"
-                className="sc-social-link"
-              >
-                Twitter
-              </a>
-            )}
-            {profile.socialLinks?.website && (
-              <a
-                href={profile.socialLinks.website}
-                target="_blank"
-                rel="noreferrer"
-                className="sc-social-link"
-              >
-                Website
-              </a>
-            )}
+            ))}
           </div>
 
           {/* Quick nav to other modules */}
