@@ -66,7 +66,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
  * ArtistRoute - Only allows artists
  */
 export const ArtistRoute = ({ children }) => {
-  return <ProtectedRoute allowedRoles={["artist"]}>{children}</ProtectedRoute>;
+  return <ProtectedRoute allowedRoles={["artist", "Artist"]}>{children}</ProtectedRoute>;
+};
+
+/**
+ * AdminRoute - Only allows admins
+ */
+export const AdminRoute = ({ children }) => {
+  return <ProtectedRoute allowedRoles={["admin", "Admin"]}>{children}</ProtectedRoute>;
 };
 
 /**

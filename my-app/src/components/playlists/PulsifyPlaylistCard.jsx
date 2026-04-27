@@ -6,8 +6,12 @@ import { PulsifyAuthVaultContext } from '../../store/PulsifyAuthVault';
 import { usePlayer } from '../../hooks/usePlayer';
 import { PulsifyEditPlaylistModal } from './PulsifyEditPlaylistModal';
 import { PulsifyShareModal } from './PulsifyShareModal';
+import { PulsifyTrackService } from '../../services/pulsifyTrackService';
 
 const generateWaveform = () => Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
+
+// Track which playlist card initiated the current playback
+let activePlaylistId = null;
 
 const TrackAction = ({ children, title, onClick }) => (
   <button
@@ -34,6 +38,8 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
   const isPro = subscriptionTier === 'PRO';
 
+  const [isLiked, setIsLiked] = useState(false);
+  
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -43,6 +49,40 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (trackData) {
+      if (trackData.is_liked !== undefined) {
+        setIsLiked(trackData.is_liked);
+      } else if (trackData.liked !== undefined) {
+        setIsLiked(trackData.liked);
+      } else {
+        const tId = trackData._id || trackData.id;
+        if (tId) {
+          PulsifyTrackService.checkIfLiked(tId)
+            .then(res => setIsLiked(res.liked || res.is_liked || false))
+            .catch(err => console.error('Failed to check track like status', err));
+        }
+      }
+    }
+  }, [trackData]);
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    try {
+      const prevLiked = isLiked;
+      setIsLiked(!isLiked); // Optimistic
+      const tId = trackData._id || trackData.id;
+      if (prevLiked) {
+        await PulsifyTrackService.unlikeTrack(tId);
+      } else {
+        await PulsifyTrackService.likeTrack(tId);
+      }
+    } catch (err) {
+      console.error('Failed to like track', err);
+      setIsLiked(isLiked); // Revert on failure
+    }
+  };
 
   const handleShareClick = (e) => {
     e.stopPropagation();
@@ -94,8 +134,8 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
 
       {hovered ? (
         <div style={{ display: 'flex', gap: '42px', marginLeft: 'auto', alignItems: 'center', paddingLeft: '8px' }}>
-          <TrackAction title="Like">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           </TrackAction>
           <TrackAction title="Repost">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 014-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 01-4 4H3" /></svg>
@@ -133,7 +173,7 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#ccc'; }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
-                  Delete playlist
+                  Delete track
                 </button>
                 {/* ─── Download Track (Pro-gated) ─── */}
                 <button
@@ -223,8 +263,17 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
 
   const { togglePlay, isPlaying, currentTrack, playerProgress } = usePlayer();
 
-  const handlePlaylistShare = () => {
+  const handlePlaylistShare = (e) => {
+    e.stopPropagation();
     setIsShareModalOpen(true);
+  };
+
+  const handleCopyLink = (e) => {
+    e.stopPropagation();
+    const baseUrl = window.location.origin;
+    const identifier = localPlaylist.permalink || plId;
+    const url = `${baseUrl}/playlists/${identifier}${localPlaylist.is_private && localPlaylist.secret_token ? `?token=${localPlaylist.secret_token}` : ''}`;
+    navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!')).catch(() => alert('Failed to copy link.'));
   };
 
   const handleDelete = async () => {
@@ -283,13 +332,14 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
             e.stopPropagation();
             if (localPlaylist.tracks && localPlaylist.tracks.length > 0) {
               const firstTrack = localPlaylist.tracks[0].track_id && typeof localPlaylist.tracks[0].track_id === 'object' ? localPlaylist.tracks[0].track_id : localPlaylist.tracks[0];
+              activePlaylistId = plId;
               togglePlay(firstTrack);
             } else {
               alert('No tracks to play in this playlist!');
             }
           }}
         >
-          {isPlaying && currentTrack && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? '⏸' : '▶'}
+          {isPlaying && currentTrack && activePlaylistId === plId && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? '⏸' : '▶'}
         </div>
       </div>
 
@@ -297,18 +347,19 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
         <div className="pulsify-card-header-row">
           <button 
             className="pulsify-card-play-btn" 
-            title={isPlaying && currentTrack && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? "Pause" : "Play"}
+            title={isPlaying && currentTrack && activePlaylistId === plId && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? "Pause" : "Play"}
             onClick={(e) => {
               e.stopPropagation();
               if (localPlaylist.tracks && localPlaylist.tracks.length > 0) {
                 const firstTrack = localPlaylist.tracks[0].track_id && typeof localPlaylist.tracks[0].track_id === 'object' ? localPlaylist.tracks[0].track_id : localPlaylist.tracks[0];
+                activePlaylistId = plId;
                 togglePlay(firstTrack);
               } else {
                 alert('No tracks to play in this playlist!');
               }
             }}
           >
-            {isPlaying && currentTrack && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? (
+            {isPlaying && currentTrack && activePlaylistId === plId && localPlaylist.tracks?.[0] && (localPlaylist.tracks[0].track_id?._id || localPlaylist.tracks[0]._id || localPlaylist.tracks[0].id) === (currentTrack._id || currentTrack.id) ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16" />
                 <rect x="14" y="4" width="4" height="16" />
@@ -331,7 +382,7 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
         <div className="pulsify-card-waveform">
           {waveform.map((h, i) => {
             const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
-            const isThisPlaylistPlaying = currentTrack && localPlaylist.tracks?.some(t => {
+            const isThisPlaylistPlaying = activePlaylistId === plId && currentTrack && localPlaylist.tracks?.some(t => {
               const tId = t.track_id?._id || t.track_id || t._id || t.id;
               return tId === currentId;
             });
@@ -383,10 +434,10 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           <button className="pulsify-card-action-btn" title="Share" onClick={handlePlaylistShare}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="Copy Link">
+          <button className="pulsify-card-action-btn" title="Copy Link" onClick={handleCopyLink}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="Edit" onClick={() => setIsEditModalOpen(true)}>
+          <button className="pulsify-card-action-btn" title="Edit" onClick={(e) => { e.stopPropagation(); setIsEditModalOpen(true); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
           <button className="pulsify-card-action-btn" title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick} style={isLiked ? { color: '#f50' } : {}}>

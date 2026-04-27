@@ -52,19 +52,45 @@ export const fetchTrending = async () => {
   return new Promise((resolve) => setTimeout(() => resolve(mockTrendingData), 450));
 };
 
-export const searchTracks = async (term) => {
+export const getCharts = async (limit = 50) => {
+  return new Promise((resolve) => setTimeout(() => resolve(mockTrendingData.slice(0, limit)), 450));
+};
+
+export const searchTracks = async (term, limit = 10, offset = 0) => {
   return new Promise(resolve => {
     setTimeout(() => {
-      if (!term.trim()) return resolve([]);
+      if (!term.trim()) return resolve({ tracks: [], users: [], playlists: [], albums: [] });
       const lowerTerm = term.toLowerCase();
       const results = [...mockFeedData, ...mockTrendingData].filter(t => 
         t.title.toLowerCase().includes(lowerTerm) || 
         t.artist.name.toLowerCase().includes(lowerTerm)
       );
       // Remove duplicates by trackId
-      const unique = Array.from(new Map(results.map(item => [item.trackId, item])).values());
-      resolve(unique);
+      const uniqueTracks = Array.from(new Map(results.map(item => [item.trackId, item])).values());
+      
+      resolve({
+        tracks: uniqueTracks.slice(offset, offset + limit),
+        users: [],
+        playlists: [],
+        albums: []
+      });
     }, 400); // 400ms network delay
+  });
+};
+
+export const searchSuggestions = async (term, limit = 5) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (!term.trim()) return resolve({ tracks: [], users: [], playlists: [], albums: [] });
+      const lowerTerm = term.toLowerCase();
+      const results = [...mockFeedData].filter(t => t.title.toLowerCase().includes(lowerTerm));
+      resolve({
+        tracks: results.slice(0, limit),
+        users: [],
+        playlists: [],
+        albums: []
+      });
+    }, 150);
   });
 };
 
@@ -107,6 +133,29 @@ export const resolveUrl = async (permalink) => {
       } else {
         resolve({ type: 'unknown', id: null, resolved: false });
       }
+    }, 200);
+  });
+};
+
+// Playlists Discovery Mocks
+export const discoverPlaylists = async (page = 1, limit = 20) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve([
+        { _id: 'pl-1', title: 'Favorites', cover_url: 'https://picsum.photos/seed/fav/200/200', track_count: 5 },
+        { _id: 'pl-2', title: 'Chill Vibes', cover_url: 'https://picsum.photos/seed/chill/200/200', track_count: 12 }
+      ]);
+    }, 300);
+  });
+};
+
+export const searchPlaylists = async (term, page = 1, limit = 20) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (!term.trim()) return resolve([]);
+      resolve([
+        { _id: 'pl-1', title: `Favorites - ${term}`, cover_url: 'https://picsum.photos/seed/fav/50/50', track_count: 5 }
+      ]);
     }, 200);
   });
 };

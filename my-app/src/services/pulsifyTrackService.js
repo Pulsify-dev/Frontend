@@ -275,6 +275,12 @@ export const PulsifyTrackService = {
     return data;
   },
 
+  async checkIfLiked(trackId) {
+    if (isMock()) return { liked: false };
+    const { data } = await pulsifyAxiosInstance.get(`/tracks/${trackId}/liked`);
+    return data;
+  },
+
   validateAudioFile(file) {
     if (!file) return { valid: false, error: 'No audio file selected.' };
 

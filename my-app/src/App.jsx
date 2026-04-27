@@ -9,8 +9,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Unauthorized from "@/pages/Unauthorized";
 import Home from "@/pages/Home";
-import LandingPage from "@/pages/LandingPage";
-import { ProtectedRoute, ArtistRoute } from "@/components/auth";
+import { ProtectedRoute, ArtistRoute, AdminRoute } from "@/components/auth";
 
 // Module 2 – Profile (Ahmad Hisham)
 import ProfilePage from "@/profile/pages/ProfilePage";
@@ -31,13 +30,27 @@ import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyMyTracksView } from "@/pages/PulsifyMyTracksView";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
 
+// Module 13 – Albums (Omar Nasser)
+import { PulsifyAlbumDetailView } from "@/pages/PulsifyAlbumDetailView";
+
 // Module 8/10 – Discovery & Notifications (Ahmed Ali)
 import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
 import PulsifyPlayerBar from "./components/common/PulsifyPlayerBar";
 import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
+import FeedPage from "./pages/FeedPage";
 import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
+import NotificationsPage from "./pages/NotificationsPage";
+
+// Module 11 - Admin & Moderation
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminContentModerationPage from "./pages/AdminContentModerationPage";
+import AdminUserManagementPage from "./pages/AdminUserManagementPage";
+import AdminTracksManagementPage from "./pages/AdminTracksManagementPage";
+import AdminAlbumsManagementPage from "./pages/AdminAlbumsManagementPage";
+import AdminSystemLogsPage from "./pages/AdminSystemLogsPage";
+import ResourceResolverPage from "./pages/ResourceResolverPage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -123,6 +136,7 @@ const AppRoutes = () => {
                 element={<PulsifyPlaylistDetailView />}
               />
 
+
               {/* Library (Protected) */}
               <Route
                 path="/library"
@@ -137,10 +151,45 @@ const AppRoutes = () => {
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
 
               {/* Discovery & Notifications - Module 8/10 */}
-              <Route path="/feed" element={<DiscoveryFeedPage />} />
+              <Route path="/feed" element={<FeedPage />} />
               <Route path="/discover" element={<DiscoveryFeedPage />} />
               <Route path="/search" element={<SearchHubPage />} />
               <Route path="/trending" element={<TrendingChartsPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboardPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/moderation" element={
+                <AdminRoute>
+                  <AdminContentModerationPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/users" element={
+                <AdminRoute>
+                  <AdminUserManagementPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/tracks" element={
+                <AdminRoute>
+                  <AdminTracksManagementPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/albums" element={
+                <AdminRoute>
+                  <AdminAlbumsManagementPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/logs" element={
+                <AdminRoute>
+                  <AdminSystemLogsPage />
+                </AdminRoute>
+              } />
+              
+              {/* Resource Resolver (Wildcard) - MUST BE LAST IN MAIN LAYOUT */}
+              <Route path="/*" element={<ResourceResolverPage />} />
             </Route>
 
             {/* Upload & My Tracks (standalone, no navbar) */}

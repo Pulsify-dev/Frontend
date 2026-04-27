@@ -1,0 +1,176 @@
+.pulsify-system-logs {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: Inter, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+}
+
+.pulsify-logs-header {
+  margin-bottom: 24px;
+}
+
+.pulsify-logs-header h2 {
+  font-size: 28px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+  color: #ff5500;
+}
+
+.pulsify-logs-header p {
+  color: #a0a0a0;
+  margin: 0 0 20px 0;
+  font-size: 15px;
+}
+
+.pulsify-logs-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1a1a1a;
+  padding: 16px 20px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.pulsify-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pulsify-filter-group label {
+  font-size: 14px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.pulsify-filter-group select {
+  background: #242424;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.pulsify-filter-group select:focus,
+.pulsify-filter-group select:hover {
+  border-color: #ff5500;
+}
+
+.pulsify-logs-refresh {
+  background: transparent;
+  color: #ff5500;
+  border: 1px solid #ff5500;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pulsify-logs-refresh:hover {
+  background: rgba(255, 85, 0, 0.1);
+  box-shadow: 0 0 8px rgba(255, 85, 0, 0.3);
+}
+
+.pulsify-logs-container {
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.pulsify-logs-loading,
+.pulsify-logs-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #888;
+  font-size: 16px;
+}
+
+.pulsify-logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.pulsify-logs-table th {
+  background: #121212;
+  color: #888;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 20px;
+  border-bottom: 2px solid #333;
+}
+
+.pulsify-logs-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 14px;
+  color: #ddd;
+}
+
+.pulsify-logs-table tr:hover {
+  background: #222;
+}
+
+.pulsify-log-time {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px !important;
+  color: #999;
+}
+
+.pulsify-log-action {
+  font-weight: 600;
+  color: #fff;
+}
+
+.pulsify-log-details {
+  color: #a0a0a0;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badges */
+.pulsify-log-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.pulsify-log-critical {
+  background: rgba(220, 53, 69, 0.15);
+  color: #ff4d4d;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.pulsify-log-warning {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.pulsify-log-info {
+  background: rgba(13, 110, 253, 0.15);
+  color: #3399ff;
+  border: 1px solid rgba(13, 110, 253, 0.3);
+}
+
+.pulsify-log-default {
+  background: #333;
+  color: #ccc;
+}
