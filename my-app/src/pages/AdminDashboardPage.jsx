@@ -16,7 +16,7 @@ const AdminDashboardPage = () => {
         // Assume getAnalytics is part of moderationService
         if (serviceLocator.moderation.getAnalytics) {
           const res = await serviceLocator.moderation.getAnalytics();
-          if (active) setMetrics(res.data);
+          if (active) setMetrics(res.data || res);
         } else {
           // Placeholder if mock doesn't have getAnalytics yet
           if (active) {
@@ -53,22 +53,22 @@ const AdminDashboardPage = () => {
         <div className="pulsify-metrics-grid">
           <div className="pulsify-metric-card" data-testid="metric-active-users">
             <h3>Active Users (30d)</h3>
-            <div className="pulsify-metric-value">{metrics.total_active_users.toLocaleString()}</div>
+            <div className="pulsify-metric-value">{metrics?.total_active_users?.toLocaleString() || 0}</div>
           </div>
           
           <div className="pulsify-metric-card" data-testid="metric-play-rate">
             <h3>Play-Through Rate</h3>
-            <div className="pulsify-metric-value">{(metrics.play_through_rate * 100).toFixed(1)}%</div>
+            <div className="pulsify-metric-value">{((metrics?.play_through_rate || 0) * 100).toFixed(1)}%</div>
           </div>
           
           <div className="pulsify-metric-card" data-testid="metric-reports">
             <h3>Pending Reports</h3>
-            <div className="pulsify-metric-value pulsify-alert-text">{metrics.pending_reports_count}</div>
+            <div className="pulsify-metric-value pulsify-alert-text">{metrics?.pending_reports_count || 0}</div>
           </div>
 
           <div className="pulsify-metric-card" data-testid="metric-suspended">
             <h3>Suspended Accounts</h3>
-            <div className="pulsify-metric-value">{metrics.suspended_users_count}</div>
+            <div className="pulsify-metric-value">{metrics?.suspended_users_count || 0}</div>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ const AdminDashboardPage = () => {
           <div className="pulsify-chart-panel" data-testid="chart-storage-usage">
             <h3>Storage Usage</h3>
             <div className="pulsify-storage-info">
-              <h1>{(metrics.total_storage_bytes / 1000000000).toFixed(2)} GB</h1>
+              <h1>{((metrics?.total_storage_bytes || 0) / 1000000000).toFixed(2)} GB</h1>
               <p>Total data across all tracks</p>
             </div>
             <div className="pulsify-progress-container">

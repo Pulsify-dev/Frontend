@@ -15,6 +15,8 @@ const PulsifyAdminLayout = ({ children }) => {
             <li><NavLink to="/admin" end className={({ isActive }) => isActive ? "active" : ""}>Dashboard</NavLink></li>
             <li><NavLink to="/admin/moderation" className={({ isActive }) => isActive ? "active" : ""}>Content Moderation</NavLink></li>
             <li><NavLink to="/admin/users" className={({ isActive }) => isActive ? "active" : ""}>User Management</NavLink></li>
+            <li><NavLink to="/admin/tracks" className={({ isActive }) => isActive ? "active" : ""}>Tracks Management</NavLink></li>
+            <li><NavLink to="/admin/albums" className={({ isActive }) => isActive ? "active" : ""}>Albums Management</NavLink></li>
             <li><NavLink to="/admin/logs" className={({ isActive }) => isActive ? "active" : ""}>System Logs</NavLink></li>
           </ul>
         </nav>

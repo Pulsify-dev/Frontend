@@ -42,7 +42,10 @@ import NotificationsPage from "./pages/NotificationsPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminContentModerationPage from "./pages/AdminContentModerationPage";
 import AdminUserManagementPage from "./pages/AdminUserManagementPage";
+import AdminTracksManagementPage from "./pages/AdminTracksManagementPage";
+import AdminAlbumsManagementPage from "./pages/AdminAlbumsManagementPage";
 import AdminSystemLogsPage from "./pages/AdminSystemLogsPage";
+import ResourceResolverPage from "./pages/ResourceResolverPage";
 
 const AppRoutes = () => {
   return (
@@ -123,6 +126,7 @@ const AppRoutes = () => {
                 element={<PulsifyPlaylistDetailView />}
               />
 
+
               {/* Library (Protected) */}
               <Route
                 path="/library"
@@ -168,11 +172,24 @@ const AppRoutes = () => {
                   <AdminUserManagementPage />
                 </AdminRoute>
               } />
+              <Route path="/admin/tracks" element={
+                <AdminRoute>
+                  <AdminTracksManagementPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/albums" element={
+                <AdminRoute>
+                  <AdminAlbumsManagementPage />
+                </AdminRoute>
+              } />
               <Route path="/admin/logs" element={
                 <AdminRoute>
                   <AdminSystemLogsPage />
                 </AdminRoute>
               } />
+              
+              {/* Resource Resolver (Wildcard) - MUST BE LAST IN MAIN LAYOUT */}
+              <Route path="/*" element={<ResourceResolverPage />} />
             </Route>
           </Routes>
 

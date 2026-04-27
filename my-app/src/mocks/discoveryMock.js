@@ -136,3 +136,26 @@ export const resolveUrl = async (permalink) => {
     }, 200);
   });
 };
+
+// Playlists Discovery Mocks
+export const discoverPlaylists = async (page = 1, limit = 20) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve([
+        { _id: 'pl-1', title: 'Favorites', cover_url: 'https://picsum.photos/seed/fav/200/200', track_count: 5 },
+        { _id: 'pl-2', title: 'Chill Vibes', cover_url: 'https://picsum.photos/seed/chill/200/200', track_count: 12 }
+      ]);
+    }, 300);
+  });
+};
+
+export const searchPlaylists = async (term, page = 1, limit = 20) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (!term.trim()) return resolve([]);
+      resolve([
+        { _id: 'pl-1', title: `Favorites - ${term}`, cover_url: 'https://picsum.photos/seed/fav/50/50', track_count: 5 }
+      ]);
+    }, 200);
+  });
+};

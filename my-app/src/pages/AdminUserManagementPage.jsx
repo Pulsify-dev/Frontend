@@ -18,7 +18,7 @@ const AdminUserManagementPage = () => {
     setLoading(true);
     try {
       const res = await serviceLocator.moderation.getUsers({ role: roleFilter, search: searchQuery });
-      setUsers(res.data.users || []);
+      setUsers(res.data?.users || res.users || res.data || []);
     } catch (err) {
       console.error(err);
       setUsers([]);

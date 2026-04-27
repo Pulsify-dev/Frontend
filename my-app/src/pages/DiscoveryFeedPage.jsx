@@ -1,66 +1,64 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePlayer } from '../hooks/usePlayer';
 import serviceLocator from '../utils/serviceLocator';
 import './DiscoveryFeedPage.css';
 
 import ArtistToolsWidget from '../components/common/ArtistToolsWidget';
 import ReportModal from '../components/common/ReportModal';
-
-const MOCK_MORE = [
-  { id: '65e2b3c4d5e6f7a8b9c0d1e1', title: 'Caribou - Broke My Hea...', artist: '', img: 'https://i1.sndcdn.com/artworks-HwUoYhhL5kRj6QeH-LtoLmw-t200x200.jpg' },
-  { id: '65e2b3c4d5e6f7a8b9c0d1e2', title: 'أديني رجعتلك- عمرو دياب 2001', artist: 'Someone\'', img: 'https://i1.sndcdn.com/artworks-000570081299-s27eb4-t200x200.jpg' },
-  { id: '65e2b3c4d5e6f7a8b9c0d1e3', title: 'Metro Showdown', artist: 'HALSKI', img: 'https://i1.sndcdn.com/artworks-bUpx121XrtJdM3I5-Z7M3lA-t200x200.jpg' },
-  { id: '65e2b3c4d5e6f7a8b9c0d1e4', title: 'عمرو دياب-لو كان يرضيك', artist: 'Roqaiation2', img: 'https://i1.sndcdn.com/artworks-000552763260-2t8ozm-t200x200.jpg' },
-  { id: '65e2b3c4d5e6f7a8b9c0d1e5', title: 'BRE.AK', artist: '', img: 'https://i1.sndcdn.com/artworks-000490197771-3qpw7o-t200x200.jpg' },
-];
-
-const MOCK_MIXED = [
-  { id: 6, title: 'vondr, Milzy, SHAKING, ...', artist: '', img: 'https://i1.sndcdn.com/artworks-YV1nN9s6B4Hj4aOQ-p9g1OQ-t200x200.jpg', tag: 'MIX 1', tagColor: '#a886d9' },
-  { id: 7, title: 'canary yellow, Dismantl...', artist: '', img: 'https://i1.sndcdn.com/artworks-000185966395-5m3ly9-t200x200.jpg', tag: 'MIX 2', tagColor: '#1b64d1' },
-  { id: 8, title: 'HALSKI, INUKA, drea...', artist: '', img: 'https://i1.sndcdn.com/artworks-QW8n2m2kX8R4zP9K-7q7gA3-t200x200.jpg', tag: 'MIX 3', tagColor: '#fff' },
-  { id: 9, title: 'Dogs I Know, Aures, wu...', artist: '', img: 'https://i1.sndcdn.com/artworks-2Bqf3u7l9W7x-8P4xN1-t200x200.jpg', tag: 'MIX 4', tagColor: '#f16529' },
-  { id: 10, title: 'ONLYTHEI...', artist: '', img: 'https://i1.sndcdn.com/artworks-Pq8L2x4N6o1R-6V3cT1-t200x200.jpg', tag: 'MIX 5', tagColor: '#333' }
-];
-
-const MOCK_CURATED = [
-  { id: 11, title: 'TECHNO', artist: '', img: 'https://i1.sndcdn.com/artworks-0wK2R8U5Pq6N-7g8C1L-t200x200.jpg' },
-  { id: 12, title: 'LEVEL UP', artist: '', img: 'https://i1.sndcdn.com/artworks-5T1v8B2Y4a6S-9K3pM4-t200x200.jpg' },
-  { id: 13, title: 'FRESCO', artist: '', img: 'https://i1.sndcdn.com/artworks-2U9v3M7X4b1N-5H6jK2-t200x200.jpg' },
-  { id: 14, title: 'DREAMS', artist: '', img: 'https://i1.sndcdn.com/artworks-8N4m1L6Q3p2V-1T7dF9-t200x200.jpg' }
-];
-
-const MOCK_ARTISTS = [
-  { id: 1, name: 'Milzy', verified: true, followers: '1,264', tracks: '6', img: 'https://i1.sndcdn.com/avatars-0W1L8B3X5N7P-2q6kF4-t50x50.jpg' },
-  { id: 2, name: 'MKULTRA', verified: false, followers: '209', tracks: '4', img: 'https://i1.sndcdn.com/avatars-1M4P7L2Q8N5B-9t3vH6-t50x50.jpg' },
-  { id: 3, name: 'jouno', verified: false, followers: '120', tracks: '5', img: 'https://i1.sndcdn.com/avatars-5B2K8M3X1T9N-6c4dL7-t50x50.jpg' }
-];
-
-const MOCK_LIKES = [
-  { id: 1, uploader: "Someone'", title: 'أديني رجعتلك- عمرو دياب 2001', plays: '44.7M', likes: '1.01M', reposts: '16.6K', comments: '2,205', img: 'https://i1.sndcdn.com/artworks-000570081299-s27eb4-t50x50.jpg' },
-  { id: 2, uploader: 'Roqaiation2', title: 'عمرو دياب-لو كان يرضيك', plays: '36.5M', likes: '893K', reposts: '12K', comments: '2,169', img: 'https://i1.sndcdn.com/artworks-000552763260-2t8ozm-t50x50.jpg' }
-];
-
-const MOCK_HISTORY = [
-  { id: 1, uploader: 'Genesis Light Operation', title: 'Still Here', plays: '13.4K', likes: '545', reposts: '8', comments: '8', img: 'https://i1.sndcdn.com/artworks-3F8L1Q6N2P4B-7t5wH2-t50x50.jpg' }
-];
+import { getListeningHistory } from '../services/api';
 
 const DiscoveryFeedPage = () => {
+  const navigate = useNavigate();
+  const { togglePlay } = usePlayer();
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportEntity, setReportEntity] = useState({ type: '', id: '' });
-  const [liveTracks, setLiveTracks] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Data rows
+  const [recentlyPlayed, setRecentlyPlayed] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [trendingTracks, setTrendingTracks] = useState([]);
+  const [freshUploads, setFreshUploads] = useState([]);
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [followedUsers, setFollowedUsers] = useState(new Set());
+
   useEffect(() => {
-    const loadRealFeed = async () => {
+    const loadAll = async () => {
       try {
-        const tracks = await serviceLocator.discovery.fetchFeed();
-        setLiveTracks(tracks || []);
+        const [
+          recentData,
+          playlistsData,
+          trendingData,
+          historyData,
+          usersData,
+        ] = await Promise.all([
+          serviceLocator.discovery.getRecentlyPlayed(1, 10).catch(() => []),
+          serviceLocator.discovery.discoverPlaylists(1, 10).catch(() => []),
+          serviceLocator.discovery.fetchTrending(1, 10).catch(() => []),
+          getListeningHistory().catch(() => ({ history: [] })),
+          serviceLocator.discovery.getSuggestedUsers(5).catch(() => []),
+        ]);
+
+        setRecentlyPlayed(Array.isArray(recentData) ? recentData : []);
+        setPlaylists(playlistsData || []);
+        setTrendingTracks(trendingData || []);
+        setHistory(historyData?.history || []);
+        setSuggestedUsers(usersData || []);
+
+        // Fresh uploads = trending tracks sorted by newest date
+        const sorted = [...(trendingData || [])].sort(
+          (a, b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0)
+        );
+        setFreshUploads(sorted.slice(0, 10));
       } catch (err) {
-        console.error("Failed to load live feed:", err);
+        console.error("Failed to load discover data:", err);
       } finally {
         setLoading(false);
       }
     };
-    loadRealFeed();
+    loadAll();
   }, []);
 
   const handleOpenReport = (type, id) => {
@@ -68,137 +66,238 @@ const DiscoveryFeedPage = () => {
     setReportModalOpen(true);
   };
 
+  const handlePlayTrack = (track) => {
+    const t = track.track_id || track;
+    togglePlay({
+      trackId: t._id || t.trackId || t.id,
+      title: t.title,
+      coverArt: t.artwork_url || t.coverArt,
+      audioUrl: t.audio_url || t.audioUrl,
+      artist: {
+        name: t.artist_id?.display_name || t.artist_id?.username || t.artist?.name || 'Unknown',
+      },
+    });
+  };
+
+  // Navigate to track detail page
+  const handleGoToTrack = (track) => {
+    const t = track.track_id || track;
+    const id = t._id || t.trackId || t.id;
+    if (id) navigate(`/tracks/${id}`);
+  };
+
+  // Follow user via backend API
+  const handleFollow = async (userId) => {
+    try {
+      await serviceLocator.discovery.followUser(userId);
+      setFollowedUsers(prev => new Set(prev).add(userId));
+    } catch (err) {
+      // 409 = already following — treat as success
+      if (err?.response?.status === 409) {
+        setFollowedUsers(prev => new Set(prev).add(userId));
+      } else {
+        console.error("Follow failed:", err);
+      }
+    }
+  };
+
+  // Unfollow user
+  const handleUnfollow = async (userId) => {
+    try {
+      await serviceLocator.discovery.unfollowUser(userId);
+      setFollowedUsers(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    } catch (err) {
+      console.error("Unfollow failed:", err);
+    }
+  };
+
+  // ──── Carousel Component ────
+  const Carousel = ({ title, subtitle, children, viewAllLink }) => (
+    <section className="sc-discover-shelf">
+      <div className="sc-shelf-header">
+        <div>
+          <h2 className="sc-shelf-title">{title}</h2>
+          {subtitle && <div className="sc-shelf-subtext">{subtitle}</div>}
+        </div>
+        {viewAllLink && <a href={viewAllLink} className="sc-shelf-viewall">View all</a>}
+      </div>
+      <div className="sc-carousel-row">
+        {children}
+      </div>
+    </section>
+  );
+
+  // ──── Track Card ────
+  const TrackCard = ({ track, onReport }) => {
+    const art = track.artwork_url || track.coverArt || 'https://via.placeholder.com/180';
+    const title = track.title;
+    const artist = track.artist_id?.display_name || track.artist_id?.username || track.artist?.name || '';
+    const id = track._id || track.trackId || track.id;
+
+    return (
+      <div className="sc-discover-card">
+        <div className="sc-discover-card-art" onClick={() => handleGoToTrack(track)} style={{ cursor: 'pointer' }}>
+          <img src={art} alt={title} />
+          <button className="sc-discover-card-play" onClick={(e) => { e.stopPropagation(); handlePlayTrack(track); }}>▶</button>
+          {onReport && (
+            <button
+              className="sc-discover-card-report"
+              onClick={(e) => { e.stopPropagation(); onReport('Track', id); }}
+              title="Report"
+            >⚑</button>
+          )}
+        </div>
+        <div className="sc-discover-card-title" onClick={() => handleGoToTrack(track)} style={{ cursor: 'pointer' }}>{title}</div>
+        {artist && <div className="sc-discover-card-artist" onClick={() => {
+          const id = track.artist_id?._id || track.artist?.id;
+          if (id) navigate(`/profile/${id}`);
+        }} style={{ cursor: 'pointer' }}>{artist}</div>}
+      </div>
+    );
+  };
+
   return (
     <div className="sc-discover-page" data-testid="discovery-feed-page">
       <div className="sc-discover-content">
-        
-        {/* Main Content Area */}
+
+        {/* Main Content */}
         <div className="sc-discover-main">
-          
+
+          {/* Row 1 – More of what you like / Recently Played */}
+          <Carousel title="More of what you like" subtitle="Recently played tracks">
+            {loading ? (
+              <div className="sc-carousel-placeholder">Loading...</div>
+            ) : recentlyPlayed.length > 0 ? (
+              recentlyPlayed.map((item, i) => {
+                const track = item.track_id || item;
+                return <TrackCard key={track._id || i} track={track} onReport={handleOpenReport} />;
+              })
+            ) : trendingTracks.length > 0 ? (
+              trendingTracks.slice(0, 5).map((track, i) => (
+                <TrackCard key={track.trackId || i} track={track} onReport={handleOpenReport} />
+              ))
+            ) : (
+              <div className="sc-carousel-placeholder">No recent tracks found.</div>
+            )}
+          </Carousel>
+
+          {/* Row 2 – Discover Playlists */}
+          <Carousel title="Curated by Pulsify" subtitle="Public Playlists">
+            {playlists.length > 0 ? (
+              playlists.map(pl => (
+                <div
+                  className="sc-discover-card sc-discover-card-playlist"
+                  key={pl._id}
+                  onClick={() => navigate(`/playlists/${pl._id}`)}
+                >
+                  <div className="sc-discover-card-art">
+                    <img src={pl.cover_url || 'https://via.placeholder.com/180'} alt={pl.title} />
+                    <div className="sc-discover-card-curator">☁</div>
+                  </div>
+                  <div className="sc-discover-card-title">{pl.title}</div>
+                  <div className="sc-discover-card-artist">{pl.track_count || 0} tracks</div>
+                </div>
+              ))
+            ) : (
+              <div className="sc-carousel-placeholder">No playlists found.</div>
+            )}
+          </Carousel>
+
+          {/* Row 3 – Trending Tracks (Numbered List) */}
           <section className="sc-discover-shelf">
-            <h2 className="sc-shelf-title">More of what you like</h2>
-            <div className="sc-shelf-subtext">Recent tracks from the platform</div>
-            <div className="sc-shelf-grid">
-              {loading ? (
-                <div style={{ color: '#888', padding: '20px' }}>Loading tracks...</div>
-              ) : liveTracks.length > 0 ? (
-                liveTracks.slice(0, 5).map(track => (
-                  <div className="sc-card" key={track.trackId}>
-                    <div className="sc-card-artwork">
-                      <img src={track.coverArt || 'https://picsum.photos/seed/default/200/200'} alt={track.title} />
-                      <button className="sc-card-report-btn" onClick={(e) => { e.preventDefault(); handleOpenReport('Track', track.trackId); }} title="Report Track">⚑</button>
-                    </div>
-                    <div className="sc-card-title">{track.title}</div>
-                    {track.artist?.name && <div className="sc-card-artist">{track.artist.name}</div>}
+            <div className="sc-shelf-header">
+              <div>
+                <h2 className="sc-shelf-title">Trending on Pulsify</h2>
+                <div className="sc-shelf-subtext">Top tracks by engagement</div>
+              </div>
+              <a href="/trending" className="sc-shelf-viewall">View all</a>
+            </div>
+            <div className="sc-trending-list">
+              {trendingTracks.slice(0, 10).map((track, i) => (
+                <div className="sc-trending-row" key={track.trackId || i}>
+                  <span className="sc-trending-rank">{i + 1}</span>
+                  <div className="sc-trending-art" onClick={() => handlePlayTrack(track)} style={{ cursor: 'pointer' }}>
+                    <img src={track.coverArt || 'https://via.placeholder.com/48'} alt={track.title} />
                   </div>
-                ))
-              ) : (
-                MOCK_MORE.map(item => (
-                  <div className="sc-card" key={item.id}>
-                    <div className="sc-card-artwork">
-                      <img src={item.img} alt={item.title} />
-                      <button className="sc-card-report-btn" onClick={(e) => { e.preventDefault(); handleOpenReport('Track', item.id); }} title="Report Track">⚑</button>
-                    </div>
-                    <div className="sc-card-title">{item.title}</div>
-                    {item.artist && <div className="sc-card-artist">{item.artist}</div>}
+                  <div className="sc-trending-info" onClick={() => handleGoToTrack(track)} style={{ cursor: 'pointer' }}>
+                    <div className="sc-trending-track-title">{track.title}</div>
+                    <div className="sc-trending-track-artist">{track.artist?.name || 'Unknown'}</div>
                   </div>
-                ))
+                  <div className="sc-trending-stats" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <span>▶ {(track.plays || 0).toLocaleString()}</span>
+                    <span>♥ {(track.likes || 0).toLocaleString()}</span>
+                    <button 
+                      className="sc-trending-report-btn"
+                      onClick={(e) => { e.stopPropagation(); handleOpenReport('Track', track.trackId || track._id || track.id); }}
+                      title="Report Track"
+                      style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '14px' }}
+                    >
+                      ⚑
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {trendingTracks.length === 0 && (
+                <div className="sc-carousel-placeholder">No trending tracks yet.</div>
               )}
             </div>
           </section>
 
-          <section className="sc-discover-shelf">
-            <h2 className="sc-shelf-title">Mixed for Ahmed A. Farag</h2>
-            <div className="sc-shelf-subtext"></div>
-            <div className="sc-shelf-grid sc-shelf-grid-mixed">
-              {MOCK_MIXED.map(item => (
-                <div className="sc-card sc-card-mixed" key={item.id}>
-                  <div className="sc-card-artwork-wrapper">
-                    <img src={item.img} alt={item.title} className="sc-card-mixed-img" />
-                    {item.tag && (
-                      <div className="sc-card-mixer-tag" style={{ backgroundColor: item.tagColor, color: item.tagColor === '#fff' ? '#000' : '#fff' }}>
-                        {item.tag}
-                      </div>
-                    )}
-                  </div>
-                  <div className="sc-card-title">{item.title}</div>
-                  {item.artist && <div className="sc-card-artist">{item.artist}</div>}
-                </div>
+          {/* Row 4 – Fresh Uploads */}
+          {freshUploads.length > 0 && (
+            <Carousel title="Fresh uploads" subtitle="Latest tracks on the platform">
+              {freshUploads.map((track, i) => (
+                <TrackCard key={track.trackId || i} track={track} onReport={handleOpenReport} />
               ))}
-            </div>
-          </section>
-
-          <section className="sc-discover-shelf">
-            <h2 className="sc-shelf-title">Curated by SoundCloud</h2>
-            <div className="sc-shelf-subtext"></div>
-            <div className="sc-shelf-grid">
-              {MOCK_CURATED.map(item => (
-                <div className="sc-card sc-card-curated" key={item.id}>
-                  <div className="sc-card-artwork-wrapper">
-                    <img src={item.img} alt={item.title} />
-                    <div className="sc-card-curator-icon">☁</div>
-                  </div>
-                  <div className="sc-card-title">{item.title}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
+            </Carousel>
+          )}
         </div>
 
         {/* Right Sidebar */}
         <aside className="sc-discover-sidebar">
-          
+
           <ArtistToolsWidget />
 
           {/* Artists You Should Follow */}
           <div className="sc-sidebar-widget">
             <div className="sc-widget-header">
               <h3>ARTISTS YOU SHOULD FOLLOW</h3>
-              <button className="sc-widget-header-btn">Refresh list</button>
+              <a href="#" className="sc-widget-header-link">Refresh list</a>
             </div>
-            <div className="sc-list-items">
-              {MOCK_ARTISTS.map(artist => (
-                <div className="sc-artist-item" key={artist.id}>
-                  <img src={artist.img} alt={artist.name} className="sc-artist-avatar" />
-                  <div className="sc-artist-info">
-                    <div className="sc-artist-name">
-                      {artist.name}
-                      {artist.verified && <span className="sc-verified-badge">✔</span>}
+            <div className="sc-follow-list">
+              {suggestedUsers.map(user => {
+                const userId = user._id || user.id;
+                const isFollowed = followedUsers.has(userId);
+                return (
+                  <div className="sc-follow-row" key={userId}>
+                    <img
+                      className="sc-follow-avatar"
+                      src={user.avatar_url || 'https://via.placeholder.com/40'}
+                      alt={user.display_name || user.username}
+                      onClick={() => navigate(`/profile/${user._id || user.id}`)}
+                    />
+                    <div className="sc-follow-info" onClick={() => navigate(`/profile/${user._id || user.id}`)}>
+                      <div className="sc-follow-name">
+                        {user.display_name || user.username}
+                        {user.is_verified && <span className="sc-verified-dot">●</span>}
+                      </div>
+                      <div className="sc-follow-stats">
+                        👤 {(user.followers_count || 0).toLocaleString()} · 🎵 {user.track_count || 0}
+                      </div>
                     </div>
-                    <div className="sc-artist-stats">
-                      <span>👥 {artist.followers}</span>
-                      <span style={{marginLeft: '6px'}}>🎶 {artist.tracks}</span>
-                    </div>
+                    <button
+                      className={`sc-follow-btn ${isFollowed ? 'sc-follow-btn-following' : ''}`}
+                      onClick={() => isFollowed ? handleUnfollow(userId) : handleFollow(userId)}
+                    >
+                      {isFollowed ? 'Following' : 'Follow'}
+                    </button>
                   </div>
-                  <button className="sc-follow-btn">Follow</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 5 Likes */}
-          <div className="sc-sidebar-widget">
-            <div className="sc-widget-header">
-              <h3>5 LIKES</h3>
-              <a href="#" className="sc-widget-header-link">View all</a>
-            </div>
-            <div className="sc-list-items">
-              {MOCK_LIKES.map(track => (
-                <div className="sc-track-mini" key={track.id}>
-                  <img src={track.img} alt={track.title} className="sc-track-mini-art" />
-                  <div className="sc-track-info">
-                    <div className="sc-track-uploader">{track.uploader}</div>
-                    <div className="sc-track-title">{track.title}</div>
-                    <div className="sc-track-stats">
-                      <span>▶ {track.plays}</span>
-                      <span>♥ {track.likes}</span>
-                      <span>🔁 {track.reposts}</span>
-                      <span>💬 {track.comments}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -209,29 +308,29 @@ const DiscoveryFeedPage = () => {
               <a href="#" className="sc-widget-header-link">View all</a>
             </div>
             <div className="sc-list-items">
-              {MOCK_HISTORY.map(track => (
-                <div className="sc-track-mini" key={track.id}>
-                  <img src={track.img} alt={track.title} className="sc-track-mini-art" />
-                  <div className="sc-track-info">
-                    <div className="sc-track-uploader">{track.uploader}</div>
-                    <div className="sc-track-title">{track.title}</div>
-                    <div className="sc-track-stats">
-                      <span>▶ {track.plays}</span>
-                      <span>♥ {track.likes}</span>
-                      <span>🔁 {track.reposts}</span>
-                      <span>💬 {track.comments}</span>
+              {history.length > 0 ? (
+                history.slice(0, 5).map((hist, i) => {
+                  const track = hist.track_id || hist;
+                  return (
+                    <div className="sc-track-mini" key={hist._id || i} onClick={() => handleGoToTrack(track)} style={{ cursor: 'pointer' }}>
+                      <img src={track.artwork_url || track.coverArt || 'https://via.placeholder.com/40'} alt={track.title} className="sc-track-mini-art" />
+                      <div className="sc-track-info">
+                        <div className="sc-track-uploader">{track.artist_id?.username || track.artist?.name || 'Unknown'}</div>
+                        <div className="sc-track-title">{track.title}</div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              ) : (
+                <div style={{ color: '#888', padding: '10px 0', fontSize: '13px' }}>No listening history available.</div>
+              )}
             </div>
           </div>
-          
+
           <div className="sc-sidebar-footer-links">
-            <a href="#">Legal</a> - <a href="#">Privacy</a> - <a href="#">Cookie Policy/Imprint</a> - <a href="#">Charts</a> - <a href="#">Newsroom</a>
+            <a href="#">Legal</a> · <a href="#">Privacy</a> · <a href="#">Cookie Policy/Imprint</a> · <a href="#">Charts</a> · <a href="#">Newsroom</a>
             <div className="sc-lang" style={{marginTop: '4px'}}>Language: <a href="#">English (US)</a></div>
           </div>
-
         </aside>
       </div>
 

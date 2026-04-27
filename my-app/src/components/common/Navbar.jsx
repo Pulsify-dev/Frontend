@@ -166,29 +166,96 @@ const Navbar = () => {
           </button>
         </form>
 
-        {showSuggestions && (suggestions.tracks?.length > 0 || suggestions.users?.length > 0) && (
+        {showSuggestions && (suggestions.tracks?.length > 0 || suggestions.users?.length > 0 || suggestions.playlists?.length > 0 || suggestions.albums?.length > 0) && (
           <div className="auth-search-suggestions">
-            {suggestions.users?.map(user => (
-              <div 
-                key={user.id || user._id} 
-                className="auth-suggestion-item"
-                onClick={() => handleSuggestionClick(`/users/${user.id || user._id}`)}
-              >
-                <img src={user.avatarUrl || user.avatar_url || 'https://via.placeholder.com/24'} alt="" className="auth-suggestion-avatar" />
-                <span>{user.displayName || user.username}</span>
-              </div>
-            ))}
-            {suggestions.tracks?.map(track => (
-              <div 
-                key={track.trackId || track.id} 
-                className="auth-suggestion-item"
-                onClick={() => handleSuggestionClick(`/tracks/${track.trackId || track.id}`)}
-              >
-                <img src={track.coverArt || track.cover_art} alt="" className="auth-suggestion-cover" />
-                <span>{track.title}</span>
-                <span style={{color: '#777', fontSize: '11px', marginLeft: 'auto'}}>Track</span>
-              </div>
-            ))}
+            {/* Tracks Section */}
+            {suggestions.tracks?.length > 0 && (
+              <>
+                <div className="auth-suggestion-category">🎵 Tracks</div>
+                {suggestions.tracks.map(track => (
+                  <div 
+                    key={track.id || track._id} 
+                    className="auth-suggestion-item"
+                    onClick={() => handleSuggestionClick(`/tracks/${track.id || track._id}`)}
+                  >
+                    <span className="auth-suggestion-icon">♪</span>
+                    <div className="auth-suggestion-text">
+                      <span className="auth-suggestion-primary">{track.title}</span>
+                      <span className="auth-suggestion-secondary">{track.artist_name || track.artist_username || ''}</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* People Section */}
+            {suggestions.users?.length > 0 && (
+              <>
+                <div className="auth-suggestion-category">👤 People</div>
+                {suggestions.users.map(user => (
+                  <div 
+                    key={user.id || user._id} 
+                    className="auth-suggestion-item"
+                    onClick={() => handleSuggestionClick(`/profile/${user._id || user.id}`)}
+                  >
+                    <span className="auth-suggestion-icon">👤</span>
+                    <div className="auth-suggestion-text">
+                      <span className="auth-suggestion-primary">{user.display_name || user.username}</span>
+                      {user.is_verified && <span className="auth-suggestion-badge">✓</span>}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Playlists Section */}
+            {suggestions.playlists?.length > 0 && (
+              <>
+                <div className="auth-suggestion-category">📋 Playlists</div>
+                {suggestions.playlists.map(pl => (
+                  <div 
+                    key={pl.id || pl._id} 
+                    className="auth-suggestion-item"
+                    onClick={() => handleSuggestionClick(`/playlists/${pl.id || pl._id}`)}
+                  >
+                    <span className="auth-suggestion-icon">☰</span>
+                    <div className="auth-suggestion-text">
+                      <span className="auth-suggestion-primary">{pl.title}</span>
+                      <span className="auth-suggestion-secondary">{pl.creator_name || pl.creator_username || ''}</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Albums Section */}
+            {suggestions.albums?.length > 0 && (
+              <>
+                <div className="auth-suggestion-category">💿 Albums</div>
+                {suggestions.albums.map(album => (
+                  <div 
+                    key={album.id || album._id} 
+                    className="auth-suggestion-item"
+                    onClick={() => handleSuggestionClick(`/albums/${album.id || album._id}`)}
+                  >
+                    <span className="auth-suggestion-icon">💿</span>
+                    <div className="auth-suggestion-text">
+                      <span className="auth-suggestion-primary">{album.title}</span>
+                      <span className="auth-suggestion-secondary">{album.artist_name || album.artist_username || ''}</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Search footer */}
+            <div 
+              className="auth-suggestion-item auth-suggestion-search-all"
+              onClick={() => { setShowSuggestions(false); navigate(`/search?q=${encodeURIComponent(searchQuery)}`); }}
+            >
+              <span className="auth-suggestion-icon">🔍</span>
+              <span className="auth-suggestion-primary">Search for "{searchQuery}"</span>
+            </div>
           </div>
         )}
       </div>
@@ -405,8 +472,39 @@ const Navbar = () => {
                               </div>
                             </div>
                             
+                            {notif.type?.toUpperCase() === 'FOLLOW' && (
+                              <button 
+                                style={{
+                                  backgroundColor: '#fff',
+                                  color: '#000',
+                                  border: '1px solid #ccc',
+                                  borderRadius: '4px',
+                                  padding: '6px 12px',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer',
+                                  marginLeft: 'auto',
+                                  flexShrink: 0
+                                }}
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await serviceLocator.discovery.followUser(notif.actorId);
+                                    e.target.innerText = 'Following';
+                                    e.target.style.backgroundColor = 'transparent';
+                                    e.target.style.color = '#fff';
+                                    e.target.style.border = '1px solid #555';
+                                  } catch (err) {
+                                    console.error('Follow failed', err);
+                                  }
+                                }}
+                              >
+                                Follow back
+                              </button>
+                            )}
+
                             {!(notif.is_read || notif.read) && (
-                              <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#f50", flexShrink: 0 }}></div>
+                              <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#f50", flexShrink: 0, marginLeft: notif.type?.toUpperCase() === 'FOLLOW' ? '12px' : 'auto' }}></div>
                             )}
                           </li>
                         ))}

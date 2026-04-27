@@ -33,7 +33,38 @@ export const getAnalytics = async () => {
     });
 
     if (response.ok) {
-      return response.json();
+      const data = await response.json();
+      
+      // Inject pending reports count and suspended users count since the backend API doesn't natively include them
+      let pendingCount = 0;
+      let suspendedCount = 0;
+
+      try {
+        const pendingReportsResponse = await getReports({ page: 1, limit: 1, status: 'Pending' });
+        pendingCount = pendingReportsResponse?.data?.total !== undefined 
+            ? pendingReportsResponse.data.total 
+            : (pendingReportsResponse?.data?.reports?.length || 0);
+      } catch (e) {
+        console.warn('Could not fetch pending reports count:', e);
+      }
+
+      try {
+        const usersResponse = await getUsers({ page: 1, limit: 100, role: 'All' });
+        const usersList = usersResponse?.data?.users || usersResponse?.data || [];
+        suspendedCount = Array.isArray(usersList) ? usersList.filter(u => u.is_suspended).length : 0;
+      } catch (e) {
+        console.warn('Could not fetch suspended users count:', e);
+      }
+            
+      if (data.data) {
+        data.data.pending_reports_count = pendingCount;
+        data.data.suspended_users_count = suspendedCount;
+      } else {
+        data.pending_reports_count = pendingCount;
+        data.suspended_users_count = suspendedCount;
+      }
+      
+      return data;
     }
   } catch (error) {
     console.warn('Admin analytics endpoint unavailable, using fallback metrics.', error);
@@ -124,10 +155,11 @@ export const restoreUser = async (userId) => {
   return response.json();
 };
 
-export const getUsers = async ({ page = 1, limit = 20, role = 'All', search = '' } = {}) => {
+export const getUsers = async ({ page = 1, limit = 20, role = 'All', status = 'All', search = '' } = {}) => {
   const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
   const query = new URLSearchParams({ page, limit });
   if (role !== 'All') query.append('role', role);
+  if (status !== 'All') query.append('status', status);
   if (search) query.append('search', search);
   
   const response = await fetch(`${API_BASE_URL}/admin/users?${query.toString()}`, {
@@ -157,6 +189,121 @@ export const getSystemLogs = async ({ level = 'All' } = {}) => {
   if (level !== 'All') query.append('level', level);
   
   const response = await fetch(`${API_BASE_URL}/admin/logs?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};
+
+export const getTracksAdmin = async ({ page = 1, limit = 20, status = 'All', search = '' } = {}) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const query = new URLSearchParams({ page, limit });
+  if (status !== 'All') query.append('status', status);
+  if (search) query.append('search', search);
+  
+  const response = await fetch(`${API_BASE_URL}/admin/tracks?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};
+
+export const getAlbumsAdmin = async ({ page = 1, limit = 20, status = 'All', search = '' } = {}) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const query = new URLSearchParams({ page, limit });
+  if (status !== 'All') query.append('status', status);
+  if (search) query.append('search', search);
+  
+  const response = await fetch(`${API_BASE_URL}/admin/albums?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};
+
+export const blockTrack = async (trackId) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/tracks/${trackId}/block`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok && response.status !== 404) {
+    // Fallback to PUT if PATCH isn't supported, or maybe it's just a general PATCH
+    const putResponse = await fetch(`${API_BASE_URL}/admin/tracks/${trackId}/block`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!putResponse.ok) throw new Error(await putResponse.text());
+    return putResponse.json();
+  }
+  return response.json();
+};
+
+export const unblockTrack = async (trackId) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/tracks/${trackId}/unblock`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok && response.status !== 404) {
+    const putResponse = await fetch(`${API_BASE_URL}/admin/tracks/${trackId}/unblock`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!putResponse.ok) throw new Error(await putResponse.text());
+    return putResponse.json();
+  }
+  return response.json();
+};
+
+export const hideAlbum = async (albumId) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/albums/${albumId}/block`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok && response.status !== 404) {
+    const putResponse = await fetch(`${API_BASE_URL}/admin/albums/${albumId}/block`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!putResponse.ok) throw new Error(await putResponse.text());
+    return putResponse.json();
+  }
+  return response.json();
+};
+
+export const unhideAlbum = async (albumId) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/albums/${albumId}/unblock`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok && response.status !== 404) {
+    const putResponse = await fetch(`${API_BASE_URL}/admin/albums/${albumId}/unblock`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!putResponse.ok) throw new Error(await putResponse.text());
+    return putResponse.json();
+  }
+  return response.json();
+};
+
+export const deleteTrackAdmin = async (trackId) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/tracks/${trackId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};
+
+export const deleteAlbumAdmin = async (albumId) => {
+  const token = localStorage.getItem('pulsify_access_token') || localStorage.getItem('adminToken') || localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}/admin/albums/${albumId}`, {
+    method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!response.ok) throw new Error(await response.text());

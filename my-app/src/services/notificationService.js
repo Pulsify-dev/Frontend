@@ -20,6 +20,7 @@ apiClient.interceptors.request.use((config) => {
 export const adaptNotification = (n) => ({
   id: n._id || n.id,
   type: n.action_type || n.type,
+  actorId: n.actor_id?._id || n.actor_id || n.actorId,
   actorName: n.actor_id?.display_name || n.actor_name || n.actorName || 'Someone',
   actorAvatar: n.actor_id?.avatar_url || n.actor_avatar || n.actorAvatar || '',
   targetTitle: n.target_title || n.targetTitle,

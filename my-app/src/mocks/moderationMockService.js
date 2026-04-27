@@ -69,24 +69,30 @@ export const updateUserRole = async (userId, role) => {
 // Mock logic for development when VITE_USE_MOCK_API is true
 class ModerationMockService {
   constructor() {
-    this.mockReports = [
-      {
-        _id: '65e2b3c4d5e6f7a8b9c0d1e2',
-        reporter_id: { _id: '64f1a2b3c4d5e6f7a8b9c0d1', username: 'johndoe', email: 'johndoe@example.com' },
-        entity_type: 'Track',
-        status: 'Pending',
-        reason: 'Copyright',
-        description: 'Mock report description'
-      },
-      {
-        _id: '8212b3c4d5e6f7a8b9c0d9e4',
-        reporter_id: { _id: '12f1a2b3c4d5e6f7a8b9c0d3', username: 'janedoe', email: 'jane@example.com' },
-        entity_type: 'User',
-        status: 'Pending',
-        reason: 'InappropriateContent',
-        description: 'Account spamming comments.'
-      }
-    ];
+    const savedReports = localStorage.getItem('pulsify_mock_reports');
+    if (savedReports) {
+      this.mockReports = JSON.parse(savedReports);
+    } else {
+      this.mockReports = [
+        {
+          _id: '65e2b3c4d5e6f7a8b9c0d1e2',
+          reporter_id: { _id: '64f1a2b3c4d5e6f7a8b9c0d1', username: 'johndoe', email: 'johndoe@example.com' },
+          entity_type: 'Track',
+          status: 'pending',
+          reason: 'Copyright',
+          description: 'Mock report description'
+        },
+        {
+          _id: '8212b3c4d5e6f7a8b9c0d9e4',
+          reporter_id: { _id: '12f1a2b3c4d5e6f7a8b9c0d3', username: 'janedoe', email: 'jane@example.com' },
+          entity_type: 'User',
+          status: 'pending',
+          reason: 'InappropriateContent',
+          description: 'Account spamming comments.'
+        }
+      ];
+      localStorage.setItem('pulsify_mock_reports', JSON.stringify(this.mockReports));
+    }
   }
 
   async createReport(reportData) {
@@ -98,9 +104,10 @@ class ModerationMockService {
       entity_id: reportData.entity_id,
       reason: reportData.reason,
       description: reportData.description || '',
-      status: 'Pending'
+      status: 'pending'
     };
     this.mockReports.unshift(report);
+    localStorage.setItem('pulsify_mock_reports', JSON.stringify(this.mockReports));
     return new Promise(resolve => 
       setTimeout(() => resolve({ status: 'success', data: { report } }), 500)
     );
@@ -120,6 +127,7 @@ class ModerationMockService {
     if (report) {
       report.status = status;
       report.admin_notes = adminNotes;
+      localStorage.setItem('pulsify_mock_reports', JSON.stringify(this.mockReports));
     }
     return new Promise(resolve => 
       setTimeout(() => resolve({ status: 'success', data: { report: { _id: reportId, status, admin_notes: adminNotes } } }), 500)
