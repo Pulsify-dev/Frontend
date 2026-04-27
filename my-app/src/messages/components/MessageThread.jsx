@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SharedEntityCard from "@/messages/components/SharedEntityCard";
 import { MessageComposer } from "@/messages/components/MessageComposer";
 import { useMessaging } from "@/hooks/useMessaging";
@@ -136,36 +136,46 @@ export const MessageThread = ({
                 <span>Loading chat history...</span>
               </div>
             ) : messages.length ? (
-              messages.map((message) => {
-                const isMine = String(message.senderId ?? "") === String(currentUserId ?? "");
+              <>
+                {messages.map((message) => {
+                  const isMine = String(message.senderId ?? "") === String(currentUserId ?? "");
 
-                return (
-                  <article
-                    key={message.id || message.clientNonce}
-                    className={`messages-bubble-row${isMine ? " is-mine" : ""}`}
-                  >
-                    <div className={`messages-bubble${isMine ? " is-mine" : ""}`}>
-                      {message.text ? <p>{message.text}</p> : null}
+                  return (
+                    <article
+                      key={message.id || message.clientNonce}
+                      className={`messages-bubble-row${isMine ? " is-mine" : ""}`}
+                    >
+                      <div className={`messages-bubble${isMine ? " is-mine" : ""}`}>
+                        {message.text ? <p>{message.text}</p> : null}
 
-                      {message.sharedEntity ? (
-                        <SharedEntityCard sharedEntity={message.sharedEntity} />
-                      ) : null}
-
-                      <div className="messages-bubble-footer">
-                        <div className="messages-bubble-meta">
-                          <span>{formatMessageTime(message.createdAt)}</span>
-                        </div>
-                        {isMine && message.deliveryState === "failed" ? (
-                          <span className="messages-bubble-error">Failed</span>
+                        {message.sharedEntity ? (
+                          <SharedEntityCard sharedEntity={message.sharedEntity} />
                         ) : null}
-                        {isMine && message.deliveryState === "sending" ? <span>Sending...</span> : null}
+
+                        <div className="messages-bubble-footer">
+                          <div className="messages-bubble-meta">
+                            <span>{formatMessageTime(message.createdAt)}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                );
-              })
+                    </article>
+                  );
+                })}
+                {isUserBlockedByThem && (
+                  <div className="messages-thread-system-message">
+                    This user blocked you. You cannot send messages or tracks.
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="messages-thread-state">No messages yet.</div>
+              <div className="messages-thread-state">
+                {isUserBlockedByThem && (
+                  <div className="messages-thread-system-message">
+                    This user blocked you. You cannot send messages or tracks.
+                  </div>
+                )}
+                {!isUserBlockedByThem && "No messages yet."}
+              </div>
             )}
           </div>
 
