@@ -8,12 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { MessagingContext } from "@/context/messagingContextValue";
 import serviceLocator from "@/utils/serviceLocator";
-import {
-  adaptConversation,
-  adaptMessage,
-  createOptimisticMessage,
-  sortMessagesByTime,
-} from "@/messages/adapters/messagingAdapter";
+import { adaptMessage, createOptimisticMessage, sortMessagesByTime } from "@/messages/adapters/messagingAdapter";
 import {
   connectMessagingSocket,
   disconnectMessagingSocket,
@@ -55,6 +50,15 @@ const toConversationPreview = (message, fallbackConversation) => {
     lastMessageAt: message.createdAt,
     lastMessageText: nextText || currentText,
   };
+};
+
+const isBlockedState = (value) =>
+  value === "i_blocked_them" || value === "they_blocked_me";
+
+const resolveBlockedStatePriority = (...states) => {
+  if (states.includes("i_blocked_them")) return "i_blocked_them";
+  if (states.includes("they_blocked_me")) return "they_blocked_me";
+  return "none";
 };
 
 export const MessagingProvider = ({ children }) => {
@@ -299,7 +303,7 @@ export const MessagingProvider = ({ children }) => {
     setIsLoadingConversations(true);
     try {
       const response = await serviceLocator.messaging.getConversations(1, 20);
-      const normalizedConversations = (response.conversations ?? []).map(adaptConversation);
+      const normalizedConversations = response.conversations ?? [];
 
       const nextParticipants = {};
       normalizedConversations.forEach((conversation) => {
@@ -309,9 +313,8 @@ export const MessagingProvider = ({ children }) => {
 
       const nextBlockedStates = {};
       normalizedConversations.forEach((conversation) => {
-        if (conversation.blockStatus && conversation.blockStatus !== "none") {
-          nextBlockedStates[conversation.id] = conversation.blockStatus;
-        }
+        const resolvedState = resolveBlockedStatePriority(conversation.blockStatus);
+        if (resolvedState !== "none") nextBlockedStates[conversation.id] = resolvedState;
       });
       setBlockedStateByConversation(nextBlockedStates);
 
@@ -427,22 +430,41 @@ export const MessagingProvider = ({ children }) => {
   }, [loadUnreadCount]);
 
   const blockUserInConversation = useCallback(async (userId, reason = "") => {
-    try {
-      await blockUser(userId, reason);
+    const applyBlockedStateForUser = () => {
       setBlockedUserIds((prev) => new Set([...prev, userId]));
       setBlockedStateByConversation((prev) => {
         const next = { ...prev };
         Object.entries(knownConversationParticipantsRef.current).forEach(
           ([conversationId, participantId]) => {
             if (participantId === userId) {
-              next[conversationId] = "i_blocked_them";
+              next[conversationId] = resolveBlockedStatePriority(
+                "i_blocked_them",
+                next[conversationId],
+              );
             }
           },
         );
         return next;
       });
+    };
+
+    try {
+      await blockUser(userId, reason);
+      applyBlockedStateForUser();
       navigate("/messages");
     } catch (err) {
+      const errorText = String(err?.response?.data?.error ?? err?.message ?? "").toLowerCase();
+      const isAlreadyBlocked =
+        Number(err?.response?.status) === 409 ||
+        errorText.includes("already blocked") ||
+        (errorText.includes("request failed") && errorText.includes("409"));
+
+      if (isAlreadyBlocked) {
+        applyBlockedStateForUser();
+        navigate("/messages");
+        return;
+      }
+
       console.error("Failed to block user:", err);
       throw err;
     }
@@ -483,14 +505,17 @@ export const MessagingProvider = ({ children }) => {
     }
 
     try {
-      const conversation = adaptConversation(
-        await serviceLocator.messaging.startOrGetConversation(normalizedRecipientId),
+      const conversation = await serviceLocator.messaging.startOrGetConversation(
+        normalizedRecipientId,
       );
 
       if (conversation.blockStatus && conversation.blockStatus !== "none") {
         setBlockedStateByConversation((prev) => ({
           ...prev,
-          [conversation.id]: conversation.blockStatus,
+          [conversation.id]: resolveBlockedStatePriority(
+            conversation.blockStatus,
+            prev[conversation.id],
+          ),
         }));
       }
 
@@ -515,9 +540,15 @@ export const MessagingProvider = ({ children }) => {
     const normalizedConversationId = String(conversationId ?? "").trim();
     if (!normalizedConversationId) return null;
 
-    const blockedState = blockedStateByConversation[normalizedConversationId];
-    if (blockedState === "i_blocked_them" || blockedState === "they_blocked_me") {
-      setSendingError("Messaging is blocked in this conversation.");
+    const blockedState = resolveBlockedStatePriority(
+      blockedStateByConversation[normalizedConversationId],
+    );
+    if (blockedState === "i_blocked_them") {
+      setSendingError("You blocked this user. Unblock to send messages or tracks.");
+      return null;
+    }
+    if (blockedState === "they_blocked_me") {
+      setSendingError("This user blocked you. You cannot send messages or tracks.");
       return null;
     }
 
@@ -596,9 +627,20 @@ export const MessagingProvider = ({ children }) => {
       if (errorText.includes("block")) {
         setBlockedStateByConversation((prev) => ({
           ...prev,
-          [normalizedConversationId]: "they_blocked_me",
+          [normalizedConversationId]: resolveBlockedStatePriority(
+            "they_blocked_me",
+            prev[normalizedConversationId],
+          ),
         }));
-        setSendingError("You cannot send messages in this conversation.");
+        const nextState = resolveBlockedStatePriority(
+          "they_blocked_me",
+          blockedStateByConversation[normalizedConversationId],
+        );
+        setSendingError(
+          nextState === "i_blocked_them"
+            ? "You blocked this user. Unblock to send messages or tracks."
+            : "This user blocked you. You cannot send messages or tracks.",
+        );
       } else {
         setSendingError("Message failed to send.");
       }
@@ -708,10 +750,17 @@ export const MessagingProvider = ({ children }) => {
 
     evaluateBlockedState(currentConversation).then((state) => {
       if (!mountedRef.current) return;
-      setBlockedStateByConversation((prev) => ({
-        ...prev,
-        [activeConversationId]: state,
-      }));
+      setBlockedStateByConversation((prev) => {
+        const previousState = prev[activeConversationId];
+        const shouldPreservePrevious = state === "none" && isBlockedState(previousState);
+        const resolvedState = shouldPreservePrevious
+          ? previousState
+          : resolveBlockedStatePriority(state, previousState);
+        return {
+          ...prev,
+          [activeConversationId]: resolvedState,
+        };
+      });
     });
   }, [
     activeConversationId,

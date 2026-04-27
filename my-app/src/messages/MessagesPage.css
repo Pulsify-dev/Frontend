@@ -10,7 +10,8 @@
 .messages-layout {
   display: grid;
   grid-template-columns: 350px 1fr;
-  min-height: calc(100vh - var(--sc-navbar-height) - var(--sc-player-height));
+  height: calc(100vh - var(--sc-navbar-height) - var(--sc-player-height));
+  min-height: 0;
 }
 
 .messages-list-shell,
@@ -23,6 +24,7 @@
   border-right: none;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .messages-list-header {
@@ -176,6 +178,8 @@
   display: flex;
   flex-direction: column;
   padding: 12px 20px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .messages-thread-top {
@@ -184,6 +188,7 @@
   align-items: center;
   gap: 12px;
   padding-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .messages-thread-top-left {
@@ -202,10 +207,31 @@
   white-space: nowrap;
 }
 
+.messages-thread-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.messages-thread-avatar-default {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--sc-bg-surface);
+  color: var(--sc-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .messages-thread-top-right {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .messages-text-action {
@@ -219,13 +245,6 @@
 
 .messages-text-action:hover {
   color: var(--sc-text-primary);
-}
-
-.messages-blocked-notice {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--sc-text-secondary);
-  opacity: 0.7;
 }
 
 .messages-pill-btn {
@@ -287,35 +306,17 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
 }
 
 .messages-bubble-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 0;
 }
 
 .messages-bubble-row.is-mine {
   justify-content: flex-end;
-}
-
-.messages-bubble-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.messages-bubble-avatar-default {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--sc-bg-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--sc-text-muted);
-  font-size: 12px;
 }
 
 .messages-bubble {
@@ -415,6 +416,9 @@
 
 .messages-composer {
   padding-top: 12px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--sc-border);
+  background: var(--sc-bg-primary);
 }
 
 .messages-composer textarea {

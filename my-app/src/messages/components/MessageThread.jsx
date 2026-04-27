@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SharedEntityCard from "@/messages/components/SharedEntityCard";
 import { MessageComposer } from "@/messages/components/MessageComposer";
 import { useMessaging } from "@/hooks/useMessaging";
-import { X, AlertTriangle, User } from "lucide-react";
+import { AlertTriangle, User } from "lucide-react";
 
 const formatMessageTime = (iso) => {
   if (!iso) return "";
@@ -23,7 +23,6 @@ export const MessageThread = ({
   conversation,
   messages,
   currentUserId,
-  currentUserAvatarUrl,
   blockedState,
   onSendMessage,
   sendingError,
@@ -33,6 +32,7 @@ export const MessageThread = ({
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [isBlocking, setIsBlocking] = useState(false);
+  const threadBodyRef = useRef(null);
 
   const participant = conversation?.otherParticipant ?? {};
   const currentBlockedState = blockedState || "none";
@@ -77,28 +77,47 @@ export const MessageThread = ({
     setBlockReason("");
   };
 
+  useEffect(() => {
+    if (!conversation || !threadBodyRef.current) return;
+    threadBodyRef.current.scrollTop = threadBodyRef.current.scrollHeight;
+  }, [conversation?.id, messages.length, isLoading]);
+
   return (
     <section className="messages-thread-shell">
       <header className="messages-thread-top">
         <div className="messages-thread-top-left">
           {conversation ? (
             <>
+              {participant.avatarUrl ? (
+                <img
+                  className="messages-thread-avatar"
+                  src={participant.avatarUrl}
+                  alt={`${participant.displayName || participant.username || "User"} avatar`}
+                />
+              ) : (
+                <div className="messages-thread-avatar messages-thread-avatar-default">
+                  <User size={14} />
+                </div>
+              )}
+
               <h3 className="messages-thread-title">
                 {participant.displayName || participant.username || "Unknown user"}
               </h3>
-              {isUserBlockedByMe ? (
-                <button type="button" className="messages-text-action" onClick={handleBlockClick}>Unblock</button>
-              ) : isUserBlockedByThem ? (
-                <span className="messages-blocked-notice">Blocked</span>
-              ) : (
-                <button type="button" className="messages-text-action" onClick={handleBlockClick}>Block</button>
-              )}
             </>
           ) : null}
         </div>
 
         {conversation ? (
           <div className="messages-thread-top-right">
+            {isUserBlockedByMe ? (
+              <button type="button" className="messages-text-action" onClick={handleBlockClick}>
+                Unblock
+              </button>
+            ) : isUserBlockedByThem ? null : (
+              <button type="button" className="messages-text-action" onClick={handleBlockClick}>
+                Block
+              </button>
+            )}
           </div>
         ) : null}
       </header>
@@ -110,7 +129,7 @@ export const MessageThread = ({
         </div>
       ) : (
         <>
-          <div className="messages-thread-body">
+          <div className="messages-thread-body" ref={threadBodyRef}>
             {isLoading ? (
               <div className="messages-thread-state">
                 <span className="messages-loading-spinner" />
@@ -119,33 +138,12 @@ export const MessageThread = ({
             ) : messages.length ? (
               messages.map((message) => {
                 const isMine = String(message.senderId ?? "") === String(currentUserId ?? "");
-                const messageAuthor = isMine
-                  ? "Me"
-                  : participant.displayName || participant.username || "Unknown user";
-                const hasAvatar = isMine
-                  ? !!currentUserAvatarUrl
-                  : !!participant.avatarUrl;
-                const avatarUrl = isMine
-                  ? currentUserAvatarUrl
-                  : participant.avatarUrl;
 
                 return (
                   <article
                     key={message.id || message.clientNonce}
                     className={`messages-bubble-row${isMine ? " is-mine" : ""}`}
                   >
-                    {hasAvatar ? (
-                      <img
-                        className="messages-bubble-avatar"
-                        src={avatarUrl}
-                        alt={`${messageAuthor} avatar`}
-                      />
-                    ) : (
-                      <div className="messages-bubble-avatar messages-bubble-avatar-default">
-                        <User size={12} />
-                      </div>
-                    )}
-
                     <div className={`messages-bubble${isMine ? " is-mine" : ""}`}>
                       {message.text ? <p>{message.text}</p> : null}
 

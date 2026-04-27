@@ -137,10 +137,9 @@ const MessagesPage = () => {
           conversation={activeConversation}
           messages={activeMessages}
           currentUserId={user?.id}
-          currentUserAvatarUrl={user?.avatarUrl || user?.avatar_url}
           blockedState={
             effectiveConversationId
-              ? activeConversation?.blockStatus || blockedStateByConversation[effectiveConversationId] || "none"
+              ? blockedStateByConversation[effectiveConversationId] || activeConversation?.blockStatus || "none"
               : "none"
           }
           onSendMessage={handleSendMessage}

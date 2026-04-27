@@ -15,11 +15,11 @@ export const MessageComposer = ({
 
   const blockedMessage = useMemo(() => {
     if (blockedState === "i_blocked_them") {
-      return "You blocked this user. Unblock to send messages.";
+      return "You blocked this user. Unblock to send messages or tracks.";
     }
 
     if (blockedState === "they_blocked_me") {
-      return "You cannot send messages to this user.";
+      return "This user blocked you. You cannot send messages or tracks.";
     }
 
     return "";
