@@ -11,7 +11,6 @@ const TABS = [
   { label: "Albums", path: null },
   { label: "Playlists", path: "/playlists" },
   { label: "Reposts", path: null },
-  { label: "Feed", path: "/feed" },
 ];
 
 export default function ProfileCard({
@@ -227,19 +226,26 @@ export default function ProfileCard({
             ))}
           </div>
 
-          {/* Quick nav to other modules */}
-          <div className="sc-sidebar-nav">
-            <Link to="/feed" className="sc-nav-link">
-              🎵 My Feed
-            </Link>
-            <Link to="/search" className="sc-nav-link">
-              🔍 Discover
-            </Link>
-            <Link to="/trending" className="sc-nav-link">
-              📈 Trending
-            </Link>
-            <Link to="/premium" className="sc-nav-link sc-nav-link--premium">
-              ⭐ Go Pro
+          {/* Upgrade card */}
+          <div className="sc-upgrade-card">
+            <div className="sc-upgrade-card-header">
+              <span className="sc-upgrade-card-label">ARTIST PRO</span>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                opacity="0.6"
+              >
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+              </svg>
+            </div>
+            <p className="sc-upgrade-card-desc">
+              With an Artist Pro account, you can upload more tracks, access
+              advanced analytics, and promote your music.
+            </p>
+            <Link to="/premium" className="sc-upgrade-card-btn">
+              Upgrade to Artist Pro
             </Link>
           </div>
         </aside>

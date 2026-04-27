@@ -85,7 +85,9 @@
 .landing-hero {
   position: relative;
   min-height: 420px;
-  background: linear-gradient(135deg, #1a2a2a 0%, #0d1a1a 40%, #111 100%);
+  background:
+    url("/images.jpeg") center center / cover no-repeat,
+    linear-gradient(135deg, #1a2a2a 0%, #0d1a1a 40%, #111 100%);
   display: flex;
   align-items: center;
   overflow: hidden;

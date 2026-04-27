@@ -563,35 +563,50 @@
   background: #e04a00;
 }
 
-/* ── Sidebar nav links to other modules ──────────── */
-.sc-sidebar-nav {
+/* ── Artist Pro upgrade card ──────────── */
+.sc-upgrade-card {
   margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid #222;
-  padding-top: 16px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 14px 16px;
+  background: #111;
 }
-.sc-nav-link {
-  font-size: 13px;
+.sc-upgrade-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sc-upgrade-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+.sc-upgrade-card-desc {
+  font-size: 12px;
   color: #aaa;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+.sc-upgrade-card-btn {
+  display: block;
+  width: 100%;
+  padding: 9px 0;
+  background: #fff;
+  color: #111;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
   text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 4px;
   transition:
     background 0.2s,
     color 0.2s;
 }
-.sc-nav-link:hover {
-  background: #222;
-  color: #fff;
-}
-.sc-nav-link--premium {
-  color: #aaa;
-}
-.sc-nav-link--premium:hover {
-  background: #222;
-  color: #fff;
+.sc-upgrade-card-btn:hover {
+  background: #e0e0e0;
 }
 
 /* Tab as Link */
