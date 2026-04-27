@@ -32,16 +32,15 @@ export const MessageComposer = ({
     if (!canSend) return;
 
     const trimmed = text.trim();
-    if (!trimmed && !attachedEntity) return;
+    if (!trimmed && !attachedEntity?.id) return;
 
-    const success = await onSend({
+    setText("");
+    setAttachedEntity(null);
+
+    await onSend({
       text: trimmed,
-      sharedEntity: attachedEntity,
+      sharedEntity: attachedEntity?.id ? attachedEntity : null,
     });
-    if (success) {
-      setText("");
-      setAttachedEntity(null);
-    }
   };
 
   const handleAttachClick = () => {
@@ -112,7 +111,7 @@ export const MessageComposer = ({
             disabled={!canSend}
           >
             <Plus size={14} style={{ marginRight: 4, verticalAlign: "middle" }} />
-            Add
+            Add music or playlist
           </button>
 
           <button
@@ -123,18 +122,6 @@ export const MessageComposer = ({
             {isSending ? "Sending" : "Send"}
           </button>
         </div>
-
-        {blockedMessage ? (
-          <p className="messages-composer-note messages-composer-note-error">
-            {blockedMessage}
-          </p>
-        ) : null}
-
-        {!blockedMessage && errorMessage ? (
-          <p className="messages-composer-note messages-composer-note-error">
-            {errorMessage}
-          </p>
-        ) : null}
       </form>
 
       <ShareEntityModal
