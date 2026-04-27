@@ -109,8 +109,11 @@ const matchesFilter = (entry, filterValue) => {
     .some((value) => String(value).toLowerCase().includes(normalizedFilter));
 };
 
+const getHistoryTrackId = (entry = {}) => entry.trackId ?? entry.id ?? "";
+
 const enrichHistoryEntry = (entry, detail) => {
   const mergedTrack = detail ?? {};
+  const resolvedTrackId = detail?.id ?? getHistoryTrackId(entry);
   const duration = mergedTrack.duration ?? entry.duration ?? 0;
   const durationPlayedMs =
     entry.duration_played_ms ??
@@ -118,7 +121,9 @@ const enrichHistoryEntry = (entry, detail) => {
     Math.max(duration * 1000, 0);
 
   return {
-    id: detail?.id ?? entry.id,
+    id: resolvedTrackId,
+    trackId: resolvedTrackId,
+    historyEntryId: entry.historyEntryId ?? entry.id,
     title: mergedTrack.title ?? entry.title ?? "Untitled track",
     artist: mergedTrack.artist ?? entry.artist ?? "Unknown artist",
     cover:
@@ -130,7 +135,7 @@ const enrichHistoryEntry = (entry, detail) => {
     waveform:
       Array.isArray(mergedTrack.waveform) && mergedTrack.waveform.length
         ? mergedTrack.waveform
-        : createWaveform(detail?.id ?? entry.id),
+        : createWaveform(resolvedTrackId),
     playedAt: entry.played_at ?? entry.playedAt ?? new Date().toISOString(),
     durationPlayedMs,
     playbackState: mergedTrack.playbackState ?? "Playable",
@@ -257,7 +262,7 @@ function PlaybackHistoryPage() {
     const uniqueTrackIds = [
       ...new Set(
         [...visibleRecentEntries, ...visibleHistoryEntries]
-          .map((entry) => entry.id)
+          .map((entry) => getHistoryTrackId(entry))
           .filter(Boolean)
       ),
     ];
@@ -274,10 +279,10 @@ function PlaybackHistoryPage() {
     });
 
     const enrichedRecent = visibleRecentEntries.map((entry) =>
-      enrichHistoryEntry(entry, detailMap.get(entry.id))
+      enrichHistoryEntry(entry, detailMap.get(getHistoryTrackId(entry)))
     );
     const enrichedHistory = visibleHistoryEntries.map((entry) =>
-      enrichHistoryEntry(entry, detailMap.get(entry.id))
+      enrichHistoryEntry(entry, detailMap.get(getHistoryTrackId(entry)))
     );
 
     setRecentlyPlayed(enrichedRecent);

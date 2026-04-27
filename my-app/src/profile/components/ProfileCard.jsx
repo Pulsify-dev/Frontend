@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { buildTrackQueueIds } from "../../config/trackCatalog";
 import { socialService } from "../../social/services/socialService";
 import { usePlayer } from "../../hooks/usePlayer";
 
@@ -568,9 +569,11 @@ export default function ProfileCard({
     currentTrack,
     isPlaying,
     currentTime,
+    queueTrackIds,
     loadTrack,
     togglePlay,
     seekTo,
+    setQueueTrackIds,
     setPlayerMessage,
   } = usePlayer();
 
@@ -766,12 +769,17 @@ export default function ProfileCard({
   };
 
   const handleAddToNextUp = (track) => {
+    const nextQueueIds = buildTrackQueueIds(
+      queueTrackIds.length ? queueTrackIds : profileTrackQueue,
+      track?.id,
+    );
+    setQueueTrackIds(nextQueueIds);
     setPlayerMessage?.(`${track.title} added to Next up.`);
     setOpenActionMenuTrackId("");
   };
 
   const handleAddToPlaylist = (track) => {
-    setPlayerMessage?.(`${track.title} added to a mock playlist.`);
+    setPlayerMessage?.(`Playlist actions are not wired yet for ${track.title}.`);
     setOpenActionMenuTrackId("");
   };
 
@@ -782,7 +790,7 @@ export default function ProfileCard({
   };
 
   const handleDistributeTrack = (track) => {
-    setPlayerMessage?.(`${track.title} is ready for distribution in this mock.`);
+    setPlayerMessage?.(`${track.title} is ready when distribution is wired.`);
     setOpenActionMenuTrackId("");
   };
 
@@ -1690,7 +1698,7 @@ export default function ProfileCard({
               </h3>
               <p>
                 Artist Pro tracks can replace files and keep stats. Deleting removes the
-                track from this mock profile, including plays, likes, reposts, and comments.
+                track from this profile, including plays, likes, reposts, and comments.
               </p>
 
               <div className="sc-track-delete-grid">
@@ -1700,7 +1708,7 @@ export default function ProfileCard({
                 </div>
                 <div>
                   <strong>Delete forever</strong>
-                  <p>Remove this track from the mock store and all profile surfaces.</p>
+                  <p>Remove this track from the backend and all profile surfaces.</p>
                 </div>
               </div>
             </div>
@@ -1710,7 +1718,7 @@ export default function ProfileCard({
                 className="sc-track-delete-replace"
                 type="button"
                 onClick={() =>
-                  setPlayerMessage?.("Replace file is mock-only on this profile screen.")
+                  setPlayerMessage?.("Replace file will land here when that flow is wired.")
                 }
               >
                 Replace File

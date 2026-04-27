@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import AlbumEngagementPanel from "@/components/AlbumEngagementPanel";
 import LoadingState from "@/components/LoadingState";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -21,7 +22,9 @@ const DEFAULT_TRACK_ART =
 
 const LIBRARY_TABS = [
   { label: "Overview", value: "overview" },
+  { label: "Popular tracks", value: "popular-tracks" },
   { label: "Likes", value: "likes" },
+  { label: "Reposts", value: "reposts" },
   { label: "Playlists", path: "/playlists" },
   { label: "Albums", value: "albums" },
   { label: "Stations", value: "stations" },
@@ -109,7 +112,9 @@ const getPlaybackStateTone = (value) => {
 const mergeTrackSnapshot = (track = {}, detail = {}) => ({
   ...track,
   ...detail,
-  id: detail.id ?? track.id,
+  id: detail.id ?? track.id ?? track.trackId,
+  trackId: detail.trackId ?? detail.id ?? track.trackId ?? track.id ?? "",
+  historyEntryId: detail.historyEntryId ?? track.historyEntryId ?? null,
   title: detail.title ?? track.title ?? "Untitled track",
   artist: detail.artist ?? track.artist ?? "Unknown artist",
   artistHandle: detail.artistHandle ?? track.artistHandle ?? "",
@@ -136,9 +141,13 @@ const mergeTrackSnapshot = (track = {}, detail = {}) => ({
 
 const enrichLibraryEntry = (entry, detail = {}) => {
   const mergedTrack = mergeTrackSnapshot(entry, detail);
+  const resolvedTrackId = mergedTrack.trackId ?? mergedTrack.id;
 
   return {
     ...mergedTrack,
+    id: resolvedTrackId,
+    trackId: resolvedTrackId,
+    historyEntryId: entry.historyEntryId ?? entry.id ?? null,
     played_at: entry.played_at ?? entry.playedAt ?? null,
     playedAt: entry.played_at ?? entry.playedAt ?? null,
     duration_played_ms:
@@ -167,6 +176,8 @@ const dedupeLibraryEntriesByTrack = (entries = []) => {
   return [...entryMap.values()];
 };
 
+const getLibraryTrackId = (entry = {}) => entry.trackId ?? entry.id ?? "";
+
 const updateCollectionTrack = (collection, trackId, snapshot) =>
   collection.map((track) =>
     track.id === trackId
@@ -181,7 +192,11 @@ const removeTrackFromCollection = (collection, trackId) =>
   collection.filter((track) => track.id !== trackId);
 
 const getActiveLibraryTab = (tabValue) => {
-  if (["likes", "albums", "stations"].includes(tabValue)) {
+  if (
+    ["likes", "popular-tracks", "reposts", "albums", "stations"].includes(
+      tabValue,
+    )
+  ) {
     return tabValue;
   }
 
@@ -464,7 +479,7 @@ export default function LibraryPage() {
         const trackIds = [
           ...new Set(
             [...likes, ...reposts, ...recentEntries, ...historyEntries]
-              .map((entry) => entry.id)
+              .map((entry) => getLibraryTrackId(entry))
               .filter(Boolean),
           ),
         ];
@@ -483,19 +498,19 @@ export default function LibraryPage() {
         if (!isMounted) return;
 
         const nextLikedTracks = likes.map((entry) =>
-          mergeTrackSnapshot(entry, detailMap.get(entry.id)),
+          mergeTrackSnapshot(entry, detailMap.get(getLibraryTrackId(entry))),
         );
         const nextRepostedTracks = reposts.map((entry) =>
-          mergeTrackSnapshot(entry, detailMap.get(entry.id)),
+          mergeTrackSnapshot(entry, detailMap.get(getLibraryTrackId(entry))),
         );
         const nextRecentTracks = dedupeLibraryEntriesByTrack(
           recentEntries.map((entry) =>
-            enrichLibraryEntry(entry, detailMap.get(entry.id)),
+            enrichLibraryEntry(entry, detailMap.get(getLibraryTrackId(entry))),
           ),
         );
         const nextHistoryTracks = sortLibraryEntriesByPlayedAt(
           historyEntries.map((entry) =>
-            enrichLibraryEntry(entry, detailMap.get(entry.id)),
+            enrichLibraryEntry(entry, detailMap.get(getLibraryTrackId(entry))),
           ),
         );
 
@@ -908,20 +923,34 @@ export default function LibraryPage() {
   };
 
   const renderTabContent = () => {
-    if (activeTab === "likes") {
+    if (activeTab === "likes" || activeTab === "popular-tracks") {
+      const isPopularTracksView = activeTab === "popular-tracks";
+
       return (
         <section className="library-section">
           <div className="library-section-header">
             <div>
-              <h1>Likes</h1>
-              <p>Every track you liked, ready to play with the same recent-track shell.</p>
+              <h1>{isPopularTracksView ? "Popular tracks" : "Likes"}</h1>
+              <p>
+                {isPopularTracksView
+                  ? "Tracks you liked, loaded from the backend with the same player shell."
+                  : "Every track you liked, ready to play with the same recent-track shell."}
+              </p>
             </div>
           </div>
 
           {!likedTracks.length ? (
             <div className="library-empty-panel">
-              <strong>No liked tracks yet.</strong>
-              <p>Heart a few tracks and they will show up here instantly.</p>
+              <strong>
+                {isPopularTracksView
+                  ? "No popular tracks yet."
+                  : "No liked tracks yet."}
+              </strong>
+              <p>
+                {isPopularTracksView
+                  ? "Like a few tracks and they will show up here from your real likes feed."
+                  : "Heart a few tracks and they will show up here instantly."}
+              </p>
             </div>
           ) : (
             <div className="library-hero-stack">
@@ -934,15 +963,34 @@ export default function LibraryPage() {
       );
     }
 
-    if (activeTab === "albums") {
+    if (activeTab === "reposts") {
       return (
         <section className="library-section">
-          <div className="library-empty-panel">
-            <strong>No albums in this library view yet.</strong>
-            <p>Your album shelf can plug in here once album surfaces are wired.</p>
+          <div className="library-section-header">
+            <div>
+              <h1>Reposts</h1>
+              <p>Tracks you reposted, loaded from the backend and ready to play.</p>
+            </div>
           </div>
+
+          {!repostedTracks.length ? (
+            <div className="library-empty-panel">
+              <strong>No reposted tracks yet.</strong>
+              <p>Repost a track and it will appear here from your real reposts feed.</p>
+            </div>
+          ) : (
+            <div className="library-hero-stack">
+              {repostedTracks.map((track, index) =>
+                renderHeroTrackCard(track, `reposted-${index}`),
+              )}
+            </div>
+          )}
         </section>
       );
+    }
+
+    if (activeTab === "albums") {
+      return <AlbumEngagementPanel />;
     }
 
     if (activeTab === "stations") {

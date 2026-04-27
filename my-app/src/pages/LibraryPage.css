@@ -194,6 +194,135 @@
   font-size: 1rem;
 }
 
+.library-album-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.library-album-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.library-album-form,
+.library-album-actions,
+.library-album-status {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.library-album-field {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 8px;
+  color: #d8d8d8;
+}
+
+.library-album-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+}
+
+.library-album-submit,
+.library-album-action {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.library-album-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #c9c9c9;
+}
+
+.library-album-pill.is-active {
+  border-color: rgba(255, 85, 0, 0.5);
+  color: #fff;
+  background: rgba(255, 85, 0, 0.12);
+}
+
+.library-album-note {
+  margin: 0;
+  color: #d3d3d3;
+}
+
+.library-album-note.is-error {
+  color: #ff8f7b;
+}
+
+.library-album-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.library-album-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.library-album-card h2,
+.library-album-card p {
+  margin: 0;
+}
+
+.library-album-people {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.library-album-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-album-person img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.library-album-person div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.library-album-person strong {
+  color: #fff;
+}
+
+.library-album-person span {
+  color: #a7a7a7;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 1100px) {
   .library-media-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -213,6 +342,10 @@
   .library-media-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+  }
+
+  .library-album-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .library-tab {

@@ -18,7 +18,9 @@ import "./ProfilePage.css";
 const mergeTrackSnapshot = (track = {}, detail = {}) => ({
   ...track,
   ...detail,
-  id: detail.id ?? track.id,
+  id: detail.id ?? track.id ?? track.trackId,
+  trackId: detail.trackId ?? detail.id ?? track.trackId ?? track.id ?? "",
+  historyEntryId: detail.historyEntryId ?? track.historyEntryId ?? null,
   title: detail.title ?? track.title ?? "Untitled track",
   artist: detail.artist ?? track.artist ?? "Unknown artist",
   artistHandle: detail.artistHandle ?? track.artistHandle ?? "",
@@ -42,9 +44,13 @@ const mergeTrackSnapshot = (track = {}, detail = {}) => ({
 
 const enrichLibraryEntry = (entry, detail = {}) => {
   const mergedTrack = mergeTrackSnapshot(entry, detail);
+  const resolvedTrackId = mergedTrack.trackId ?? mergedTrack.id;
 
   return {
     ...mergedTrack,
+    id: resolvedTrackId,
+    trackId: resolvedTrackId,
+    historyEntryId: entry.historyEntryId ?? entry.id ?? null,
     played_at: entry.played_at ?? entry.playedAt ?? null,
     playedAt: entry.played_at ?? entry.playedAt ?? null,
     duration_played_ms:
@@ -85,6 +91,8 @@ const dedupeLibraryEntriesByTrack = (entries = []) => {
 
   return [...entryMap.values()];
 };
+
+const getLibraryTrackId = (entry = {}) => entry.trackId ?? entry.id ?? "";
 
 export default function ProfilePage() {
   const { currentTrack, isPlaying, syncCurrentTrack } = usePlayer();
@@ -137,7 +145,7 @@ export default function ProfilePage() {
         const trackIds = [
           ...new Set(
             [...likes, ...reposts, ...recentEntries, ...historyEntries]
-              .map((entry) => entry.id)
+              .map((entry) => getLibraryTrackId(entry))
               .filter(Boolean),
           ),
         ];
@@ -146,30 +154,55 @@ export default function ProfilePage() {
           trackIds.map((trackId) => getTrack(trackId)),
         );
         const detailMap = new Map();
+        const failedTrackIds = new Set();
 
         detailResults.forEach((result, index) => {
           if (result.status === "fulfilled") {
             detailMap.set(trackIds[index], result.value);
+          } else {
+            failedTrackIds.add(trackIds[index]);
           }
         });
 
+        if (failedTrackIds.size > 0) {
+          console.warn(
+            `${failedTrackIds.size} tracks not found on backend:`,
+            Array.from(failedTrackIds),
+          );
+        }
+
+        const filterValidTracks = (entries) =>
+          entries.filter((entry) => !failedTrackIds.has(getLibraryTrackId(entry)));
+
         setLikedTracks(
-          likes.map((entry) => mergeTrackSnapshot(entry, detailMap.get(entry.id))),
+          filterValidTracks(
+            likes.map((entry) =>
+              mergeTrackSnapshot(entry, detailMap.get(getLibraryTrackId(entry))),
+            ),
+          ),
         );
         setRepostedTracks(
-          reposts.map((entry) => mergeTrackSnapshot(entry, detailMap.get(entry.id))),
+          filterValidTracks(
+            reposts.map((entry) =>
+              mergeTrackSnapshot(entry, detailMap.get(getLibraryTrackId(entry))),
+            ),
+          ),
         );
         setRecentTracks(
           dedupeLibraryEntriesByTrack(
-            recentEntries.map((entry) =>
-              enrichLibraryEntry(entry, detailMap.get(entry.id)),
+            filterValidTracks(
+              recentEntries.map((entry) =>
+                enrichLibraryEntry(entry, detailMap.get(getLibraryTrackId(entry))),
+              ),
             ),
           ),
         );
         setHistoryTracks(
           sortLibraryEntriesByPlayedAt(
-            historyEntries.map((entry) =>
-              enrichLibraryEntry(entry, detailMap.get(entry.id)),
+            filterValidTracks(
+              historyEntries.map((entry) =>
+                enrichLibraryEntry(entry, detailMap.get(getLibraryTrackId(entry))),
+              ),
             ),
           ),
         );

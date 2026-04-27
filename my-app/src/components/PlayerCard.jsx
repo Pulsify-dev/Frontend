@@ -134,8 +134,8 @@ function PlayerCard({
         timestamp_ms: attachTimestamp ? Math.floor(currentTime * 1000) : null,
       })
       setText('')
-    } catch {
-      setError('Comment could not be posted.')
+    } catch (error) {
+      setError(error?.message || 'Comment could not be posted.')
     } finally {
       setIsSubmitting(false)
     }

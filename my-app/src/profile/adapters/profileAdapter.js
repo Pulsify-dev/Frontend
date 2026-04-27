@@ -2,15 +2,33 @@ export function mapProfileDtoToProfile(dto) {
   return {
     id: dto._id || dto.id,
     username: dto.username,
-    displayName: dto.display_name,
+    displayName: dto.display_name ?? dto.displayName ?? dto.username,
     bio: dto.bio,
     location: dto.location,
-    favoriteGenres: dto.favorite_genres,
-    avatarUrl: dto.avatar_url,
-    coverUrl: dto.cover_url,
-    accountTier: dto.account_tier,
-    isPrivate: dto.is_private,
+    favoriteGenres: dto.favorite_genres ?? dto.favoriteGenres ?? [],
+    avatarUrl: dto.avatar_url ?? dto.avatarUrl,
+    coverUrl: dto.cover_url ?? dto.coverUrl,
+    accountTier: dto.account_tier ?? dto.accountTier,
+    isPrivate: dto.is_private ?? dto.isPrivate,
     socialLinks: dto.social_links ?? {},
+    likesCount:
+      dto.likes_count ??
+      dto.likesCount ??
+      dto.liked_tracks_count ??
+      dto.likedTracksCount ??
+      0,
+    repostsCount:
+      dto.reposts_count ??
+      dto.repostsCount ??
+      dto.reposted_tracks_count ??
+      dto.repostedTracksCount ??
+      0,
+    trackCount:
+      dto.track_count ??
+      dto.trackCount ??
+      dto.tracks_count ??
+      dto.tracksCount ??
+      0,
   };
 }
 

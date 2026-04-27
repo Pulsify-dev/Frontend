@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import serviceLocator from "../utils/serviceLocator";
+import { readAuthToken } from "../services/api";
 
 // Observer Pattern: broadcasts notification state updates app-wide
 export const NotificationContext = createContext();
@@ -12,6 +13,12 @@ export const NotificationProvider = ({ children }) => {
 
   // Fetch notifications from DI service
   const loadNotifications = useCallback(async () => {
+    if (!readAuthToken()) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     try {
       const data = await serviceLocator.notifications.fetchNotifications();
       setNotifications(data);
@@ -23,9 +30,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Initial fetch + polling interval (simulates push notifications)
   useEffect(() => {
-    const token =
-      localStorage.getItem("pulsify_access_token") ||
-      localStorage.getItem("pulsify_jwt_token");
+    const token = readAuthToken();
 
     if (!token) return;
 

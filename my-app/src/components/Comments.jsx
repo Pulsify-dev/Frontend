@@ -8,8 +8,14 @@ const formatTime = (seconds) => {
 
 const formatRelativeDate = (value) => {
   const then = new Date(value)
+  const timestamp = then.getTime()
+
+  if (Number.isNaN(timestamp)) {
+    return 'just now'
+  }
+
   const now = new Date()
-  const diffHours = Math.round((then.getTime() - now.getTime()) / (1000 * 60 * 60))
+  const diffHours = Math.round((timestamp - now.getTime()) / (1000 * 60 * 60))
 
   if (Math.abs(diffHours) < 24) {
     return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
@@ -45,6 +51,40 @@ const mergeById = (items) => {
   return [...itemMap.values()]
 }
 
+const getCommentCreatedAtMs = (comment) => {
+  const createdAtMs = new Date(comment?.created_at).getTime()
+  return Number.isNaN(createdAtMs) ? 0 : createdAtMs
+}
+
+const getCommentTimelineMs = (comment) =>
+  typeof comment?.timestamp_ms === 'number'
+    ? comment.timestamp_ms
+    : Number.MAX_SAFE_INTEGER
+
+const sortComments = (items, sortOrder) =>
+  [...items].sort((left, right) => {
+    if (sortOrder === 'newest') {
+      const createdAtDifference =
+        getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left)
+
+      if (createdAtDifference !== 0) return createdAtDifference
+
+      return getCommentTimelineMs(left) - getCommentTimelineMs(right)
+    }
+
+    const leftHasTimeline = typeof left?.timestamp_ms === 'number'
+    const rightHasTimeline = typeof right?.timestamp_ms === 'number'
+
+    if (leftHasTimeline && rightHasTimeline) {
+      const timelineDifference = left.timestamp_ms - right.timestamp_ms
+      if (timelineDifference !== 0) return timelineDifference
+    } else if (leftHasTimeline !== rightHasTimeline) {
+      return leftHasTimeline ? -1 : 1
+    }
+
+    return getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left)
+  })
+
 const normalizeRepliesPayload = (payload) => {
   if (Array.isArray(payload)) {
     return {
@@ -78,6 +118,7 @@ function Comments({
   onJumpToTime,
   onLoadReplies,
   onReplySubmit,
+  onUpdateComment,
   onLoadMoreComments,
   hasMoreComments = false,
   isLoadingMoreComments = false,
@@ -95,22 +136,15 @@ function Comments({
   const [replyErrors, setReplyErrors] = useState({})
   const [replyComposerIds, setReplyComposerIds] = useState({})
   const [submittingReplyIds, setSubmittingReplyIds] = useState({})
+  const [editingCommentIds, setEditingCommentIds] = useState({})
+  const [editDrafts, setEditDrafts] = useState({})
+  const [editErrors, setEditErrors] = useState({})
+  const [savingEditIds, setSavingEditIds] = useState({})
 
-  const sortedComments = useMemo(() => {
-    const nextComments = [...comments]
-
-    if (sortOrder === 'newest') {
-      return nextComments.sort(
-        (left, right) => new Date(right.created_at) - new Date(left.created_at),
-      )
-    }
-
-    return nextComments.sort((left, right) => {
-      const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER
-      const rightTime = right.timestamp_ms ?? Number.MAX_SAFE_INTEGER
-      return leftTime - rightTime
-    })
-  }, [comments, sortOrder])
+  const sortedComments = useMemo(
+    () => sortComments(comments, sortOrder),
+    [comments, sortOrder],
+  )
 
   const storeRepliesPayload = (commentId, payload, strategy = 'replace') => {
     const normalizedPayload = normalizeRepliesPayload(payload)
@@ -201,7 +235,7 @@ function Comments({
     }))
 
     try {
-      await onDeleteComment?.(commentId)
+      await onDeleteComment?.(commentId, { parentCommentId })
 
       if (parentCommentId) {
         setLoadedReplies((current) => ({
@@ -232,6 +266,23 @@ function Comments({
     }))
   }
 
+  const toggleEditComposer = (comment) => {
+    const nextIsOpen = !editingCommentIds[comment.id]
+
+    setEditingCommentIds((current) => ({
+      ...current,
+      [comment.id]: nextIsOpen,
+    }))
+    setEditDrafts((current) => ({
+      ...current,
+      [comment.id]: nextIsOpen ? comment.text ?? '' : current[comment.id] ?? '',
+    }))
+    setEditErrors((current) => ({
+      ...current,
+      [comment.id]: '',
+    }))
+  }
+
   const handleReplySubmit = async (comment) => {
     const draft = String(replyDrafts[comment.id] ?? '').trim()
 
@@ -253,7 +304,10 @@ function Comments({
     }))
 
     try {
-      const reply = await onReplySubmit?.(comment.id, { text: draft })
+      const reply = await onReplySubmit?.(comment.id, {
+        text: draft,
+        timestamp_ms: comment.timestamp_ms ?? 0,
+      })
       if (!reply) return
 
       setLoadedReplies((current) => ({
@@ -308,18 +362,81 @@ function Comments({
     }
   }
 
+  const handleEditSubmit = async (comment, parentCommentId = null) => {
+    const draft = String(editDrafts[comment.id] ?? '').trim()
+
+    if (!draft) {
+      setEditErrors((current) => ({
+        ...current,
+        [comment.id]: 'Write an updated comment first.',
+      }))
+      return
+    }
+
+    setSavingEditIds((current) => ({
+      ...current,
+      [comment.id]: true,
+    }))
+    setEditErrors((current) => ({
+      ...current,
+      [comment.id]: '',
+    }))
+
+    try {
+      const updatedComment = await onUpdateComment?.(comment.id, draft, {
+        parentCommentId,
+      })
+
+      if (parentCommentId && updatedComment) {
+        setLoadedReplies((current) => ({
+          ...current,
+          [parentCommentId]: (current[parentCommentId] ?? []).map((reply) =>
+            reply.id === comment.id
+              ? {
+                  ...reply,
+                  ...updatedComment,
+                }
+              : reply,
+          ),
+        }))
+      }
+
+      setEditingCommentIds((current) => ({
+        ...current,
+        [comment.id]: false,
+      }))
+    } catch (error) {
+      const message = error?.message || 'Comment could not be updated.'
+      setEditErrors((current) => ({
+        ...current,
+        [comment.id]: message,
+      }))
+      onMessage?.(message)
+    } finally {
+      setSavingEditIds((current) => ({
+        ...current,
+        [comment.id]: false,
+      }))
+    }
+  }
+
   const renderComment = (comment, options = {}) => {
     const { isReply = false, parentCommentId = null } = options
-    const replies = loadedReplies[comment.id] ?? []
+    const replies = sortComments(loadedReplies[comment.id] ?? [], sortOrder)
     const pagination = replyPagination[comment.id]
     const isExpanded = Boolean(expandedCommentIds[comment.id])
     const isLoadingReplies = Boolean(loadingReplyIds[comment.id])
     const isLoadingMoreReplies = Boolean(loadingMoreReplyIds[comment.id])
     const isDeleting = Boolean(deletingCommentIds[comment.id])
     const isSubmittingReply = Boolean(submittingReplyIds[comment.id])
+    const isSavingEdit = Boolean(savingEditIds[comment.id])
     const isReplyComposerOpen = Boolean(replyComposerIds[comment.id])
+    const isEditing = Boolean(editingCommentIds[comment.id])
     const canOpenReplies = !isReply && Boolean(onLoadReplies)
     const canReply = !isReply && !comment.isDeleted && Boolean(onReplySubmit)
+    const canEdit = Boolean(onUpdateComment) && Boolean(comment.canEdit) && !comment.isDeleted
+    const canDelete =
+      Boolean(onDeleteComment) && Boolean(comment.canDelete) && !comment.isDeleted
     const replyButtonLabel = isExpanded ? 'Hide replies' : `Replies (${comment.repliesCount ?? 0})`
     const hasMoreReplies =
       Boolean(pagination) &&
@@ -367,6 +484,15 @@ function Comments({
                   {isReplyComposerOpen ? 'Cancel reply' : 'Reply'}
                 </button>
               ) : null}
+              {canEdit ? (
+                <button
+                  className="comment-link"
+                  type="button"
+                  onClick={() => toggleEditComposer(comment)}
+                >
+                  {isEditing ? 'Cancel edit' : 'Edit'}
+                </button>
+              ) : null}
               {typeof comment.timestamp_ms === 'number' ? (
                 <button
                   className="comment-link"
@@ -376,7 +502,7 @@ function Comments({
                   Jump to {formatTime(comment.timestamp_ms / 1000)}
                 </button>
               ) : null}
-              {comment.isOwnedByViewer && !comment.isDeleted ? (
+              {canDelete ? (
                 <button
                   className="comment-link comment-link-danger"
                   type="button"
@@ -387,6 +513,37 @@ function Comments({
                 </button>
               ) : null}
             </div>
+
+            {canEdit && isEditing ? (
+              <div className="reply-compose-shell">
+                <div className="comment-form-inline">
+                  <input
+                    type="text"
+                    value={editDrafts[comment.id] ?? ''}
+                    onChange={(event) =>
+                      setEditDrafts((current) => ({
+                        ...current,
+                        [comment.id]: event.target.value,
+                      }))
+                    }
+                    placeholder="Edit your comment"
+                  />
+                  <button
+                    className="comment-submit"
+                    type="button"
+                    onClick={() => handleEditSubmit(comment, parentCommentId)}
+                    disabled={isSavingEdit}
+                  >
+                    {isSavingEdit ? 'Saving' : 'Save'}
+                  </button>
+                </div>
+                {editErrors[comment.id] ? (
+                  <p className="panel-notice panel-notice-error">
+                    {editErrors[comment.id]}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {canReply && isReplyComposerOpen ? (
               <div className="reply-compose-shell">

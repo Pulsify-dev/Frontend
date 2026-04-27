@@ -1,5 +1,10 @@
 import React, { createContext, useState, useEffect } from "react";
-import { pulsifyAxiosInstance } from "../services/api";
+import {
+  clearAuthToken,
+  pulsifyAxiosInstance,
+  readAuthToken,
+  saveAuthToken,
+} from "../services/api";
 
 export const PulsifyAuthVaultContext = createContext();
 
@@ -13,7 +18,7 @@ const isMockMode =
 
 export const PulsifyAuthVaultProvider = ({ children }) => {
   const [activeSessionToken, setActiveSessionToken] = useState(
-    localStorage.getItem("pulsify_access_token") || null,
+    readAuthToken() || null,
   );
   const [subscriptionTier, setSubscriptionTier] = useState(
     localStorage.getItem("pulsify_mock_tier") || "FREE",
@@ -35,6 +40,10 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
           setSubscriptionTier(data.tier);
         }
       } catch (err) {
+        if (err?.response?.status === 401) {
+          clearAuthToken();
+          if (isMounted) setActiveSessionToken(null);
+        }
         if (isMounted) setSubscriptionTier("FREE");
       }
     };
@@ -52,12 +61,12 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
   };
 
   const mountSecureSession = (token) => {
-    localStorage.setItem("pulsify_access_token", token);
+    saveAuthToken(token);
     setActiveSessionToken(token);
   };
 
   const destroySecureSession = () => {
-    localStorage.removeItem("pulsify_access_token");
+    clearAuthToken();
     localStorage.removeItem("pulsify_refresh_token");
     localStorage.removeItem("pulsify_mock_tier");
     localStorage.removeItem("pulsify_user");

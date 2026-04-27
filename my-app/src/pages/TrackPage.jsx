@@ -6,9 +6,9 @@ import HistoryPanel from "../components/HistoryPanel";
 import LoadingState from "../components/LoadingState";
 import PlayerCard from "../components/PlayerCard";
 import TrackHeader from "../components/TrackHeader";
+import { CONFIGURED_TRACK_IDS, buildTrackQueueIds } from "../config/trackCatalog";
 import { DEFAULT_TRACK_ID } from "../config/defaultTrack";
 import { usePlayer } from "../hooks/usePlayer";
-import { trackExperienceMockData } from "../mock/trackExperienceData";
 import {
   clearAuthToken,
   createComment,
@@ -28,10 +28,9 @@ import {
   getTrackPlaylists,
   toggleLike,
   toggleRepost,
+  updateComment,
 } from "../services/api";
 import "../App.css";
-
-const mockTrackOrder = Object.keys(trackExperienceMockData.tracks);
 const configuredApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL || "your configured API";
 
@@ -62,11 +61,24 @@ const inferDownloadExtension = (url, mimeType) => {
   }
 };
 
+const getCommentCreatedAtMs = (comment) => {
+  const createdAtMs = new Date(comment?.created_at).getTime();
+  return Number.isNaN(createdAtMs) ? 0 : createdAtMs;
+};
+
 const sortCommentsByTimeline = (items) =>
   [...items].sort((left, right) => {
-    const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER;
-    const rightTime = right.timestamp_ms ?? Number.MAX_SAFE_INTEGER;
-    return leftTime - rightTime;
+    const leftHasTimeline = typeof left?.timestamp_ms === "number";
+    const rightHasTimeline = typeof right?.timestamp_ms === "number";
+
+    if (leftHasTimeline && rightHasTimeline) {
+      const timelineDifference = left.timestamp_ms - right.timestamp_ms;
+      if (timelineDifference !== 0) return timelineDifference;
+    } else if (leftHasTimeline !== rightHasTimeline) {
+      return leftHasTimeline ? -1 : 1;
+    }
+
+    return getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left);
   });
 
 const mergeById = (items) => {
@@ -89,6 +101,29 @@ const markCommentAsDeleted = (comment) => ({
   text: "Comment deleted.",
   isDeleted: true,
 });
+
+const findLatestMatchingComment = (
+  items,
+  { text, parentCommentId = null, timestamp_ms = null } = {},
+) => {
+  const normalizedText = String(text ?? "").trim();
+
+  return [...(items ?? [])]
+    .filter((item) => {
+      if (!item?.isOwnedByViewer) return false;
+      if (String(item.text ?? "").trim() !== normalizedText) return false;
+      if ((item.parentCommentId ?? null) !== parentCommentId) return false;
+
+      if (typeof timestamp_ms === "number" && typeof item.timestamp_ms === "number") {
+        return item.timestamp_ms === timestamp_ms;
+      }
+
+      return true;
+    })
+    .sort(
+      (left, right) => getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left),
+    )[0] ?? null;
+};
 
 const getSectionConfig = (
   view,
@@ -209,6 +244,16 @@ function TrackPage({ view = "overview" }) {
     [view, track, relatedTracks, playlists, likers, reposters]
   );
 
+  const routeQueueTrackIds = useMemo(
+    () =>
+      buildTrackQueueIds(
+        track?.id ?? trackId,
+        relatedTracks.map((item) => item.id),
+        CONFIGURED_TRACK_IDS,
+      ),
+    [relatedTracks, track?.id, trackId]
+  );
+
   useEffect(() => {
     if (!activeTrack?.id || !routeTrackId || activeTrack.id === routeTrackId) {
       return;
@@ -249,6 +294,20 @@ function TrackPage({ view = "overview" }) {
       );
     };
   }, [trackId]);
+
+  const broadcastTrackSnapshot = (nextTrack, extraDetail = {}) => {
+    if (!nextTrack?.id || typeof window === "undefined") return;
+
+    window.dispatchEvent(
+      new CustomEvent("pulsify:track-engagement-updated", {
+        detail: {
+          trackId: nextTrack.id,
+          track: nextTrack,
+          ...extraDetail,
+        },
+      })
+    );
+  };
 
   const isAuthError =
     error.startsWith("Missing access token.") ||
@@ -337,14 +396,28 @@ function TrackPage({ view = "overview" }) {
       setComments(sortCommentsByTimeline(commentsPayload.comments));
       setCommentTotal(commentsPayload.totalCount ?? nextTrack.commentCount ?? 0);
       setCommentsPagination(commentsPayload.pagination ?? null);
-      setLikers(results[2].status === "fulfilled" ? results[2].value : []);
-      setReposters(results[3].status === "fulfilled" ? results[3].value : []);
-      setRelatedTracks(results[4].status === "fulfilled" ? results[4].value : []);
-      setPlaylists(results[5].status === "fulfilled" ? results[5].value : []);
+      const nextLikers = results[2].status === "fulfilled" ? results[2].value : [];
+      const nextReposters =
+        results[3].status === "fulfilled" ? results[3].value : [];
+      const nextRelatedTracks =
+        results[4].status === "fulfilled" ? results[4].value : [];
+      const nextPlaylists =
+        results[5].status === "fulfilled" ? results[5].value : [];
+
+      setLikers(nextLikers);
+      setReposters(nextReposters);
+      setRelatedTracks(nextRelatedTracks);
+      setPlaylists(nextPlaylists);
       setFanLeaderboard(
         results[6].status === "fulfilled" ? results[6].value : []
       );
-      setQueueTrackIds(mockTrackOrder);
+      setQueueTrackIds(
+        buildTrackQueueIds(
+          nextTrack.id,
+          nextRelatedTracks.map((item) => item.id),
+          CONFIGURED_TRACK_IDS,
+        )
+      );
       syncCurrentTrack(nextTrack);
       setIsLoading(false);
     };
@@ -407,7 +480,7 @@ function TrackPage({ view = "overview" }) {
     loadTrack(track, {
       autoplay: false,
       playbackContext: "track_page",
-      queueIds: mockTrackOrder,
+      queueIds: routeQueueTrackIds,
       startTime: nextValue,
     });
   };
@@ -430,7 +503,7 @@ function TrackPage({ view = "overview" }) {
     await loadTrack(track, {
       autoplay: true,
       playbackContext: "track_page",
-      queueIds: mockTrackOrder,
+      queueIds: routeQueueTrackIds,
     });
   };
 
@@ -447,16 +520,10 @@ function TrackPage({ view = "overview" }) {
 
     setTrack(optimisticTrack);
     syncCurrentTrack(optimisticTrack);
-    window.dispatchEvent(
-      new CustomEvent("pulsify:track-engagement-updated", {
-        detail: {
-          trackId: track.id,
-          track: optimisticTrack,
-          viewerHasLiked: shouldLike,
-          previousViewerHasLiked,
-        },
-      })
-    );
+    broadcastTrackSnapshot(optimisticTrack, {
+      viewerHasLiked: shouldLike,
+      previousViewerHasLiked,
+    });
 
     try {
       await toggleLike(track.id, shouldLike);
@@ -470,16 +537,10 @@ function TrackPage({ view = "overview" }) {
 
       setTrack(rollbackTrack);
       syncCurrentTrack(rollbackTrack);
-      window.dispatchEvent(
-        new CustomEvent("pulsify:track-engagement-updated", {
-          detail: {
-            trackId: track.id,
-            track: rollbackTrack,
-            viewerHasLiked: previousViewerHasLiked,
-            previousViewerHasLiked: shouldLike,
-          },
-        })
-      );
+      broadcastTrackSnapshot(rollbackTrack, {
+        viewerHasLiked: previousViewerHasLiked,
+        previousViewerHasLiked: shouldLike,
+      });
       console.error(toggleError);
     }
   };
@@ -487,29 +548,37 @@ function TrackPage({ view = "overview" }) {
   const handleRepostToggle = async () => {
     if (!track) return;
 
+    const previousViewerHasReposted = Boolean(track.viewerHasReposted);
     const shouldRepost = !track.viewerHasReposted;
-
-    setTrack((currentTrack) => ({
-      ...currentTrack,
+    const optimisticTrack = {
+      ...track,
       viewerHasReposted: shouldRepost,
-      repostCount: Math.max(
-        currentTrack.repostCount + (shouldRepost ? 1 : -1),
-        0
-      ),
-    }));
+      repostCount: Math.max(track.repostCount + (shouldRepost ? 1 : -1), 0),
+    };
+
+    setTrack(optimisticTrack);
+    syncCurrentTrack(optimisticTrack);
+    broadcastTrackSnapshot(optimisticTrack, {
+      viewerHasReposted: shouldRepost,
+      previousViewerHasReposted,
+    });
 
     try {
       await toggleRepost(track.id, shouldRepost);
       setReposters(await getReposters(track.id));
     } catch (toggleError) {
-      setTrack((currentTrack) => ({
-        ...currentTrack,
-        viewerHasReposted: !shouldRepost,
-        repostCount: Math.max(
-          currentTrack.repostCount + (shouldRepost ? -1 : 1),
-          0
-        ),
-      }));
+      const rollbackTrack = {
+        ...track,
+        viewerHasReposted: previousViewerHasReposted,
+        repostCount: track.repostCount,
+      };
+
+      setTrack(rollbackTrack);
+      syncCurrentTrack(rollbackTrack);
+      broadcastTrackSnapshot(rollbackTrack, {
+        viewerHasReposted: previousViewerHasReposted,
+        previousViewerHasReposted: shouldRepost,
+      });
       console.error(toggleError);
     }
   };
@@ -517,36 +586,48 @@ function TrackPage({ view = "overview" }) {
   const handleAddComment = async (payload) => {
     if (!track) return;
 
-    const comment = await createComment(track.id, payload);
-    setComments((currentComments) =>
-      sortCommentsByTimeline([...currentComments, comment])
+    await createComment(track.id, payload);
+    const refreshedCommentsPayload = await getComments(track.id, {
+      page: 1,
+      limit: COMMENTS_PAGE_LIMIT,
+    });
+    const nextTrack = {
+      ...track,
+      commentCount: (track.commentCount ?? 0) + 1,
+    };
+
+    setComments(sortCommentsByTimeline(refreshedCommentsPayload.comments ?? []));
+    setCommentTotal(
+      refreshedCommentsPayload.totalCount ?? (commentTotal ?? 0) + 1,
     );
-    setCommentTotal((currentTotal) => currentTotal + 1);
-    setTrack((currentTrack) => ({
-      ...currentTrack,
-      commentCount: currentTrack.commentCount + 1,
-    }));
-    setCommentsPagination((currentPagination) =>
-      currentPagination
-        ? {
-            ...currentPagination,
-            total: (currentPagination.total ?? 0) + 1,
-            pages: Math.max(
-              currentPagination.pages ?? 1,
-              Math.ceil(((currentPagination.total ?? 0) + 1) / Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1))
-            ),
-          }
-        : currentPagination
-    );
+    setTrack(nextTrack);
+    syncCurrentTrack(nextTrack);
+    broadcastTrackSnapshot(nextTrack);
+    setCommentsPagination(refreshedCommentsPayload.pagination ?? null);
   };
 
   const handleAddReply = async (parentCommentId, payload) => {
     if (!track) return null;
 
-    const reply = await createComment(track.id, {
+    const parentComment = comments.find((comment) => comment.id === parentCommentId);
+    const replyPayload = {
       ...payload,
       parentCommentId,
+      timestamp_ms:
+        typeof payload.timestamp_ms === "number"
+          ? payload.timestamp_ms
+          : parentComment?.timestamp_ms ?? 0,
+    };
+
+    await createComment(track.id, replyPayload);
+    const refreshedRepliesPayload = await getCommentReplies(parentCommentId, {
+      page: 1,
+      limit: REPLIES_PAGE_LIMIT,
     });
+    const nextTrack = {
+      ...track,
+      commentCount: (track.commentCount ?? 0) + 1,
+    };
 
     setComments((currentComments) =>
       currentComments.map((comment) =>
@@ -559,10 +640,9 @@ function TrackPage({ view = "overview" }) {
       )
     );
     setCommentTotal((currentTotal) => currentTotal + 1);
-    setTrack((currentTrack) => ({
-      ...currentTrack,
-      commentCount: currentTrack.commentCount + 1,
-    }));
+    setTrack(nextTrack);
+    syncCurrentTrack(nextTrack);
+    broadcastTrackSnapshot(nextTrack);
     setCommentsPagination((currentPagination) =>
       currentPagination
         ? {
@@ -576,7 +656,15 @@ function TrackPage({ view = "overview" }) {
         : currentPagination
     );
 
-    return reply;
+    return (
+      findLatestMatchingComment(refreshedRepliesPayload.replies, {
+        text: replyPayload.text,
+        parentCommentId,
+        timestamp_ms: replyPayload.timestamp_ms,
+      }) ??
+      refreshedRepliesPayload.replies?.[refreshedRepliesPayload.replies.length - 1] ??
+      null
+    );
   };
 
   const handleLoadReplies = async (commentId, options = {}) => {
@@ -584,6 +672,29 @@ function TrackPage({ view = "overview" }) {
       page: options.page ?? 1,
       limit: options.limit ?? REPLIES_PAGE_LIMIT,
     });
+  };
+
+  const handleUpdateComment = async (
+    commentId,
+    text,
+    { parentCommentId = null } = {},
+  ) => {
+    const updatedComment = await updateComment(commentId, text);
+
+    if (!parentCommentId) {
+      setComments((currentComments) =>
+        currentComments.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                ...updatedComment,
+              }
+            : comment
+        )
+      );
+    }
+
+    return updatedComment;
   };
 
   const handleLoadMoreComments = async () => {
@@ -617,12 +728,50 @@ function TrackPage({ view = "overview" }) {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (
+    commentId,
+    { parentCommentId = null } = {},
+  ) => {
     await deleteComment(commentId);
+    const nextTrack = {
+      ...track,
+      commentCount: Math.max((track?.commentCount ?? 0) - 1, 0),
+    };
+
     setComments((currentComments) =>
-      currentComments.map((comment) =>
-        comment.id === commentId ? markCommentAsDeleted(comment) : comment
-      )
+      currentComments.map((comment) => {
+        if (comment.id === commentId) {
+          return markCommentAsDeleted(comment);
+        }
+
+        if (parentCommentId && comment.id === parentCommentId) {
+          return {
+            ...comment,
+            repliesCount: Math.max((comment.repliesCount ?? 0) - 1, 0),
+          };
+        }
+
+        return comment;
+      })
+    );
+    setCommentTotal((currentTotal) => Math.max(currentTotal - 1, 0));
+    setTrack(nextTrack);
+    syncCurrentTrack(nextTrack);
+    broadcastTrackSnapshot(nextTrack);
+    setCommentsPagination((currentPagination) =>
+      currentPagination
+        ? {
+            ...currentPagination,
+            total: Math.max((currentPagination.total ?? 0) - 1, 0),
+            pages: Math.max(
+              1,
+              Math.ceil(
+                Math.max((currentPagination.total ?? 0) - 1, 0) /
+                  Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1)
+              )
+            ),
+          }
+        : currentPagination
     );
     setPlayerMessage("Comment deleted successfully.");
   };
@@ -872,6 +1021,7 @@ function TrackPage({ view = "overview" }) {
                 onJumpToTime={handleSeek}
                 onLoadReplies={handleLoadReplies}
                 onReplySubmit={handleAddReply}
+                onUpdateComment={handleUpdateComment}
                 onLoadMoreComments={handleLoadMoreComments}
                 hasMoreComments={
                   view === "comments" &&

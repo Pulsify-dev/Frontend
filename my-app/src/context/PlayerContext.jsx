@@ -295,6 +295,11 @@ export const PlayerProvider = ({ children }) => {
         return buildBlockedStreamInfo(track, error?.message)
       }
 
+      if (error?.status === 404) {
+        console.warn(`Track not found on backend: ${track.id}`)
+        return buildFallbackStreamInfo(track, nextPlaybackContext)
+      }
+
       console.error(error)
       return buildFallbackStreamInfo(track, nextPlaybackContext)
     }
