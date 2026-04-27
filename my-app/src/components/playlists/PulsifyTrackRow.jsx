@@ -124,10 +124,6 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
 
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', fontSize: '14px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <span style={{ color: '#999', marginRight: '6px' }}>-</span>
-        <span style={{ color: '#bbb', fontWeight: 'bold', marginRight: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-          {track.artist_id?.display_name || track.artist_name || track.artist?.name || 'Unknown Artist'}
-        </span>
-        <span style={{ color: '#999', marginRight: '6px' }}>-</span>
         <Link 
           to={`/tracks/${track._id || track.id}`}
           style={{ color: '#fff', fontWeight: 'bold', fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textDecoration: 'none' }}
@@ -139,18 +135,23 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
       </div>
 
       {hovered && (
-        <div style={{ display: 'flex', gap: '32px', marginRight: '16px', alignItems: 'center' }}>
-          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          </TrackAction>
-          <TrackAction title="Repost">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
-          </TrackAction>
+        <div style={{ display: 'flex', gap: '24px', marginRight: '16px', alignItems: 'center' }}>
           <TrackAction title="Share" onClick={handleShareClick}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </TrackAction>
+          <TrackAction title="Copy Link" onClick={(e) => {
+            e.stopPropagation();
+            const trackId = track._id || track.id;
+            navigator.clipboard.writeText(`${window.location.origin}/tracks/${trackId}`);
+            alert('Link copied to clipboard!');
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </TrackAction>
+          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </TrackAction>
           <TrackAction title="Add to Next up">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="14" height="14" rx="2" ry="2"/><path d="M7 21h14a2 2 0 0 0 2-2V7"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h10v2H3v-2zm13-1v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/></svg>
           </TrackAction>
           <div style={{ position: 'relative' }} ref={menuRef}>
             <TrackAction title="More" onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}>

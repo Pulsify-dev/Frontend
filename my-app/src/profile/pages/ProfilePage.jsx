@@ -49,12 +49,32 @@ export default function ProfilePage() {
   // Fetch playlists when the Playlists tab is activated
   useEffect(() => {
     if (activeTab !== "Playlists") return;
+    if (!profile?.id) return;
     let cancelled = false;
     const fetchPlaylists = async () => {
       setPlaylistsLoading(true);
       try {
-        const data = await PulsifyPlaylistService.retrieveAllPlaylists('me');
-        const rawPlaylists = Array.isArray(data) ? data : data.playlists || [];
+        let rawPlaylists = [];
+        
+        if (isOwnProfile) {
+          // If viewing own profile, get my private and public playlists
+          const data = await PulsifyPlaylistService.retrieveAllPlaylists('me');
+          rawPlaylists = data.playlists || data.data || (Array.isArray(data) ? data : []);
+        } else {
+          // If viewing someone else, the backend is missing /users/:id/playlists
+          // WORKAROUND: Fetch public playlists and filter by creator ID
+          try {
+            const { data } = await import('../../services/api').then(m => m.pulsifyAxiosInstance.get('/playlists/discover/public?limit=100'));
+            const publicPlaylists = data.data || [];
+            rawPlaylists = publicPlaylists.filter(p => {
+              const cId = p.creator_id?._id || p.creator_id?.id || p.creator_id;
+              return cId === profile.id;
+            });
+          } catch (e) {
+            console.error("Failed to fetch public playlists for filtering", e);
+          }
+        }
+
         // Fetch detailed data for each playlist to get track info
         const detailedPlaylists = await Promise.all(
           rawPlaylists.map(async (pl) => {

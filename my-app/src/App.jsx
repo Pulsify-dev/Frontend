@@ -155,6 +155,9 @@ const AppRoutes = () => {
                 }
               />
 
+              {/* Albums - Module 13 */}
+              <Route path="/albums/:albumId" element={<PulsifyAlbumDetailView />} />
+
               {/* Premium - Module 12 */}
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
 

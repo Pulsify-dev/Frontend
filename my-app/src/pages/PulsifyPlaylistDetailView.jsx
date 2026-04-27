@@ -271,7 +271,7 @@ export const PulsifyPlaylistDetailView = () => {
 
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
               <button style={{
-                width: '70px', height: '70px', borderRadius: '50%',
+                width: '60px', height: '60px', borderRadius: '50%',
                 backgroundColor: '#111', border: 'none', color: '#fff',
                 fontSize: '24px', cursor: 'pointer',
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
@@ -288,13 +288,20 @@ export const PulsifyPlaylistDetailView = () => {
                 }}
               >
                 {(() => {
-                  if (!isPlaying || !currentTrack) return '▶';
                   const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
-                  const isThisPlaylistPlaying = playlistDetail.tracks?.some(t => {
+                  const isThisPlaylistPlaying = isPlaying && currentTrack && playlistDetail.tracks?.some(t => {
                     const tId = t.track_id?._id || t.track_id || t._id || t.id;
                     return tId === currentId;
                   });
-                  return isThisPlaylistPlaying ? '⏸' : '▶';
+                  return isThisPlaylistPlaying ? (
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '0px' }}>
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                    </svg>
+                  ) : (
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '4px' }}>
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  );
                 })()}
               </button>
               <div style={{ minWidth: 0 }}>
