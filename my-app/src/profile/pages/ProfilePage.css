@@ -268,53 +268,23 @@ a.sc-tab {
 }
 
 .sc-profile-link-nav-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
-  gap: 18px;
-  border-top: 1px solid #242424;
-  padding-top: 20px;
-}
-
-.sc-profile-link-nav-block {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  width: 100%;
   min-width: 0;
+  margin-bottom: 26px;
+  padding: 2px 0 24px;
+  border-bottom: 1px solid #202020;
 }
 
-.sc-profile-link-nav-strip .sc-sidebar-links,
-.sc-profile-link-nav-strip .sc-sidebar-nav {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sc-profile-link-nav-strip .sc-social-link,
-.sc-profile-link-nav-strip .sc-nav-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  border: 1px solid #2d2d2d;
-  background: #181818;
-  color: #d7d7d7;
-  padding: 7px 12px;
-  border-radius: 4px;
-}
-
-.sc-profile-link-nav-strip .sc-social-link:hover,
-.sc-profile-link-nav-strip .sc-nav-link:hover {
-  border-color: #4a4a4a;
-  background: #222;
-  color: #fff;
-}
-
-.sc-profile-link-nav-strip .sc-nav-link--premium {
-  border-color: rgba(255, 85, 0, 0.45);
-  color: #ff9c73;
-}
-
-.sc-profile-link-nav-strip .sc-nav-link--premium:hover {
-  border-color: #f50;
-  background: rgba(255, 85, 0, 0.14);
-  color: #fff;
+.sc-profile-side-bio {
+  margin: 0 0 19px;
+  color: #767676;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .sc-profile-showcase-grid {
@@ -327,6 +297,12 @@ a.sc-tab {
 .sc-profile-showcase-main,
 .sc-profile-likes-rail {
   min-width: 0;
+}
+
+.sc-profile-showcase-main {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
 }
 
 .sc-profile-likes-rail {
@@ -947,13 +923,16 @@ a.sc-tab {
 .sc-sidebar-links {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 .sc-social-link {
-  font-size: 13px;
-  color: #aaa;
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8a8a8a;
   text-decoration: none;
+  line-height: 1.2;
 }
 
 .sc-social-link:hover {
@@ -963,29 +942,63 @@ a.sc-tab {
 .sc-sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
+}
+
+.sc-sidebar-links + .sc-sidebar-nav {
+  margin-top: 22px;
+  padding-top: 24px;
+  border-top: 1px solid #202020;
 }
 
 .sc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
   font-size: 13px;
-  color: #aaa;
+  font-weight: 700;
+  color: #858585;
   text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 0;
+  line-height: 1.2;
 }
 
 .sc-nav-link:hover {
-  background: #222;
   color: #fff;
 }
 
 .sc-nav-link--premium {
-  color: #aaa;
+  color: #858585;
 }
 
 .sc-nav-link--premium:hover {
-  background: #222;
   color: #fff;
+}
+
+.sc-nav-link-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 14px;
+}
+
+.sc-nav-link-icon--feed {
+  color: #8b65dd;
+}
+
+.sc-nav-link-icon--discover {
+  color: #42c5e8;
+}
+
+.sc-nav-link-icon--trending {
+  color: #c7d3e8;
+}
+
+.sc-nav-link-icon--premium {
+  color: #f7d74c;
 }
 
 .sc-track-delete-overlay {
@@ -1401,8 +1414,34 @@ a.sc-tab {
   margin-bottom: 12px;
 }
 
+.sc-edit-link-row {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.32fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.sc-edit-link-label-input {
+  min-width: 0;
+}
+
 .sc-edit-link-input {
   max-width: 100%;
+}
+
+.sc-remove-link-btn {
+  background: none;
+  border: 1px solid #555;
+  color: #ccc;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sc-remove-link-btn:hover {
+  border-color: #999;
+  color: #fff;
 }
 
 .sc-edit-link-btns {
@@ -1522,7 +1561,8 @@ a.sc-tab {
   }
 
   .sc-profile-link-nav-strip {
-    grid-template-columns: 1fr;
+    max-width: none;
+    padding-left: 0;
   }
 
   .sc-overview-stats {
@@ -1613,9 +1653,8 @@ a.sc-tab {
     flex: 1 1 auto;
   }
 
-  .sc-profile-link-nav-strip .sc-social-link,
-  .sc-profile-link-nav-strip .sc-nav-link {
-    flex: 1 1 118px;
+  .sc-edit-link-row {
+    grid-template-columns: 1fr;
   }
 
   .sc-like-rail-card {

@@ -13,6 +13,23 @@ const TABS = [
   { label: "Feed", path: "/feed" },
 ];
 
+const PROFILE_LINK_LABELS = {
+  instagram: "Instagram",
+  twitter: "Twitter",
+  x: "X",
+  website: "Website",
+  support: "Support",
+  support_link: "Support",
+  supportlink: "Support",
+};
+
+const QUICK_NAV_ITEMS = [
+  { label: "My Feed", path: "/feed", icon: "feed" },
+  { label: "Discover", path: "/discover", icon: "discover" },
+  { label: "Trending", path: "/trending", icon: "trending" },
+  { label: "Go Pro", path: "/premium", icon: "premium", premium: true },
+];
+
 const resolveLibraryTabLabel = (tabValue) => {
   if (tabValue === "popular-tracks" || tabValue === "likes") {
     return "Popular tracks";
@@ -23,6 +40,57 @@ const resolveLibraryTabLabel = (tabValue) => {
   }
 
   return "All";
+};
+
+const formatProfileLinkLabel = (key) => {
+  const normalizedKey = String(key ?? "").trim().toLowerCase();
+
+  if (PROFILE_LINK_LABELS[normalizedKey]) {
+    return PROFILE_LINK_LABELS[normalizedKey];
+  }
+
+  return String(key ?? "Link")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+};
+
+const normalizeProfileLinkUrl = (value) => {
+  const url = String(value ?? "").trim();
+
+  if (!url) return "";
+
+  if (/^(https?:|mailto:|tel:)/i.test(url)) {
+    return url;
+  }
+
+  return `https://${url.replace(/^\/+/, "")}`;
+};
+
+const getProfileLinks = (socialLinks = {}) => {
+  const entries = Array.isArray(socialLinks)
+    ? socialLinks.map((link, index) => [
+        link.key ?? link.label ?? `link_${index + 1}`,
+        link,
+      ])
+    : Object.entries(socialLinks ?? {});
+
+  return entries
+    .map(([key, value]) => {
+      const isStructuredValue = value && typeof value === "object";
+      const rawUrl = isStructuredValue ? value.url ?? value.href ?? "" : value;
+      const href = normalizeProfileLinkUrl(rawUrl);
+
+      if (!href) return null;
+
+      return {
+        key,
+        href,
+        label: isStructuredValue
+          ? value.label ?? formatProfileLinkLabel(key)
+          : formatProfileLinkLabel(key),
+      };
+    })
+    .filter(Boolean);
 };
 
 const DEFAULT_TRACK_ART =
@@ -341,6 +409,77 @@ const DeleteIcon = () => (
   </svg>
 );
 
+const FeedNavIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M9 18V5l10-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="16" cy="16" r="3" />
+  </svg>
+);
+
+const DiscoverNavIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-4-4" />
+  </svg>
+);
+
+const TrendingNavIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M4 17 10 11l4 4 6-8" />
+    <path d="M15 7h5v5" />
+  </svg>
+);
+
+const PremiumNavIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="m12 2.75 2.74 5.55 6.13.89-4.44 4.33 1.05 6.11L12 16.75l-5.48 2.88 1.05-6.11-4.44-4.33 6.13-.89L12 2.75Z" />
+  </svg>
+);
+
+const QUICK_NAV_ICONS = {
+  feed: FeedNavIcon,
+  discover: DiscoverNavIcon,
+  trending: TrendingNavIcon,
+  premium: PremiumNavIcon,
+};
+
 function TrackMetricLink({ to, icon, label, value }) {
   if (value === null || value === undefined || value === "") return null;
 
@@ -471,6 +610,7 @@ export default function ProfileCard({
     new Set(historyTracks.map((track) => track.id).filter(Boolean)).size;
   const likeRailCount = Number(profile.likesCount ?? 0) || likedTracks.length;
   const hasFooterMeta = Boolean(profile.bio || profile.favoriteGenres?.length);
+  const profileLinks = getProfileLinks(profile.socialLinks);
 
   const formatCount = (value) => {
     const numericValue = Number(value) || 0;
@@ -1192,62 +1332,6 @@ export default function ProfileCard({
           </div>
         </section>
 
-        <section className="sc-profile-link-nav-strip">
-          <div className="sc-profile-link-nav-block">
-            <h3>Links</h3>
-            <div className="sc-sidebar-links">
-              {profile.socialLinks?.instagram ? (
-                <a
-                  href={profile.socialLinks.instagram}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="sc-social-link"
-                >
-                  Instagram
-                </a>
-              ) : null}
-              {profile.socialLinks?.twitter ? (
-                <a
-                  href={profile.socialLinks.twitter}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="sc-social-link"
-                >
-                  Twitter
-                </a>
-              ) : null}
-              {profile.socialLinks?.website ? (
-                <a
-                  href={profile.socialLinks.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="sc-social-link"
-                >
-                  Website
-                </a>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="sc-profile-link-nav-block sc-profile-link-nav-block--nav">
-            <h3>Quick nav</h3>
-            <div className="sc-sidebar-nav">
-              <Link to="/feed" className="sc-nav-link">
-                My Feed
-              </Link>
-              <Link to="/discover" className="sc-nav-link">
-                Discover
-              </Link>
-              <Link to="/trending" className="sc-nav-link">
-                Trending
-              </Link>
-              <Link to="/premium" className="sc-nav-link sc-nav-link--premium">
-                Go Pro
-              </Link>
-            </div>
-          </div>
-        </section>
-
         <section className="sc-profile-showcase-grid">
           <div className="sc-profile-showcase-main">
             <section className="sc-profile-section sc-profile-section--recent">
@@ -1262,9 +1346,108 @@ export default function ProfileCard({
               </div>
               {renderRecentSection()}
             </section>
+
+            <section className="sc-profile-section" id="profile-history">
+              <div className="sc-profile-section-head">
+                <div>
+                  <h2>Listening history</h2>
+                  <p>Everything this user listened to, ordered from newest to oldest.</p>
+                </div>
+                <Link to="/history" className="sc-profile-section-link">
+                  Open history
+                </Link>
+              </div>
+              <div className="sc-profile-history-list">{renderHistorySection()}</div>
+            </section>
+
+            <section className="sc-profile-section" id="profile-favorites">
+              <div className="sc-profile-section-head">
+                <div>
+                  <h2>Favorites</h2>
+                  <p>Tracks you liked with clickable favoriters, reposts, and comments.</p>
+                </div>
+              </div>
+              <div className="sc-profile-track-list">
+                {renderTrackRows(likedTracks, "Like a track to pin it here.", { limit: 6 })}
+              </div>
+            </section>
+
+            <section className="sc-profile-section" id="profile-reposts">
+              <div className="sc-profile-section-head">
+                <div>
+                  <h2>Reposts</h2>
+                  <p>Tracks pushed into your own feed and profile surface.</p>
+                </div>
+              </div>
+              <div className="sc-profile-track-list">
+                {renderTrackRows(repostedTracks, "Repost a track and it will appear here.", { limit: 6 })}
+              </div>
+            </section>
+
+            {showEmptyLibraryState ? (
+              <div className="sc-empty-state">
+                <p>Seems a little quiet over here</p>
+                <button
+                  className="sc-upload-now-btn"
+                  type="button"
+                  onClick={() => navigate("/upload")}
+                >
+                  Upload now
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <aside className="sc-profile-likes-rail">
+            <div
+              className="sc-profile-link-nav-strip"
+              aria-label="Profile links and quick navigation"
+            >
+              {profile.bio ? (
+                <p className="sc-profile-side-bio">{profile.bio}</p>
+              ) : null}
+
+              {profileLinks.length ? (
+                <div className="sc-sidebar-links" aria-label="Profile links">
+                  {profileLinks.map((link) => (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="sc-social-link"
+                      key={`${link.key}-${link.href}`}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+
+              <nav className="sc-sidebar-nav" aria-label="Quick navigation">
+                {QUICK_NAV_ITEMS.map((item) => {
+                  const NavIcon = QUICK_NAV_ICONS[item.icon];
+
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.path}
+                      className={`sc-nav-link ${
+                        item.premium ? "sc-nav-link--premium" : ""
+                      }`}
+                    >
+                      <span
+                        className={`sc-nav-link-icon sc-nav-link-icon--${item.icon}`}
+                        aria-hidden="true"
+                      >
+                        {NavIcon ? <NavIcon /> : null}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
             <div className="sc-profile-section-head sc-profile-section-head--rail">
               <div>
                 <h2>{likeRailCount} Likes</h2>
@@ -1280,56 +1463,6 @@ export default function ProfileCard({
             <div className="sc-like-rail-list">{renderLikesRail()}</div>
           </aside>
         </section>
-
-        <section className="sc-profile-section" id="profile-history">
-          <div className="sc-profile-section-head">
-            <div>
-              <h2>Listening history</h2>
-              <p>Everything this user listened to, ordered from newest to oldest.</p>
-            </div>
-            <Link to="/history" className="sc-profile-section-link">
-              Open history
-            </Link>
-          </div>
-          <div className="sc-profile-history-list">{renderHistorySection()}</div>
-        </section>
-
-        <section className="sc-profile-section" id="profile-favorites">
-          <div className="sc-profile-section-head">
-            <div>
-              <h2>Favorites</h2>
-              <p>Tracks you liked with clickable favoriters, reposts, and comments.</p>
-            </div>
-          </div>
-          <div className="sc-profile-track-list">
-            {renderTrackRows(likedTracks, "Like a track to pin it here.", { limit: 6 })}
-          </div>
-        </section>
-
-        <section className="sc-profile-section" id="profile-reposts">
-          <div className="sc-profile-section-head">
-            <div>
-              <h2>Reposts</h2>
-              <p>Tracks pushed into your own feed and profile surface.</p>
-            </div>
-          </div>
-          <div className="sc-profile-track-list">
-            {renderTrackRows(repostedTracks, "Repost a track and it will appear here.", { limit: 6 })}
-          </div>
-        </section>
-
-        {showEmptyLibraryState ? (
-          <div className="sc-empty-state">
-            <p>Seems a little quiet over here</p>
-            <button
-              className="sc-upload-now-btn"
-              type="button"
-              onClick={() => navigate("/upload")}
-            >
-              Upload now
-            </button>
-          </div>
-        ) : null}
 
         {hasFooterMeta ? (
           <section className="sc-profile-footer-meta">
