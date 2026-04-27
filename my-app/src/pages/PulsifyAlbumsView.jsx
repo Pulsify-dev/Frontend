@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { PulsifyPlaylistService } from '../services/pulsifyPlaylistService';
+import { PulsifyAlbumService } from '../services/pulsifyAlbumService';
 import { PulsifyTrackService } from '../services/pulsifyTrackService';
-import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
-import { PulsifyCreatePlaylistModal } from '../components/playlists/PulsifyCreatePlaylistModal';
+import { PulsifyAlbumCard } from '../components/albums/PulsifyAlbumCard';
+import { PulsifyCreateAlbumModal } from '../components/albums/PulsifyCreateAlbumModal';
 import { Link } from 'react-router-dom';
 import { PulsifyAuthVaultContext } from '../store/PulsifyAuthVault';
 import { pulsifyAxiosInstance } from '../services/api';
 import '../components/playlists/css/PulsifyPlaylists.css';
+import '../components/albums/css/PulsifyAlbums.css';
 
-
-
-export const PulsifyPlaylistsView = () => {
-  const [pulsifyPlaylists, setPulsifyPlaylists] = useState([]);
+export const PulsifyAlbumsView = () => {
+  const [albums, setAlbums] = useState([]);
   const [likedTracks, setLikedTracks] = useState([]);
   const [likedCount, setLikedCount] = useState(0);
   const [socialStats, setSocialStats] = useState({ followers: 0, following: 0 });
@@ -20,44 +19,72 @@ export const PulsifyPlaylistsView = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
 
-  const totalTracksMocked = pulsifyPlaylists.reduce((acc, pl) => acc + (pl.track_count || pl.tracks?.length || 0), 0);
-  const isUploadLocked = subscriptionTier !== 'PRO' && totalTracksMocked >= 3;
+  const totalTracks = albums.reduce((acc, alb) => acc + (alb.track_count || alb.tracks?.length || 0), 0);
 
-  const handleCreatePlaylist = async (payload) => {
+  const handleCreateAlbum = async (payload) => {
     try {
-      const result = await PulsifyPlaylistService.createPlaylist(payload);
-      const newPlaylist = result.data || result;
-      setPulsifyPlaylists(prev => [newPlaylist, ...prev]);
+      const result = await PulsifyAlbumService.createAlbum(payload);
+      console.log('[AlbumsView] Create album raw response:', result);
+      // Unwrap: backend may return { album: {...} }, { data: {...} }, or the album directly
+      let newAlbum = result;
+      if (result?.album && typeof result.album === 'object') newAlbum = result.album;
+      else if (result?.data && typeof result.data === 'object' && !result.title) newAlbum = result.data;
+      
+      // After creating, fetch the full album details so tracks are populated
+      try {
+        const albumId = newAlbum._id || newAlbum.id;
+        if (albumId) {
+          const detailed = await PulsifyAlbumService.getAlbumById(albumId);
+          const unwrapped = detailed?.album || detailed?.data || detailed;
+          if (unwrapped?._id || unwrapped?.id) newAlbum = unwrapped;
+        }
+      } catch (e) {
+        console.warn('[AlbumsView] Could not re-fetch created album details:', e);
+      }
+      
+      setAlbums(prev => [newAlbum, ...prev]);
     } catch (err) {
-      alert('Failed to create playlist: ' + err.message);
+      console.error('[AlbumsView] Create album failed:', err.response?.data || err);
+      alert('Failed to create album: ' + (err.response?.data?.message || err.message));
     }
   };
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadPulsifyData = async () => {
+    const loadAlbums = async () => {
       try {
         setIsLoading(true);
-        const data = await PulsifyPlaylistService.retrieveAllPlaylists('me');
+        const data = await PulsifyAlbumService.retrieveAllAlbums();
+        console.log('[AlbumsView] retrieveAllAlbums returned:', data);
         if (isMounted) {
-          const rawPlaylists = Array.isArray(data) ? data : data.playlists || [];
-          // Fetch detailed data for each playlist to populate track titles
-          const detailedPlaylists = await Promise.all(
-            rawPlaylists.map(async (pl) => {
-              try {
-                const detailed = await PulsifyPlaylistService.getPlaylistById(pl._id || pl.id);
-                return detailed.data || detailed || pl;
-              } catch (e) {
-                return pl; // fallback to raw
-              }
-            })
-          );
-          setPulsifyPlaylists(detailedPlaylists);
+          const rawAlbums = Array.isArray(data) ? data : data.albums || [];
+          console.log('[AlbumsView] rawAlbums array:', rawAlbums);
+          
+          if (rawAlbums.length === 0) {
+            // No albums found — show empty state
+            setAlbums([]);
+          } else {
+            // Fetch detailed data for each album to populate track titles
+            const detailedAlbums = await Promise.all(
+              rawAlbums.map(async (alb) => {
+                try {
+                  const detailed = await PulsifyAlbumService.getAlbumById(alb._id || alb.id);
+                  // Unwrap nested response
+                  const unwrapped = detailed?.album || detailed?.data || detailed;
+                  return unwrapped || alb;
+                } catch (e) {
+                  return alb;
+                }
+              })
+            );
+            setAlbums(detailedAlbums);
+          }
         }
       } catch (err) {
+        console.error('[AlbumsView] loadAlbums error:', err);
         if (isMounted) {
-          setFetchError(err.message || 'Failed to retrieve playlist context.');
+          setFetchError(err.message || 'Failed to retrieve albums.');
         }
       } finally {
         if (isMounted) {
@@ -70,14 +97,12 @@ export const PulsifyPlaylistsView = () => {
       try {
         const res = await PulsifyTrackService.getLikedTracks().catch(() => ({ data: [], count: 0 }));
         if (isMounted) {
-          // Merge remote data with local demo state
           const remoteTracks = res.data || [];
           let localTracks = [];
           try {
             const localStr = localStorage.getItem('pulsifyLikedTracks');
             if (localStr) localTracks = JSON.parse(localStr);
           } catch (e) {}
-          // Simple deduplication by track ID
           const merged = [...localTracks, ...remoteTracks].filter((v, i, a) => 
             a.findIndex(t => (t._id || t.id) === (v._id || v.id)) === i
           );
@@ -103,21 +128,15 @@ export const PulsifyPlaylistsView = () => {
       }
     };
 
-    loadPulsifyData();
+    loadAlbums();
     fetchLikes();
     fetchSocialCounts();
 
-    const handleLikesUpdated = () => fetchLikes();
-    window.addEventListener('pulsify-likes-updated', handleLikesUpdated);
-
-    return () => {
-      isMounted = false;
-      window.removeEventListener('pulsify-likes-updated', handleLikesUpdated);
-    };
+    return () => { isMounted = false; };
   }, []);
 
   if (isLoading) {
-    return <div className="pulsify-util-msg" style={{ backgroundColor: '#111', minHeight: '100vh' }}>Loading your sets...</div>;
+    return <div className="pulsify-util-msg" style={{ backgroundColor: '#111', minHeight: '100vh' }}>Loading your albums...</div>;
   }
 
   if (fetchError) {
@@ -147,24 +166,31 @@ export const PulsifyPlaylistsView = () => {
         <span className="pulsify-tab">All</span>
         <span className="pulsify-tab">Popular tracks</span>
         <span className="pulsify-tab">Tracks</span>
-        <span className="pulsify-tab">Albums</span>
-        <span className="pulsify-tab active">Playlists</span>
+        <span className="pulsify-tab active">Albums</span>
+        <Link to="/playlists" className="pulsify-tab" style={{ textDecoration: 'none' }}>Playlists</Link>
         <span className="pulsify-tab">Reposts</span>
-
       </div>
 
       <div className="pulsify-page-layout">
         {/* Left Main Column */}
         <div className="pulsify-main-column">
+          <div className="pulsify-header-bar">
+            <h2>Your Albums</h2>
+            <div className="pulsify-action-group">
+              <button className="pulsify-btn pulsify-btn-brand" onClick={() => setShowCreateModal(true)}>
+                Create Album
+              </button>
+            </div>
+          </div>
           <div className="pulsify-grid-container">
-            {pulsifyPlaylists.length === 0 ? (
-              <div className="pulsify-util-msg">You have no sets.</div>
+            {albums.length === 0 ? (
+              <div className="pulsify-util-msg">You have no albums yet.</div>
             ) : (
-              pulsifyPlaylists.map((pl) => (
-                <PulsifyPlaylistCard
-                  key={pl._id || pl.id}
-                  playlist={pl}
-                  onDelete={(id) => setPulsifyPlaylists(prev => prev.filter(p => (p._id || p.id) !== id))}
+              albums.map((alb) => (
+                <PulsifyAlbumCard
+                  key={alb._id || alb.id}
+                  album={alb}
+                  onDelete={(id) => setAlbums(prev => prev.filter(a => (a._id || a.id) !== id))}
                 />
               ))
             )}
@@ -184,7 +210,7 @@ export const PulsifyPlaylistsView = () => {
             </div>
             <div className="pulsify-stat-box">
               <span className="pulsify-stat-label">Tracks</span>
-              <span className="pulsify-stat-value">{totalTracksMocked}</span>
+              <span className="pulsify-stat-value">{totalTracks}</span>
             </div>
           </div>
 
@@ -231,10 +257,10 @@ export const PulsifyPlaylistsView = () => {
         </div>
       </div>
 
-      <PulsifyCreatePlaylistModal
+      <PulsifyCreateAlbumModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreatePlaylist}
+        onSubmit={handleCreateAlbum}
       />
     </div>
   );

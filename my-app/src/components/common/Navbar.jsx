@@ -275,6 +275,14 @@ const Navbar = () => {
               Upload
             </Link>
 
+            <Link to="/my-tracks" className="auth-nav-text-link">
+              For Artists
+            </Link>
+
+            <Link to="/upload" className="auth-nav-text-link">
+              Upload
+            </Link>
+
             {/* User Menu */}
             <div className="auth-user-menu-container" ref={userMenuRef}>
               <button
@@ -293,7 +301,10 @@ const Navbar = () => {
                     {(user?.displayName?.[0] || "♪").toUpperCase()}
                   </span>
                 )}
-                <span className="auth-user-name">{user?.displayName}</span>
+                <span className="auth-user-name">
+                  {user?.displayName}
+                  {isPro && <span className="navbar-pro-badge">PRO</span>}
+                </span>
                 <svg
                   width="20"
                   height="20"
@@ -355,9 +366,46 @@ const Navbar = () => {
                   )}
 
                   <div className="auth-user-dropdown-divider" />
+
+                  {/* Group 2 — Premium & Features (M12) */}
+                  <Link
+                    to="/premium"
+                    className="auth-overflow-dropdown-item"
+                    onClick={() => setIsOverflowOpen(false)}
+                  >
+                    Artist Membership
+                  </Link>
+                  <Link
+                    to="/keyboard-shortcuts"
+                    className="auth-overflow-dropdown-item"
+                    onClick={() => setIsOverflowOpen(false)}
+                  >
+                    Keyboard shortcuts
+                  </Link>
+
+                  <div className="auth-user-dropdown-divider" />
+
+                  {/* Group 3 — Account (M1/M12) */}
+                  <Link
+                    to="/premium"
+                    className="auth-overflow-dropdown-item"
+                    onClick={() => setIsOverflowOpen(false)}
+                  >
+                    Subscription
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="auth-overflow-dropdown-item"
+                    onClick={() => setIsOverflowOpen(false)}
+                  >
+                    Settings
+                  </Link>
                   <button
-                    onClick={handleLogout}
-                    className="auth-user-dropdown-item auth-user-dropdown-logout"
+                    onClick={() => {
+                      handleLogout();
+                      setIsOverflowOpen(false);
+                    }}
+                    className="auth-overflow-dropdown-item auth-user-dropdown-logout"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
                     Sign out

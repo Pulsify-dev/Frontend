@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { socialService } from "../../social/services/socialService";
 import FollowButton from "../../social/components/FollowButton";
+import { PlatformIcon, detectPlatform } from "./SocialPlatforms";
 
 const TABS = [
   { label: "All", path: null },
   { label: "Popular tracks", path: null },
   { label: "Tracks", path: null },
   { label: "Albums", path: null },
-  { label: "Playlists", path: "/playlists" },
+  { label: "Playlists", path: null },
   { label: "Reposts", path: null },
   { label: "Feed", path: "/feed" },
 ];
@@ -19,6 +20,9 @@ export default function ProfileCard({
   onCoverUpload,
   onAvatarUpload,
   isOwnProfile = true,
+  onTabChange,
+  activeTab = "All",
+  tabContent,
 }) {
   const navigate = useNavigate();
   const [socialCounts, setSocialCounts] = useState({
@@ -108,7 +112,8 @@ export default function ProfileCard({
             ) : (
               <button
                 key={tab.label}
-                className={`sc-tab ${tab.label === "All" ? "sc-tab--active" : ""}`}
+                className={`sc-tab ${tab.label === activeTab ? "sc-tab--active" : ""}`}
+                onClick={() => onTabChange?.(tab.label)}
               >
                 {tab.label}
               </button>
@@ -134,15 +139,19 @@ export default function ProfileCard({
       {/* Content area */}
       <div className="sc-content-area">
         <div className="sc-main-content">
-          <div className="sc-empty-state">
-            <p>Seems a little quiet over here</p>
-            <button
-              className="sc-upload-now-btn"
-              onClick={() => navigate("/upload")}
-            >
-              Upload now
-            </button>
-          </div>
+          {tabContent ? (
+            tabContent
+          ) : (
+            <div className="sc-empty-state">
+              <p>Seems a little quiet over here</p>
+              <button
+                className="sc-upload-now-btn"
+                onClick={() => navigate("/upload")}
+              >
+                Upload now
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -191,36 +200,39 @@ export default function ProfileCard({
           )}
 
           <div className="sc-sidebar-links">
-            {profile.socialLinks?.instagram && (
+            {[
+              ...(profile.socialLinks?.instagram
+                ? [
+                    {
+                      platform: "instagram",
+                      url: profile.socialLinks.instagram,
+                    },
+                  ]
+                : []),
+              ...(profile.socialLinks?.twitter
+                ? [{ platform: "twitter", url: profile.socialLinks.twitter }]
+                : []),
+              ...(profile.socialLinks?.website
+                ? [{ platform: "website", url: profile.socialLinks.website }]
+                : []),
+              ...(profile.socialLinks?.links?.filter((l) => l.url) ?? []),
+            ].map((link, i) => (
               <a
-                href={profile.socialLinks.instagram}
+                key={i}
+                href={link.url}
                 target="_blank"
                 rel="noreferrer"
                 className="sc-social-link"
               >
-                Instagram
+                <PlatformIcon
+                  platform={link.platform ?? detectPlatform(link.url)}
+                  size={14}
+                />
+                <span>
+                  {link.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
+                </span>
               </a>
-            )}
-            {profile.socialLinks?.twitter && (
-              <a
-                href={profile.socialLinks.twitter}
-                target="_blank"
-                rel="noreferrer"
-                className="sc-social-link"
-              >
-                Twitter
-              </a>
-            )}
-            {profile.socialLinks?.website && (
-              <a
-                href={profile.socialLinks.website}
-                target="_blank"
-                rel="noreferrer"
-                className="sc-social-link"
-              >
-                Website
-              </a>
-            )}
+            ))}
           </div>
 
           {/* Quick nav to other modules */}

@@ -5,12 +5,18 @@ export function mapProfileDtoToProfile(dto) {
     displayName: dto.display_name,
     bio: dto.bio,
     location: dto.location,
-    favoriteGenres: dto.favorite_genres,
+    favoriteGenres: dto.favorite_genres ?? [],
     avatarUrl: dto.avatar_url,
     coverUrl: dto.cover_url,
-    accountTier: dto.account_tier,
+    accountTier: dto.account_tier ?? dto.tier,
     isPrivate: dto.is_private,
+    isVerified: dto.is_verified ?? false,
     socialLinks: dto.social_links ?? {},
+    trackCount: dto.track_count ?? 0,
+    followersCount: dto.followers_count ?? 0,
+    followingCount: dto.following_count ?? 0,
+    // Backend has no role field — infer from track_count for public profiles
+    isArtist: (dto.track_count ?? 0) > 0,
   };
 }
 

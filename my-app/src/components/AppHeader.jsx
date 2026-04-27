@@ -1,8 +1,12 @@
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? "trk-2026-014";
 
 function AppHeader() {
+  const { user } = useAuth();
+  const isArtist = user?.role === "artist";
+
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -35,6 +39,12 @@ function AppHeader() {
             >
               Library
             </NavLink>
+            <NavLink
+              className={({ isActive }) => (isActive ? "active" : "")}
+              to={`/tracks/${DEFAULT_TRACK_ID}`}
+            >
+              Track
+            </NavLink>
           </nav>
         </div>
 
@@ -54,9 +64,11 @@ function AppHeader() {
           <Link className="text-action" to="/profile">
             Artist Studio
           </Link>
-          <Link className="text-action" to="/upload">
-            Upload
-          </Link>
+          {isArtist && (
+            <Link className="text-action" to="/upload">
+              Upload
+            </Link>
+          )}
           <Link className="profile-chip" to="/profile" aria-label="Profile">
             <span />
           </Link>
