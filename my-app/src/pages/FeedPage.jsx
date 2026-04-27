@@ -200,10 +200,6 @@ const FeedPage = () => {
             </div>
           </div>
 
-          {/* How the Feed works explainer */}
-          <div className="sc-feed-explainer">
-            <p>💡 <strong>How your feed works:</strong> Follow artists from the <a href="/discover" className="sc-link-accent">Discover</a> or <a href="/search" className="sc-link-accent">Search</a> page. When they upload new tracks or repost content, it will appear here in your feed automatically.</p>
-          </div>
 
           {/* Feed Content */}
           {loading ? (

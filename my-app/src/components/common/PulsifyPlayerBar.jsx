@@ -65,7 +65,7 @@ const PulsifyPlayerBar = () => {
   useEffect(() => {
     const fetchStreamUrl = async () => {
       if (!currentTrack) return;
-      const trackId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+      const trackId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id || currentTrack?.trackId;
       console.log('Player Bar: Fetching stream for trackId:', trackId, 'currentTrack:', currentTrack);
       
       if (!trackId) {
@@ -104,7 +104,7 @@ const PulsifyPlayerBar = () => {
         onTimeUpdate={handleTimeUpdate}
         onEnded={async () => {
           if (currentTrack) {
-            const trackId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
+            const trackId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id || currentTrack?.trackId;
             try {
               const { registerPlay } = await import('../../services/api');
               const durationMs = audioRef.current?.currentTime ? audioRef.current.currentTime * 1000 : 0;
