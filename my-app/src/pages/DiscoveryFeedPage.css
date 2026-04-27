@@ -111,24 +111,30 @@
 
 .sc-discover-card-play {
   position: absolute;
-  bottom: 8px;
-  left: 8px;
-  width: 32px;
-  height: 32px;
-  background: #f50;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.6);
   border: none;
   border-radius: 50%;
   color: #fff;
-  font-size: 13px;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.2s;
+  z-index: 2;
 }
 
-.sc-discover-card:hover .sc-discover-card-play {
+.sc-discover-card-art:hover .sc-discover-card-play {
+  opacity: 1;
+}
+
+.sc-discover-card-art:hover .sc-discover-card-report {
   opacity: 1;
 }
 
@@ -148,9 +154,6 @@
   transition: opacity 0.2s;
 }
 
-.sc-discover-card:hover .sc-discover-card-report {
-  opacity: 1;
-}
 
 .sc-discover-card-curator {
   position: absolute;
