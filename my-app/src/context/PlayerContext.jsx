@@ -14,7 +14,7 @@ const readStoredVolume = () => {
   if (typeof window === 'undefined') return 70
 
   const nextValue = Number(window.localStorage.getItem(PLAYER_VOLUME_KEY) ?? 70)
-  if (!Number.isFinite(nextValue)) return 70
+  if (!Number.isNaN(nextValue)) return 70
   return Math.min(Math.max(nextValue, 0), 100)
 }
 
@@ -107,6 +107,15 @@ const buildFallbackStreamInfo = (track, playbackContext = 'track_page') => {
     message: null,
   }
 }
+
+// A "full" track object is one that was already fetched from the API —
+// it will have at minimum a title and a duration. If those are present we
+// skip the redundant getTrack() call inside resolveTrack.
+const isFullTrackObject = (track) =>
+  track != null &&
+  typeof track === 'object' &&
+  Boolean(track.title) &&
+  (track.duration != null || track.durationSeconds != null || track.duration_seconds != null)
 
 const dedupeQueue = (trackIds = []) =>
   [...new Set(trackIds.filter(Boolean).map((trackId) => String(trackId)))]
@@ -256,9 +265,14 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [currentTime, currentTrack])
 
+  // FIX 1: Skip the redundant getTrack() API call when the caller already
+  // passed in a full track object (i.e. TrackPage already fetched it).
+  // We only hit the API when given a bare track ID string, or a minimal
+  // stub that is missing required fields like title/duration.
   const resolveTrack = useCallback(async (trackInput) => {
     if (!trackInput) return null
 
+    // Bare ID string — must fetch.
     if (typeof trackInput === 'string') {
       return getTrack(trackInput)
     }
@@ -268,6 +282,12 @@ export const PlayerProvider = ({ children }) => {
       return normalizedTrack
     }
 
+    // Full object already — no need to re-fetch from the API.
+    if (isFullTrackObject(trackInput)) {
+      return normalizedTrack
+    }
+
+    // Partial / stub object — fill in the gaps from the API.
     try {
       const trackDetails = await getTrack(normalizedTrack.id)
       return {

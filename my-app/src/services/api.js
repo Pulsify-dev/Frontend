@@ -1726,6 +1726,21 @@ export const toggleLike = async (trackId, shouldLike) => {
       });
       return { success: true };
     }
+
+    try {
+      const likedStatus = await checkTrackLiked(trackId);
+      if (Boolean(likedStatus?.liked) === shouldLike) {
+        updateViewerTrackEngagementCache({
+          id: trackId,
+          trackId,
+          viewerHasLiked: shouldLike,
+        });
+        return { success: true };
+      }
+    } catch {
+      // Preserve the original mutation error when follow-up verification fails.
+    }
+
     throw err;
   }
 };

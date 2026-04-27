@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Comments from "../components/Comments";
 import EngagementListModal from "../components/EngagementListModal";
@@ -31,6 +31,7 @@ import {
   updateComment,
 } from "../services/api";
 import "../App.css";
+
 const configuredApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL || "your configured API";
 
@@ -178,6 +179,7 @@ function TrackPage({ view = "overview" }) {
   const navigate = useNavigate();
   const { trackId: routeTrackId } = useParams();
   const trackId = routeTrackId ?? DEFAULT_TRACK_ID;
+
   const {
     currentTrack: activeTrack,
     isPlaying: playerIsPlaying,
@@ -192,6 +194,15 @@ function TrackPage({ view = "overview" }) {
     setQueueTrackIds,
     syncCurrentTrack,
   } = usePlayer();
+
+  // FIX: keep a stable ref to syncCurrentTrack so we can call it inside
+  // async functions without adding it to useEffect dependency arrays
+  // (it is stable by itself, but being in contextValue ties it to every
+  // context re-render which previously caused the cascade).
+  const syncCurrentTrackRef = useRef(syncCurrentTrack);
+  useEffect(() => {
+    syncCurrentTrackRef.current = syncCurrentTrack;
+  });
 
   const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const [tokenInput, setTokenInput] = useState(() => readAuthToken());
@@ -210,6 +221,7 @@ function TrackPage({ view = "overview" }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [uiMessage, setUiMessage] = useState("");
   const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
+
   const isTrackIdMissing = !trackId;
   const isActiveRouteTrack = Boolean(track?.id) && activeTrack?.id === track.id;
 
@@ -254,6 +266,7 @@ function TrackPage({ view = "overview" }) {
     [relatedTracks, track?.id, trackId]
   );
 
+  // Navigate when the player switches to a different track via queue controls.
   useEffect(() => {
     if (!activeTrack?.id || !routeTrackId || activeTrack.id === routeTrackId) {
       return;
@@ -266,6 +279,7 @@ function TrackPage({ view = "overview" }) {
     );
   }, [activeTrack?.id, navigate, routeTrackId, view]);
 
+  // Listen for engagement updates broadcast by other pages/components.
   useEffect(() => {
     const handleTrackEngagementUpdate = (event) => {
       const { trackId: updatedTrackId, track: updatedTrack } = event.detail ?? {};
@@ -313,6 +327,11 @@ function TrackPage({ view = "overview" }) {
     error.startsWith("Missing access token.") ||
     error.startsWith("Unauthorized.");
 
+  // FIX: removed syncCurrentTrack from the dependency array.
+  // We call it via syncCurrentTrackRef so the effect only re-runs when
+  // trackId or authRefreshKey actually change — not on every context
+  // re-render caused by currentTime ticks from the audio element.
+  // setQueueTrackIds is stable (useCallback with [] deps) so it's safe to keep.
   useEffect(() => {
     if (!trackId) {
       setIsLoading(false);
@@ -322,7 +341,7 @@ function TrackPage({ view = "overview" }) {
 
     let isMounted = true;
 
-    const loadTrack = async () => {
+    const fetchTrackData = async () => {
       setIsLoading(true);
       setError("");
       setUiMessage(
@@ -340,6 +359,7 @@ function TrackPage({ view = "overview" }) {
       try {
         nextTrack = await getTrack(trackId);
       } catch {
+        if (!isMounted) return;
         setError("Track unavailable right now.");
         setIsLoading(false);
         return;
@@ -396,6 +416,7 @@ function TrackPage({ view = "overview" }) {
       setComments(sortCommentsByTimeline(commentsPayload.comments));
       setCommentTotal(commentsPayload.totalCount ?? nextTrack.commentCount ?? 0);
       setCommentsPagination(commentsPayload.pagination ?? null);
+
       const nextLikers = results[2].status === "fulfilled" ? results[2].value : [];
       const nextReposters =
         results[3].status === "fulfilled" ? results[3].value : [];
@@ -411,6 +432,7 @@ function TrackPage({ view = "overview" }) {
       setFanLeaderboard(
         results[6].status === "fulfilled" ? results[6].value : []
       );
+
       setQueueTrackIds(
         buildTrackQueueIds(
           nextTrack.id,
@@ -418,21 +440,26 @@ function TrackPage({ view = "overview" }) {
           CONFIGURED_TRACK_IDS,
         )
       );
-      syncCurrentTrack(nextTrack);
+
+      // Use the ref so this call doesn't become a dep of the effect.
+      syncCurrentTrackRef.current(nextTrack);
+
       setIsLoading(false);
     };
 
-    loadTrack();
+    fetchTrackData();
 
     return () => {
       isMounted = false;
     };
-  }, [authRefreshKey, setQueueTrackIds, syncCurrentTrack, trackId]);
+    // FIX: syncCurrentTrack intentionally omitted — called via ref above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authRefreshKey, setQueueTrackIds, trackId]);
 
-  useEffect(() => {
-    if (!track || !isActiveRouteTrack) return;
-    syncCurrentTrack(track);
-  }, [isActiveRouteTrack, syncCurrentTrack, track]);
+  // FIX: removed the second useEffect that called syncCurrentTrack whenever
+  // `track` or `isActiveRouteTrack` changed. That created a state → render →
+  // context change → re-render → effect loop. The single call at the end of
+  // fetchTrackData above is sufficient.
 
   const handleTokenSubmit = (event) => {
     event.preventDefault();
@@ -519,7 +546,7 @@ function TrackPage({ view = "overview" }) {
     };
 
     setTrack(optimisticTrack);
-    syncCurrentTrack(optimisticTrack);
+    syncCurrentTrackRef.current(optimisticTrack);
     broadcastTrackSnapshot(optimisticTrack, {
       viewerHasLiked: shouldLike,
       previousViewerHasLiked,
@@ -536,7 +563,7 @@ function TrackPage({ view = "overview" }) {
       };
 
       setTrack(rollbackTrack);
-      syncCurrentTrack(rollbackTrack);
+      syncCurrentTrackRef.current(rollbackTrack);
       broadcastTrackSnapshot(rollbackTrack, {
         viewerHasLiked: previousViewerHasLiked,
         previousViewerHasLiked: shouldLike,
@@ -557,7 +584,7 @@ function TrackPage({ view = "overview" }) {
     };
 
     setTrack(optimisticTrack);
-    syncCurrentTrack(optimisticTrack);
+    syncCurrentTrackRef.current(optimisticTrack);
     broadcastTrackSnapshot(optimisticTrack, {
       viewerHasReposted: shouldRepost,
       previousViewerHasReposted,
@@ -574,7 +601,7 @@ function TrackPage({ view = "overview" }) {
       };
 
       setTrack(rollbackTrack);
-      syncCurrentTrack(rollbackTrack);
+      syncCurrentTrackRef.current(rollbackTrack);
       broadcastTrackSnapshot(rollbackTrack, {
         viewerHasReposted: previousViewerHasReposted,
         previousViewerHasReposted: shouldRepost,
@@ -601,7 +628,7 @@ function TrackPage({ view = "overview" }) {
       refreshedCommentsPayload.totalCount ?? (commentTotal ?? 0) + 1,
     );
     setTrack(nextTrack);
-    syncCurrentTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
     broadcastTrackSnapshot(nextTrack);
     setCommentsPagination(refreshedCommentsPayload.pagination ?? null);
   };
@@ -641,7 +668,7 @@ function TrackPage({ view = "overview" }) {
     );
     setCommentTotal((currentTotal) => currentTotal + 1);
     setTrack(nextTrack);
-    syncCurrentTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
     broadcastTrackSnapshot(nextTrack);
     setCommentsPagination((currentPagination) =>
       currentPagination
@@ -756,7 +783,7 @@ function TrackPage({ view = "overview" }) {
     );
     setCommentTotal((currentTotal) => Math.max(currentTotal - 1, 0));
     setTrack(nextTrack);
-    syncCurrentTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
     broadcastTrackSnapshot(nextTrack);
     setCommentsPagination((currentPagination) =>
       currentPagination
