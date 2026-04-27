@@ -485,7 +485,7 @@ export const PulsifyPlaylistDetailView = () => {
           <div style={{ width: '300px', flexShrink: 0, marginTop: '-48px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', color: '#fff', fontWeight: 'bold', textTransform: 'uppercase' }}>Playlists from this user</div>
-              <div style={{ fontSize: '11px', color: '#999', cursor: 'pointer' }}>View all</div>
+              <Link to={`/profile/${playlistDetail.creator_id?._id || playlistDetail.creator_id || playlistDetail.creator_username || ''}`} style={{ fontSize: '11px', color: '#999', cursor: 'pointer', textDecoration: 'none' }}>View all</Link>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>

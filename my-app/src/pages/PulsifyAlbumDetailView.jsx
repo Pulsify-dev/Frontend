@@ -29,6 +29,20 @@ export const PulsifyAlbumDetailView = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
+  useEffect(() => {
+    if (albumDetail && (albumDetail._id || albumDetail.id)) {
+      if (albumDetail.is_liked !== undefined) {
+        setIsLiked(albumDetail.is_liked);
+      } else if (albumDetail.liked !== undefined) {
+        setIsLiked(albumDetail.liked);
+      } else {
+        PulsifyAlbumService.checkIfLiked(albumDetail._id || albumDetail.id)
+          .then(res => setIsLiked(res.liked || res.is_liked || false))
+          .catch(err => console.error('Failed to check album like status', err));
+      }
+    }
+  }, [albumDetail]);
+
   const formatTime = (secs) => {
     if (!secs || isNaN(secs)) return '0:00';
     const m = Math.floor(secs / 60);
@@ -121,7 +135,19 @@ export const PulsifyAlbumDetailView = () => {
   };
 
   const handleLikeClick = async () => {
-    setIsLiked(!isLiked);
+    try {
+      const prevLiked = isLiked;
+      setIsLiked(!isLiked); // Optimistic UI update
+      if (prevLiked) {
+        await PulsifyAlbumService.unlikeAlbum(albumDetail._id || albumDetail.id);
+      } else {
+        await PulsifyAlbumService.likeAlbum(albumDetail._id || albumDetail.id);
+      }
+    } catch (err) {
+      console.error('Failed to toggle album like', err);
+      setIsLiked(isLiked); // Revert on failure
+      alert('Failed to update like status.');
+    }
   };
 
   const handleRemoveTrack = async (indexToRemove) => {
@@ -435,7 +461,7 @@ export const PulsifyAlbumDetailView = () => {
           <div style={{ width: '300px', flexShrink: 0, marginTop: '-48px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', color: '#fff', fontWeight: 'bold', textTransform: 'uppercase' }}>Albums from this artist</div>
-              <Link to="/albums" style={{ fontSize: '11px', color: '#999', cursor: 'pointer', textDecoration: 'none' }}>View all</Link>
+              <Link to={`/profile/${albumDetail.artist_id?._id || albumDetail.artist_id || ''}`} style={{ fontSize: '11px', color: '#999', cursor: 'pointer', textDecoration: 'none' }}>View all</Link>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>

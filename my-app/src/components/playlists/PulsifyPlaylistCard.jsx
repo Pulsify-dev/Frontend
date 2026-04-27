@@ -6,6 +6,7 @@ import { PulsifyAuthVaultContext } from '../../store/PulsifyAuthVault';
 import { usePlayer } from '../../hooks/usePlayer';
 import { PulsifyEditPlaylistModal } from './PulsifyEditPlaylistModal';
 import { PulsifyShareModal } from './PulsifyShareModal';
+import { PulsifyTrackService } from '../../services/pulsifyTrackService';
 
 const generateWaveform = () => Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
@@ -37,6 +38,8 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
   const isPro = subscriptionTier === 'PRO';
 
+  const [isLiked, setIsLiked] = useState(false);
+  
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -46,6 +49,40 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (trackData) {
+      if (trackData.is_liked !== undefined) {
+        setIsLiked(trackData.is_liked);
+      } else if (trackData.liked !== undefined) {
+        setIsLiked(trackData.liked);
+      } else {
+        const tId = trackData._id || trackData.id;
+        if (tId) {
+          PulsifyTrackService.checkIfLiked(tId)
+            .then(res => setIsLiked(res.liked || res.is_liked || false))
+            .catch(err => console.error('Failed to check track like status', err));
+        }
+      }
+    }
+  }, [trackData]);
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    try {
+      const prevLiked = isLiked;
+      setIsLiked(!isLiked); // Optimistic
+      const tId = trackData._id || trackData.id;
+      if (prevLiked) {
+        await PulsifyTrackService.unlikeTrack(tId);
+      } else {
+        await PulsifyTrackService.likeTrack(tId);
+      }
+    } catch (err) {
+      console.error('Failed to like track', err);
+      setIsLiked(isLiked); // Revert on failure
+    }
+  };
 
   const handleShareClick = (e) => {
     e.stopPropagation();
@@ -97,8 +134,8 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
 
       {hovered ? (
         <div style={{ display: 'flex', gap: '42px', marginLeft: 'auto', alignItems: 'center', paddingLeft: '8px' }}>
-          <TrackAction title="Like">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           </TrackAction>
           <TrackAction title="Repost">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 014-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 01-4 4H3" /></svg>

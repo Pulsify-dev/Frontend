@@ -231,4 +231,27 @@ export const PulsifyAlbumService = {
     const { data } = await pulsifyAxiosInstance.put(`/albums/${albumId}/tracks/order`, { ordered_ids: orderedIds });
     return data;
   },
+
+  // ──── SOCIAL / ENGAGEMENT ────
+
+  /** POST /albums/:id/like — Like an album */
+  async likeAlbum(albumId) {
+    if (isMock()) return { message: 'Album liked successfully.' };
+    const { data } = await pulsifyAxiosInstance.post(`/albums/${albumId}/like`);
+    return data;
+  },
+
+  /** DELETE /albums/:id/like — Unlike an album */
+  async unlikeAlbum(albumId) {
+    if (isMock()) return { message: 'Album unliked successfully.' };
+    const { data } = await pulsifyAxiosInstance.delete(`/albums/${albumId}/like`);
+    return data;
+  },
+
+  /** GET /albums/:id/liked — Check if liked */
+  async checkIfLiked(albumId) {
+    if (isMock()) return { liked: false };
+    const { data } = await pulsifyAxiosInstance.get(`/albums/${albumId}/liked`);
+    return data;
+  }
 };

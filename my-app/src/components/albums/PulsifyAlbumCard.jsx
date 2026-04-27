@@ -6,6 +6,7 @@ import { PulsifyAuthVaultContext } from '../../store/PulsifyAuthVault';
 import { usePlayer } from '../../hooks/usePlayer';
 import { PulsifyEditAlbumModal } from './PulsifyEditAlbumModal';
 import { PulsifyShareModal } from '../playlists/PulsifyShareModal';
+import { PulsifyTrackService } from '../../services/pulsifyTrackService';
 
 const generateWaveform = () => Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
@@ -37,6 +38,8 @@ const AlbumCardTrackEntry = ({ trackData, i, artistName, albId }) => {
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
   const isPro = subscriptionTier === 'PRO';
 
+  const [isLiked, setIsLiked] = useState(false); // Track local like state
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -46,6 +49,40 @@ const AlbumCardTrackEntry = ({ trackData, i, artistName, albId }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (trackData) {
+      if (trackData.is_liked !== undefined) {
+        setIsLiked(trackData.is_liked);
+      } else if (trackData.liked !== undefined) {
+        setIsLiked(trackData.liked);
+      } else {
+        const tId = trackData._id || trackData.id;
+        if (tId) {
+          PulsifyTrackService.checkIfLiked(tId)
+            .then(res => setIsLiked(res.liked || res.is_liked || false))
+            .catch(err => console.error('Failed to check track like status', err));
+        }
+      }
+    }
+  }, [trackData]);
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    try {
+      const prevLiked = isLiked;
+      setIsLiked(!isLiked); // Optimistic
+      const tId = trackData._id || trackData.id;
+      if (prevLiked) {
+        await PulsifyTrackService.unlikeTrack(tId);
+      } else {
+        await PulsifyTrackService.likeTrack(tId);
+      }
+    } catch (err) {
+      console.error('Failed to like track', err);
+      setIsLiked(isLiked); // Revert on failure
+    }
+  };
 
   const handleShareClick = (e) => {
     e.stopPropagation();
@@ -97,8 +134,8 @@ const AlbumCardTrackEntry = ({ trackData, i, artistName, albId }) => {
 
       {hovered ? (
         <div style={{ display: 'flex', gap: '42px', marginLeft: 'auto', alignItems: 'center', paddingLeft: '8px' }}>
-          <TrackAction title="Like">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           </TrackAction>
           <TrackAction title="Share" onClick={handleShareClick}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
@@ -161,6 +198,20 @@ export const PulsifyAlbumCard = ({ album, onDelete }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (localAlbum) {
+      if (localAlbum.is_liked !== undefined) {
+        setIsLiked(localAlbum.is_liked);
+      } else if (localAlbum.liked !== undefined) {
+        setIsLiked(localAlbum.liked);
+      } else if (albId) {
+        PulsifyAlbumService.checkIfLiked(albId)
+          .then(res => setIsLiked(res.liked || res.is_liked || false))
+          .catch(err => console.error('Failed to check album like status', err));
+      }
+    }
+  }, [localAlbum, albId]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -319,7 +370,21 @@ export const PulsifyAlbumCard = ({ album, onDelete }) => {
           <button className="pulsify-card-action-btn" title="Edit" onClick={(e) => { e.stopPropagation(); setIsEditModalOpen(true); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title={isLiked ? "Unlike" : "Like"} onClick={() => setIsLiked(!isLiked)} style={isLiked ? { color: '#f50' } : {}}>
+          <button className="pulsify-card-action-btn" title={isLiked ? "Unlike" : "Like"} onClick={async (e) => { 
+            e.stopPropagation(); 
+            try {
+              const prevLiked = isLiked;
+              setIsLiked(!isLiked); // Optimistic UI update
+              if (prevLiked) {
+                await PulsifyAlbumService.unlikeAlbum(albId);
+              } else {
+                await PulsifyAlbumService.likeAlbum(albId);
+              }
+            } catch (err) {
+              console.error('Failed to toggle album like', err);
+              setIsLiked(isLiked); // Revert on failure
+            }
+          }} style={isLiked ? { color: '#f50' } : {}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           </button>
 
