@@ -67,6 +67,19 @@
   gap: 10px;
 }
 
+.messages-thread-system-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--sc-bg-surface);
+  border-radius: 8px;
+  margin: 8px 16px;
+  color: var(--sc-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
 .messages-list-items {
   overflow-y: auto;
   flex: 1;
@@ -236,15 +249,17 @@
 
 .messages-text-action {
   border: none;
-  background: transparent;
-  color: var(--sc-text-secondary);
+  background: #ffffff;
+  color: #000000;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 3px;
   cursor: pointer;
 }
 
 .messages-text-action:hover {
-  color: var(--sc-text-primary);
+  background: #eeeeee;
 }
 
 .messages-pill-btn {
@@ -545,6 +560,13 @@
   background: #f5f5f5;
 }
 
+.messages-composer-actions .messages-secondary-btn:disabled {
+  background: #ffffff;
+  color: #000000;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .messages-composer-note {
   font-size: 11px;
   color: var(--sc-text-muted);
@@ -566,7 +588,7 @@
 }
 
 .messages-modal {
-  width: min(380px, calc(100vw - 24px));
+  width: min(420px, calc(100vw - 24px));
   background: var(--sc-bg-primary);
   border: 1px solid var(--sc-border);
   border-radius: 4px;
@@ -834,8 +856,8 @@
 }
 
 .messages-share-modal {
-  width: min(420px, calc(100vw - 24px));
-  max-height: min(500px, calc(100vh - 100px));
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(600px, calc(100vh - 100px));
   background: var(--sc-bg-primary);
   border: 1px solid var(--sc-border);
   border-radius: 8px;
