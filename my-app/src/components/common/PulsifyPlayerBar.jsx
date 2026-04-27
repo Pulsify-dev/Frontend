@@ -3,10 +3,9 @@ import { usePlayer } from '../../hooks/usePlayer';
 import './PulsifyPlayerBar.css';
 
 const PulsifyPlayerBar = () => {
-  const { currentTrack, isPlaying, togglePlay, setPlayerProgress, setPlayerCurrentTime } = usePlayer();
+  const { currentTrack, isPlaying, togglePlay, setPlayerProgress, setPlayerCurrentTime, audioRef } = usePlayer();
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(80);
-  const audioRef = useRef(null);
 
   // Handle playback state changes
   useEffect(() => {

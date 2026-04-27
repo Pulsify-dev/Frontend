@@ -226,8 +226,17 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
 
   const { togglePlay, isPlaying, currentTrack, playerProgress } = usePlayer();
 
-  const handlePlaylistShare = () => {
+  const handlePlaylistShare = (e) => {
+    e.stopPropagation();
     setIsShareModalOpen(true);
+  };
+
+  const handleCopyLink = (e) => {
+    e.stopPropagation();
+    const baseUrl = window.location.origin;
+    const identifier = localPlaylist.permalink || plId;
+    const url = `${baseUrl}/playlists/${identifier}${localPlaylist.is_private && localPlaylist.secret_token ? `?token=${localPlaylist.secret_token}` : ''}`;
+    navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!')).catch(() => alert('Failed to copy link.'));
   };
 
   const handleDelete = async () => {
@@ -388,10 +397,10 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
           <button className="pulsify-card-action-btn" title="Share" onClick={handlePlaylistShare}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="Copy Link">
+          <button className="pulsify-card-action-btn" title="Copy Link" onClick={handleCopyLink}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
           </button>
-          <button className="pulsify-card-action-btn" title="Edit" onClick={() => setIsEditModalOpen(true)}>
+          <button className="pulsify-card-action-btn" title="Edit" onClick={(e) => { e.stopPropagation(); setIsEditModalOpen(true); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
           <button className="pulsify-card-action-btn" title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick} style={isLiked ? { color: '#f50' } : {}}>
