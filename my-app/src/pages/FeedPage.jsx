@@ -4,6 +4,9 @@ import { usePlayer } from '../hooks/usePlayer';
 import serviceLocator from '../utils/serviceLocator';
 import ArtistToolsWidget from '../components/common/ArtistToolsWidget';
 import ReportModal from '../components/common/ReportModal';
+import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
+import { PulsifyAlbumCard } from '../components/albums/PulsifyAlbumCard';
+import { PulsifyTrackCard } from '../components/discovery/PulsifyTrackCard';
 import './FeedPage.css';
 
 // Format relative time
@@ -120,11 +123,14 @@ const FeedPage = () => {
   const renderFeedItem = (item, index) => {
     const isRepost = item.type === 'repost';
     const isAlbumRepost = isRepost && item.entityType === 'album';
+    const isPlaylistRepost = isRepost && item.entityType === 'playlist';
     const track = item.track;
+    const album = item.album;
+    const playlist = item.playlist;
     const artist = item.artist;
     const headerUser = isRepost ? item.repostedBy : artist;
     const headerAction = isRepost
-      ? (isAlbumRepost ? 'reposted an album' : 'reposted a track')
+      ? (isAlbumRepost ? 'reposted an album' : isPlaylistRepost ? 'reposted a playlist' : 'reposted a track')
       : 'posted a track';
 
     return (
@@ -135,13 +141,13 @@ const FeedPage = () => {
             className="sc-feed-header-avatar"
             src={headerUser?.avatarUrl || 'https://via.placeholder.com/28'}
             alt={headerUser?.displayName || headerUser?.username}
-                        onClick={() => navigate(`/profile/${headerUser?.id}`)}
+            onClick={() => navigate(`/profile/${headerUser?.id}`)}
             style={{ cursor: 'pointer' }}
           />
           <span className="sc-feed-header-text">
             <strong
               className="sc-feed-header-name"
-                          onClick={() => navigate(`/profile/${headerUser?.id}`)}
+              onClick={() => navigate(`/profile/${headerUser?.id}`)}
             >
               {headerUser?.displayName || headerUser?.username}
             </strong>
@@ -150,79 +156,26 @@ const FeedPage = () => {
         </div>
 
         {/* Body */}
-        {isAlbumRepost ? (
-          /* Album Repost Card */
-          <div className="sc-feed-album-card" onClick={() => navigate(`/albums/${item.album?._id}`)} style={{ cursor: 'pointer' }}>
-            <div className="sc-feed-album-art">
-              <img src={item.album?.artwork_url || 'https://via.placeholder.com/150'} alt={item.album?.title} />
-            </div>
-            <div className="sc-feed-album-info">
-              <div className="sc-feed-album-artist">{artist?.displayName || artist?.username}</div>
-              <div className="sc-feed-album-title">{item.album?.title}</div>
-              <div className="sc-feed-album-meta">{item.album?.track_count || 0} tracks · {item.album?.type || 'Album'}</div>
-            </div>
-          </div>
+        {isAlbumRepost || album ? (
+          <PulsifyAlbumCard key={album?._id || index} album={album} />
+        ) : isPlaylistRepost || item.type === 'playlist' || playlist ? (
+          <PulsifyPlaylistCard key={playlist?._id || index} playlist={playlist} />
         ) : track ? (
-          /* Track Card — SoundCloud style */
-          <div className="sc-feed-track-card">
-            <div className="sc-feed-track-art" onClick={() => handlePlayTrack(track)}>
-              <img src={track.coverArt || 'https://via.placeholder.com/160'} alt={track.title} />
-              <button className="sc-feed-play-btn" onClick={(e) => { e.stopPropagation(); handlePlayTrack(track); }}>▶</button>
-            </div>
-            <div className="sc-feed-track-right">
-              <div className="sc-feed-track-meta-row">
-                <div className="sc-feed-track-names">
-                  <span
-                    className="sc-feed-track-artist-name"
-                    onClick={() => navigate(`/profile/${artist?.id || track.artist?.id}`)}
-                  >
-                    {artist?.displayName || artist?.username || track.artist?.name}
-                  </span>
-                  <span className="sc-feed-track-title" onClick={() => handleGoToTrack(track)}>
-                    {track.title}
-                  </span>
-                </div>
-                {track.genre && <span className="sc-genre-tag">#{track.genre}</span>}
-              </div>
-
-              {/* Waveform placeholder */}
-              <div className="sc-waveform-placeholder" onClick={() => handlePlayTrack(track)}>
-                <div className="sc-waveform-bars">
-                  {Array.from({ length: 80 }).map((_, i) => (
-                    <div key={i} className="sc-waveform-bar" style={{ height: `${12 + Math.random() * 28}px` }}></div>
-                  ))}
-                </div>
-                <span className="sc-waveform-duration">{formatDuration(track.durationSeconds)}</span>
-              </div>
-
-              {/* Engagement Bar */}
-              <div className="sc-engagement-bar">
-                <div className="sc-engagement-left">
-                  <button className="sc-eng-btn">♥ {track.likes || 0}</button>
-                  <button className="sc-eng-btn">⇄ {track.reposts || 0}</button>
-                  <button className="sc-eng-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    {' '}Share
-                  </button>
-                  <button className="sc-eng-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                    {' '}Copy Link
-                  </button>
-                  <button 
-                    className="sc-eng-btn" 
-                    onClick={(e) => { e.stopPropagation(); setReportEntity({ type: 'Track', id: track.trackId }); setReportModalOpen(true); }}
-                  >
-                    ⚑ Report
-                  </button>
-                  <button className="sc-eng-btn sc-eng-btn-more" onClick={() => handleGoToTrack(track)}>More ›</button>
-                </div>
-                <div className="sc-engagement-right">
-                  <span className="sc-eng-stat">▶ {track.plays || 0}</span>
-                  <span className="sc-eng-stat">💬 {track.comments || 0}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PulsifyTrackCard 
+            key={track._id || track.trackId || index} 
+            track={{
+              ...track,
+              id: track.trackId || track._id || track.id,
+              coverUrl: track.coverArt || track.artwork_url || 'https://via.placeholder.com/160',
+              title: track.title || 'Untitled',
+              artistName: artist?.displayName || artist?.username || track.artist?.name || 'Unknown Artist',
+              playCount: track.plays || 0,
+              likeCount: track.likes || 0
+            }}
+            onPlayClick={handlePlayTrack}
+            onLikeClick={() => console.log("Like clicked")}
+            isLiked={false}
+          />
         ) : null}
       </div>
     );

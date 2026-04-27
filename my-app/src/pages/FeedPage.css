@@ -74,7 +74,6 @@
 /* ──── Feed Item Card ──── */
 .sc-feed-item-card {
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--sc-border, #333);
   padding-bottom: 20px;
 }
 
