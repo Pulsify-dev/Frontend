@@ -593,7 +593,10 @@ export const MessagingProvider = ({ children }) => {
       conversationId: normalizedConversationId,
       text: trimmedText,
       sharedEntity,
-    });
+    }).catch(() => ({ success: false }));
+
+    let restResponse = null;
+    let restError = null;
 
     if (socketAck?.success && socketAck?.data?.message) {
       reconcileOptimisticMessage(
@@ -605,7 +608,7 @@ export const MessagingProvider = ({ children }) => {
     }
 
     try {
-      const restResponse = await serviceLocator.messaging.sendMessageRest(
+      restResponse = await serviceLocator.messaging.sendMessageRest(
         normalizedConversationId,
         {
           text: trimmedText,
@@ -621,6 +624,7 @@ export const MessagingProvider = ({ children }) => {
 
       return restResponse.message;
     } catch (error) {
+      restError = error;
       markOptimisticMessageFailed(normalizedConversationId, clientNonce);
 
       const errorText = String(error?.response?.data?.error ?? error?.message ?? "").toLowerCase();
