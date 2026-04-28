@@ -56,7 +56,7 @@ export const PulsifyTrackCard = ({ track }) => {
 
   const handleShareClick = (e) => {
     e.stopPropagation();
-    const embedCode = `<iframe src="https://pulsify.page/tracks/embed/${tId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
+    const embedCode = `<iframe src="${window.location.origin}/tracks/${tId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
     navigator.clipboard.writeText(embedCode).then(() => {
       alert('Embed iframe copied to clipboard!');
     }).catch(err => console.error('Failed to copy', err));

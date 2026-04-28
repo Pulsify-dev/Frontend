@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { getStreamUrl, getTrack, registerPlay } from "../services/api";
+import { PulsifyPremiumService } from "../services/pulsifyPremiumService";
 
 const PLAYER_VOLUME_KEY = "pulsify_player_volume";
 
@@ -162,6 +163,13 @@ export const PlayerProvider = ({ children }) => {
     previewMessage: "",
   });
 
+  // ── Ad delivery state (Module 12) ──
+  const [showAd, setShowAd] = useState(false);
+  const [adVideoUrl, setAdVideoUrl] = useState(null);
+  const [adIntervalSeconds, setAdIntervalSeconds] = useState(null);
+  const adTimerRef = useRef(null);
+  const adPlayTimeRef = useRef(0);
+
   const playbackState =
     streamInfo?.playback_state ?? currentTrack?.playbackState ?? "Playable";
   const previewStartSeconds =
@@ -201,6 +209,67 @@ export const PlayerProvider = ({ children }) => {
       if (currentQueue.includes(currentTrack.id)) return currentQueue;
       return dedupeQueue([...currentQueue, currentTrack.id]);
     });
+  }, [currentTrack?.id]);
+
+  // ── Fetch ad config on mount (Module 12) ──
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAdConfig = async () => {
+      try {
+        const sub = await PulsifyPremiumService.getMySubscription();
+        if (cancelled) return;
+        const features = sub?.features || {};
+        const planLimits = sub?.plan_limits || {};
+        // Pro users get null for both
+        const interval = features.ad_interval_seconds ?? planLimits.ad_interval_seconds ?? null;
+        const videoUrl = features.ad_video_url ?? planLimits.ad_video_url ?? null;
+        if (interval && videoUrl) {
+          setAdIntervalSeconds(interval);
+          setAdVideoUrl(videoUrl);
+        } else {
+          setAdIntervalSeconds(null);
+          setAdVideoUrl(null);
+        }
+      } catch (err) {
+        // Fail silently — no ads if we can't fetch config
+        console.warn('[AdDelivery] Failed to fetch ad config:', err);
+      }
+    };
+    fetchAdConfig();
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Ad timer: count play time and trigger ad (Module 12) ──
+  useEffect(() => {
+    if (!adIntervalSeconds || !adVideoUrl) return;
+    if (adTimerRef.current) clearInterval(adTimerRef.current);
+
+    if (isPlaying && !showAd) {
+      adTimerRef.current = setInterval(() => {
+        adPlayTimeRef.current += 1;
+        if (adPlayTimeRef.current >= adIntervalSeconds) {
+          adPlayTimeRef.current = 0;
+          // Pause music and show ad
+          if (audioRef.current && !audioRef.current.paused) {
+            skipPauseReportRef.current = true;
+            audioRef.current.pause();
+          }
+          setIsPlaying(false);
+          setShowAd(true);
+        }
+      }, 1000);
+    }
+
+    return () => { if (adTimerRef.current) clearInterval(adTimerRef.current); };
+  }, [isPlaying, showAd, adIntervalSeconds, adVideoUrl]);
+
+  const handleAdComplete = useCallback(() => {
+    setShowAd(false);
+    adPlayTimeRef.current = 0;
+    // Resume music
+    if (audioRef.current && currentTrack?.id) {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
   }, [currentTrack?.id]);
 
   useEffect(() => {
@@ -670,6 +739,9 @@ export const PlayerProvider = ({ children }) => {
 
   const clearPlayerMessage = useCallback(() => setPlayerMessage(""), []);
 
+  const playerProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const playerCurrentTime = currentTime;
+
   const contextValue = useMemo(
     () => ({
       currentTrack,
@@ -686,6 +758,8 @@ export const PlayerProvider = ({ children }) => {
       isPreparing,
       hasPrevious,
       hasNext,
+      playerProgress,
+      playerCurrentTime,
       loadTrack,
       togglePlay,
       seekTo,
@@ -696,6 +770,9 @@ export const PlayerProvider = ({ children }) => {
       clearPlayerMessage,
       setPlayerMessage,
       syncCurrentTrack,
+      showAd,
+      adVideoUrl,
+      handleAdComplete,
     }),
     [
       clearPlayerMessage,
@@ -710,7 +787,9 @@ export const PlayerProvider = ({ children }) => {
       playNext,
       playPrevious,
       playbackState,
+      playerCurrentTime,
       playerMessage,
+      playerProgress,
       previewDurationSeconds,
       previewEndSeconds,
       previewStartSeconds,
@@ -721,6 +800,9 @@ export const PlayerProvider = ({ children }) => {
       syncCurrentTrack,
       togglePlay,
       volume,
+      showAd,
+      adVideoUrl,
+      handleAdComplete,
     ],
   );
 

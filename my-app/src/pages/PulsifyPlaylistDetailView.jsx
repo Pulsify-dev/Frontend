@@ -53,6 +53,7 @@ export const PulsifyPlaylistDetailView = () => {
     playerProgress,
     playerCurrentTime,
     seekTo,
+    duration,
   } = usePlayer();
   const [creatorProfile, setCreatorProfile] = useState(null);
 
@@ -301,11 +302,16 @@ export const PulsifyPlaylistDetailView = () => {
         playlistDetail._id,
         formData,
       );
-      if (res && res.data && res.data.cover_url) {
+      console.log("[Image Upload] PATCH response:", JSON.stringify(res, null, 2));
+      // The response shape may vary: res.data.cover_url, res.cover_url, or res.data.data.cover_url
+      const newCoverUrl = res?.data?.cover_url || res?.cover_url || res?.data?.data?.cover_url;
+      if (newCoverUrl) {
         setPlaylistDetail((prev) => ({
           ...prev,
-          cover_url: res.data.cover_url,
+          cover_url: newCoverUrl,
         }));
+      } else {
+        console.warn("[Image Upload] No cover_url found in response, image may not have been saved by the backend.");
       }
     } catch (err) {
       console.error("Failed to upload image", err);
@@ -608,8 +614,9 @@ export const PulsifyPlaylistDetailView = () => {
                   }}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const pct = ((e.clientX - rect.left) / rect.width) * 100;
-                    if (seekTo) seekTo(pct);
+                    const pct = (e.clientX - rect.left) / rect.width;
+                    const dur = currentTrack?.duration || duration || totalSec || 0;
+                    if (seekTo && dur > 0) seekTo(pct * dur);
                   }}
                 >
                   <div
