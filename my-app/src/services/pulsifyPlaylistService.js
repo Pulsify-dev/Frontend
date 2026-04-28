@@ -61,6 +61,15 @@ export const PulsifyPlaylistService = {
     return data;
   },
 
+  /** GET /users/:userId/playlists — Get playlists for a specific user */
+  async getUserPlaylists(userId, page = 1, limit = 20) {
+    if (isMock()) {
+      return { success: true, count: mockPlaylists.length, data: mockPlaylists.map(p => ({ ...p })) };
+    }
+    const { data } = await pulsifyAxiosInstance.get(`/users/${userId}/playlists`, { params: { page, limit } });
+    return data;
+  },
+
   /** Backward-compat alias used by PulsifyPlaylistsView */
   async retrieveAllPlaylists() {
     const result = await this.getMyPlaylists();
