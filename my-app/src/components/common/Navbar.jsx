@@ -448,7 +448,7 @@ const Navbar = () => {
 
                   {/* Playlists — Module 7 */}
                   <Link
-                    to="/playlists"
+                    to="/library?tab=playlists"
                     className="auth-user-dropdown-item"
                     onClick={() => setIsUserMenuOpen(false)}
                   >

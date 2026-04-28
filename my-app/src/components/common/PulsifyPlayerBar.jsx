@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { usePlayer } from "../../hooks/usePlayer";
 import { getTrack, toggleLike } from "../../services/api";
 import PlayerDock from "../PlayerDock";
+import PulsifyAdOverlay from "./PulsifyAdOverlay";
 import "./PulsifyPlayerBar.css";
 
 const PulsifyPlayerBar = () => {
@@ -27,6 +28,9 @@ const PulsifyPlayerBar = () => {
     clearPlayerMessage,
     setPlayerMessage,
     syncCurrentTrack,
+    showAd,
+    adVideoUrl,
+    handleAdComplete,
   } = usePlayer();
   const [queueTracks, setQueueTracks] = useState([]);
   const [pendingLikeTrackIds, setPendingLikeTrackIds] = useState({});
@@ -182,7 +186,13 @@ const PulsifyPlayerBar = () => {
   };
 
   return (
-    <PlayerDock
+    <>
+      <PulsifyAdOverlay
+        adVideoUrl={adVideoUrl}
+        isVisible={showAd}
+        onAdComplete={handleAdComplete}
+      />
+      <PlayerDock
       track={currentTrack}
       isPlaying={isPlaying}
       isPreparing={isPreparing}
@@ -208,6 +218,7 @@ const PulsifyPlayerBar = () => {
       onQueueTrackLike={handleLikeTrack}
       pendingQueueLikeIds={pendingLikeTrackIds}
     />
+    </>
   );
 };
 
