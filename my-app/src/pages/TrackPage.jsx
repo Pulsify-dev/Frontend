@@ -33,10 +33,14 @@ import {
   toggleRepost,
   updateComment,
 } from "../services/api";
+import { useMessaging } from "@/hooks/useMessaging";
 import "../App.css";
 
 const configuredApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL || "your configured API";
+
+const INVALID_FILENAME_CHARS = /[<>:"/\\|?*]/g;
+const CONTROL_CHARACTERS = new RegExp(String.raw`[\x00-\x1f]`, "g");
 
 const sanitizeFilenamePart = (value) =>
   String(value ?? "")
@@ -876,6 +880,32 @@ function TrackPage({ view = "overview" }) {
     await copyShareLink(window.location.href, "Track link copied.");
   };
 
+const handleShareToMessage = async () => {
+  if (!track || typeof window === "undefined") return;
+
+  const username = window.prompt("Enter username");
+  if (!username?.trim()) return;
+
+  const conversation = await openConversation(username.trim());
+    if (!conversation?.id) {
+      setPlayerMessage("Could not open conversation.");
+      return;
+    }
+
+    const sent = await shareTrackToConversation({
+      conversationId: conversation.id,
+      trackId: track.id,
+      text: `Check this track: ${track.title}`,
+    });
+
+    if (!sent) {
+      setPlayerMessage("Could not share track in messages.");
+      return;
+    }
+
+    navigate(`/messages/${conversation.id}`);
+  };
+
   const handleDownload = async () => {
     if (!track || typeof document === "undefined") return;
 
@@ -1056,6 +1086,7 @@ function TrackPage({ view = "overview" }) {
               onLikeToggle={handleLikeToggle}
               onRepostToggle={handleRepostToggle}
               onShare={handleShare}
+              onShareToMessage={handleShareToMessage}
               onCopyLink={handleCopyLink}
               view={view}
             />

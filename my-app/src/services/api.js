@@ -2281,6 +2281,26 @@ pulsifyAxiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
+export const blockUser = async (userId, reason = "") => {
+  if (useMock) {
+    return { success: true, message: "User blocked successfully" };
+  }
+  const payload = await request(`/users/${userId}/block`, {
+    method: "POST",
+    body: reason ? { reason } : undefined,
+  });
+  return payload;
+};
+
+export const unblockUser = async (userId) => {
+  if (useMock) {
+    return { success: true, message: "Unblocked successfully" };
+  }
+  const payload = await request(`/users/${userId}/block`, {
+    method: "DELETE",
+  });
+  return payload;
+};
 pulsifyAxiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {

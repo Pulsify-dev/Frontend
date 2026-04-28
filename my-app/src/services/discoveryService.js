@@ -204,6 +204,31 @@ export const resolveUrl = async (permalink) => {
   return data;
 };
 
+// Global search across tracks, users, playlists, and albums
+export const searchGlobal = async (term, limit = 10, offset = 0) => {
+  const safeTerm = encodeURIComponent(term);
+  const { data } = await apiClient.get(`/search?q=${safeTerm}&limit=${limit}&offset=${offset}`);
+  return data;
+};
+
+// Trending tracks
+export const getTrendingTracks = async (page = 1, limit = 20, genre = null) => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (genre) params.append("genre", genre);
+  const { data } = await apiClient.get(`/trending?${params.toString()}`);
+  return data;
+};
+
+// Personal feed (requires authentication)
+export const getPersonalFeed = async (page = 1, limit = 20) => {
+  const { data } = await apiClient.get(`/feed?page=${page}&limit=${limit}`);
+  return data;
+};
+
+// Get user's playlists
+export const getMyPlaylists = async (limit = 10) => {
+  const { data } = await apiClient.get(`/playlists?limit=${limit}`);
+  return data?.data?.playlists ?? data ?? [];
 // ──── PLAYLISTS DISCOVERY ─────────────────────────────────
 export const discoverPlaylists = async (page = 1, limit = 20) => {
   try {

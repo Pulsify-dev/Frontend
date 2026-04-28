@@ -288,10 +288,14 @@ export const authService = {
     });
   },
 
-  login: async (email, password) => {
+  login: async (email, password, captchaToken) => {
     return apiRequest("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        captcha_token: captchaToken,
+      }),
     });
   },
 
@@ -334,6 +338,7 @@ export const authService = {
     return apiRequest("/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ token, new_password: newPassword }),
+      auth: false,
     });
   },
 

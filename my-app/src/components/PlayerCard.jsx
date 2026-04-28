@@ -102,6 +102,7 @@ function PlayerCard({
   onLikeToggle,
   onRepostToggle,
   onShare,
+  onShareToMessage,
   onCopyLink,
   view,
 }) {
