@@ -453,9 +453,16 @@ export const MessagingProvider = ({ children }) => {
       applyBlockedStateForUser();
       navigate("/messages");
     } catch (err) {
-      const errorText = String(err?.response?.data?.error ?? err?.message ?? "").toLowerCase();
+      const errorText = String(
+        err?.data?.error ??
+          err?.data?.message ??
+          err?.response?.data?.error ??
+          err?.response?.data?.message ??
+          err?.message ??
+          "",
+      ).toLowerCase();
       const isAlreadyBlocked =
-        Number(err?.response?.status) === 409 ||
+        Number(err?.status ?? err?.response?.status) === 409 ||
         errorText.includes("already blocked") ||
         (errorText.includes("request failed") && errorText.includes("409"));
 

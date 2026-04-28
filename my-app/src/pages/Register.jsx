@@ -72,6 +72,25 @@ function GoogleIcon() {
   );
 }
 
+function FacebookIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#1877F2"
+        d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.414c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97H15.83c-1.49 0-1.955.93-1.955 1.884v2.266h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
+      />
+    </svg>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zm-2.02-15.03c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
+  );
+}
+
 
 const Register = () => {
   const navigate = useNavigate();
@@ -301,6 +320,44 @@ const Register = () => {
                   ) : (
                     <>
                       <GoogleIcon /> Sign up with Google
+                    </>
+                  )}
+                </button>
+              )}
+
+              {availableProviders.includes("facebook") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--facebook"
+                  onClick={() => handleOAuthSignup("facebook")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "facebook" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <FacebookIcon /> Sign up with Facebook
+                    </>
+                  )}
+                </button>
+              )}
+
+              {availableProviders.includes("apple") && (
+                <button
+                  className="auth-oauth-btn auth-oauth-btn--apple"
+                  onClick={() => handleOAuthSignup("apple")}
+                  disabled={anyLoading}
+                  type="button"
+                >
+                  {oauthLoading === "apple" ? (
+                    <>
+                      <LoadingSpinner /> Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <AppleIcon /> Sign up with Apple
                     </>
                   )}
                 </button>

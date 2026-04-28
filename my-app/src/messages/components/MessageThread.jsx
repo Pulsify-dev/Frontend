@@ -31,6 +31,7 @@ export const MessageThread = ({
   const { blockUser, unblockUser } = useMessaging();
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [blockReason, setBlockReason] = useState("");
+  const [blockError, setBlockError] = useState("");
   const [isBlocking, setIsBlocking] = useState(false);
   const threadBodyRef = useRef(null);
 
@@ -43,6 +44,7 @@ export const MessageThread = ({
     if (isUserBlockedByMe) {
       handleUnblockConfirm();
     } else if (!isUserBlockedByThem) {
+      setBlockError("");
       setShowBlockModal(true);
     }
   };
@@ -62,10 +64,19 @@ export const MessageThread = ({
   const handleBlockConfirm = async () => {
     if (!participant.id || isBlocking) return;
     setIsBlocking(true);
+    setBlockError("");
     try {
       await blockUser(participant.id, blockReason);
       setShowBlockModal(false);
     } catch (err) {
+      const message =
+        err?.data?.message ||
+        err?.data?.error ||
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Could not block this user.";
+      setBlockError(message);
       console.error("Failed to block user:", err);
     } finally {
       setIsBlocking(false);
@@ -75,6 +86,7 @@ export const MessageThread = ({
   const handleBlockCancel = () => {
     setShowBlockModal(false);
     setBlockReason("");
+    setBlockError("");
   };
 
   useEffect(() => {
@@ -200,6 +212,11 @@ export const MessageThread = ({
             <p className="messages-block-modal-text">
               They won't be able to view your profile, follow you, or send you messages.
             </p>
+            {blockError ? (
+              <p className="messages-composer-note messages-composer-note-error">
+                {blockError}
+              </p>
+            ) : null}
             <div className="messages-block-modal-reason">
               <label className="messages-block-modal-label">Reason (optional)</label>
               <textarea

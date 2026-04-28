@@ -88,11 +88,16 @@ const MessagesPage = () => {
   const handleCreateConversation = async (event) => {
     event.preventDefault();
 
-const normalizedUsername = String(recipientUsernameDraft ?? "").trim();
-  if (!normalizedUsername) {
-    setNewMessageError("Username is required.");
-    return;
-  }
+    const normalizedUsername = String(recipientUsernameDraft ?? "").trim().replace(/^@/, "");
+    if (!normalizedUsername) {
+      setNewMessageError("Username is required.");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]{6,20}$/.test(normalizedUsername)) {
+      setNewMessageError("Enter the user's username, not their display name. Usernames use 6-20 letters, numbers, or underscores.");
+      return;
+    }
 
     setIsCreatingConversation(true);
     setNewMessageError("");

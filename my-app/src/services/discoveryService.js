@@ -229,6 +229,7 @@ export const getPersonalFeed = async (page = 1, limit = 20) => {
 export const getMyPlaylists = async (limit = 10) => {
   const { data } = await apiClient.get(`/playlists?limit=${limit}`);
   return data?.data?.playlists ?? data ?? [];
+};
 // ──── PLAYLISTS DISCOVERY ─────────────────────────────────
 export const discoverPlaylists = async (page = 1, limit = 20) => {
   try {
