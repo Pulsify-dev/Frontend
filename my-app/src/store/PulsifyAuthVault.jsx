@@ -1,11 +1,24 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
-import { pulsifyAxiosInstance } from "../services/api";
+import {
+  pulsifyAxiosInstance,
+  readAuthToken,
+  saveAuthToken,
+  clearAuthToken,
+} from "../services/api";
 
 export const PulsifyAuthVaultContext = createContext();
 
+const isMockMode =
+  String(
+    import.meta.env.VITE_USE_MOCKS ??
+      import.meta.env.VITE_USE_MOCK_API ??
+      import.meta.env.VITE_USE_MOCK ??
+      "false",
+  ).toLowerCase() === "true";
+
 export const PulsifyAuthVaultProvider = ({ children }) => {
   const [activeSessionToken, setActiveSessionToken] = useState(
-    localStorage.getItem("pulsify_access_token") || null,
+    readAuthToken() || null,
   );
   const [subscriptionTier, setSubscriptionTier] = useState(
     localStorage.getItem("pulsify_mock_tier") || "FREE",
@@ -26,7 +39,7 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
       const responseData = data?.data || data;
       const plan = responseData?.effective_plan;
       if (plan) {
-        const tier = plan === 'Artist Pro' ? 'PRO' : 'FREE';
+        const tier = plan === "Artist Pro" ? "PRO" : "FREE";
         setSubscriptionTier(tier);
         if (responseData?.plan_limits) {
           setPlanLimits(responseData.plan_limits);
@@ -43,18 +56,18 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
 
   const handleTierChange = (newTier) => {
     setSubscriptionTier(newTier);
-    if (String(import.meta.env.VITE_USE_MOCKS) === "true") {
+    if (isMockMode) {
       localStorage.setItem("pulsify_mock_tier", newTier);
     }
   };
 
   const mountSecureSession = (token) => {
-    localStorage.setItem("pulsify_access_token", token);
+    saveAuthToken(token);
     setActiveSessionToken(token);
   };
 
   const destroySecureSession = () => {
-    localStorage.removeItem("pulsify_access_token");
+    clearAuthToken();
     localStorage.removeItem("pulsify_refresh_token");
     localStorage.removeItem("pulsify_mock_tier");
     localStorage.removeItem("pulsify_user");

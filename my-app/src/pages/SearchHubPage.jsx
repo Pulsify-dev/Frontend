@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import serviceLocator from '../utils/serviceLocator';
 import PulsifyTrackRow from '../components/common/PulsifyTrackRow';
+import { toggleLike, toggleRepost } from '../services/api';
 import './SearchHubPage.css';
 
 const FILTER_TABS = ['Everything', 'Tracks', 'People', 'Albums', 'Playlists'];
+
+const updateTrackRows = (collection, trackId, updater) =>
+  collection.map((track) => (track.trackId === trackId ? updater(track) : track));
+
 
 const SearchHubPage = () => {
   const navigate = useNavigate();
@@ -20,44 +25,91 @@ const SearchHubPage = () => {
   const [followedUsers, setFollowedUsers] = useState(new Set());
 
   useEffect(() => {
-    if (!searchTerm.trim()) { 
-      setResults({ tracks: [], users: [], playlists: [], albums: [] }); 
-      return; 
+    if (!searchTerm.trim()) {
+      setResults({ tracks: [], users: [], playlists: [], albums: [] });
+      return;
     }
     let mounted = true;
     setLoading(true);
     const debounce = setTimeout(async () => {
       try {
         const data = await serviceLocator.discovery.searchTracks(searchTerm);
-        if (mounted) { setResults(data); setLoading(false); }
-      } catch (err) {
-        console.error("DI search error:", err);
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setResults(data);
+        }
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    }, 400);
-    return () => { mounted = false; clearTimeout(debounce); };
+    }, 300);
+
+    return () => {
+      mounted = false;
+      clearTimeout(debounce);
+    };
   }, [searchTerm]);
 
   const handleLike = async (trackId) => {
+    const sourceTrack = results.tracks.find((track) => track.trackId === trackId);
+    if (!sourceTrack) return;
+
+    const shouldLike = !sourceTrack.viewerHasLiked;
+
+    setResults((prev) => ({
+      ...prev,
+      tracks: updateTrackRows(prev.tracks, trackId, (track) => ({
+        ...track,
+        viewerHasLiked: shouldLike,
+        likes: Math.max(Number(track.likes ?? 0) + (shouldLike ? 1 : -1), 0),
+      })),
+    }));
+
     try {
-      if (likedTracks.has(trackId)) {
-        setLikedTracks(prev => { const n = new Set(prev); n.delete(trackId); return n; });
-      } else {
-        await serviceLocator.discovery.likeTrack(trackId);
-        setLikedTracks(prev => new Set(prev).add(trackId));
-      }
-    } catch (e) { console.error("Like failed:", e); }
+      await toggleLike(trackId, shouldLike);
+    } catch (error) {
+      console.error('Like failed:', error);
+      setResults((prev) => ({
+        ...prev,
+        tracks: updateTrackRows(prev.tracks, trackId, (track) => ({
+          ...track,
+          viewerHasLiked: sourceTrack.viewerHasLiked,
+          likes: Number(sourceTrack.likes ?? 0),
+        })),
+      }));
+    }
   };
 
   const handleRepost = async (trackId) => {
+    const sourceTrack = results.tracks.find((track) => track.trackId === trackId);
+    if (!sourceTrack) return;
+
+    const shouldRepost = !sourceTrack.viewerHasReposted;
+
+    setResults((prev) => ({
+      ...prev,
+      tracks: updateTrackRows(prev.tracks, trackId, (track) => ({
+        ...track,
+        viewerHasReposted: shouldRepost,
+        reposts: Math.max(Number(track.reposts ?? 0) + (shouldRepost ? 1 : -1), 0),
+      })),
+    }));
+
     try {
-      if (repostedTracks.has(trackId)) {
-        setRepostedTracks(prev => { const n = new Set(prev); n.delete(trackId); return n; });
-      } else {
-        await serviceLocator.discovery.repostTrack(trackId);
-        setRepostedTracks(prev => new Set(prev).add(trackId));
-      }
-    } catch (e) { console.error("Repost failed:", e); }
+      await toggleRepost(trackId, shouldRepost);
+    } catch (error) {
+      console.error('Repost failed:', error);
+      setResults((prev) => ({
+        ...prev,
+        tracks: updateTrackRows(prev.tracks, trackId, (track) => ({
+          ...track,
+          viewerHasReposted: sourceTrack.viewerHasReposted,
+          reposts: Number(sourceTrack.reposts ?? 0),
+        })),
+      }));
+    }
   };
 
   const handleFollow = async (userId) => {
@@ -105,7 +157,6 @@ const SearchHubPage = () => {
       <h2 className="sc-page-heading">Search</h2>
 
       <div className="sc-search-layout">
-        {/* Left Sidebar */}
         <aside className="sc-search-sidebar">
           <div className="sc-search-input-wrap">
             <input
@@ -113,14 +164,14 @@ const SearchHubPage = () => {
               className="sc-search-input"
               placeholder="Search for artists, bands, tracks, podcasts"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(event) => setSearchTerm(event.target.value)}
               data-testid="search-input"
             />
-            <span className="sc-search-input-icon">🔍</span>
+            <span className="sc-search-input-icon">{'\u2315'}</span>
           </div>
 
           <ul className="sc-filter-list">
-            {FILTER_TABS.map(tab => (
+            {FILTER_TABS.map((tab) => (
               <li
                 key={tab}
                 className={`sc-filter-item ${activeFilter === tab ? 'active' : ''}`}
@@ -144,21 +195,24 @@ const SearchHubPage = () => {
             <div className="sc-footer-links-row">
               <span>Charts</span> · <span>Transparency Reports</span>
             </div>
-            <div className="sc-footer-lang">Language: <a href="#lang">English (US)</a></div>
+            <div className="sc-footer-lang">
+              Language: <a href="#lang">English (US)</a>
+            </div>
           </footer>
         </aside>
 
-        {/* Results Area */}
         <section className="sc-search-results" data-testid="search-results">
-          {loading && (
-            <div className="sc-loader"><div className="sc-loader-bar"></div></div>
-          )}
+          {loading ? (
+            <div className="sc-loader">
+              <div className="sc-loader-bar" />
+            </div>
+          ) : null}
 
-          {!loading && !hasQuery && (
+          {!loading && !hasQuery ? (
             <p className="sc-search-prompt">
-              Search Pulsify for tracks, artists, podcasts, and playlists.
+              Search across the real backend tracks wired into this app.
             </p>
-          )}
+          ) : null}
 
           {!loading && hasQuery && activeList.length === 0 && (
             <div className="sc-no-results">
@@ -235,8 +289,8 @@ const SearchHubPage = () => {
                   track={track}
                   onLike={handleLike}
                   onRepost={handleRepost}
-                  isLiked={likedTracks.has(track.trackId)}
-                  isReposted={repostedTracks.has(track.trackId)}
+                  isLiked={track.viewerHasLiked}
+                  isReposted={track.viewerHasReposted}
                 />
               ))}
               

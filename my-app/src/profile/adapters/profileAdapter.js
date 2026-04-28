@@ -2,7 +2,7 @@ export function mapProfileDtoToProfile(dto) {
   return {
     id: dto._id || dto.id,
     username: dto.username,
-    displayName: dto.display_name,
+    displayName: dto.display_name ?? dto.displayName ?? dto.username,
     bio: dto.bio,
     location: dto.location,
     favoriteGenres: dto.favorite_genres ?? [],

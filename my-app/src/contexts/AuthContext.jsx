@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { authService } from "@/services/authService";
+import { clearAuthToken, saveAuthToken } from "@/services/api";
 
 /**
  * Auth Context
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     setAccessToken(null);
     setRefreshToken(null);
     localStorage.removeItem(STORAGE_KEYS.USER);
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    clearAuthToken();
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     
     // Clear any pending refresh timeout
@@ -136,7 +137,7 @@ export const AuthProvider = ({ children }) => {
     setRefreshToken(newRefreshToken);
     
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(normalizedUser));
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+    saveAuthToken(newAccessToken);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
     
     // Schedule token refresh

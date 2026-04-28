@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { DEFAULT_TRACK_ID, HAS_DEFAULT_TRACK_ID } from "./config/defaultTrack";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import "./App.css";
@@ -24,6 +25,8 @@ import SettingsPage from "@/pages/SettingsPage";
 
 // Module 4/5/6 – Tracks, Playback & Engagement (Mayar Ayman)
 import TrackPage from "@/pages/TrackPage";
+import PlaybackHistoryPage from "@/pages/PlaybackHistoryPage";
+import LibraryPage from "@/pages/LibraryPage";
 
 // Module 7 + 12 – Playlists & Premium (Omar Nasser)
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
@@ -107,10 +110,11 @@ const AppRoutes = () => {
               <Route
                 path="/trackpage"
                 element={
-                  <Navigate
-                    to={`/tracks/${import.meta.env.VITE_TRACK_ID ?? "trk-2026-014"}`}
-                    replace
-                  />
+                  HAS_DEFAULT_TRACK_ID ? (
+                    <Navigate to={`/tracks/${DEFAULT_TRACK_ID}`} replace />
+                  ) : (
+                    <TrackPage view="overview" />
+                  )
                 }
               />
               <Route
@@ -137,6 +141,11 @@ const AppRoutes = () => {
                 path="/tracks/:trackId/reposts"
                 element={<TrackPage view="reposts" />}
               />
+              <Route path="/history" element={<PlaybackHistoryPage />} />
+              <Route
+                path="/recently-played"
+                element={<PlaybackHistoryPage />}
+              />
 
               {/* Playlists - Module 7 */}
               <Route path="/playlists" element={<PulsifyPlaylistsView />} />
@@ -150,13 +159,16 @@ const AppRoutes = () => {
                 path="/library"
                 element={
                   <ProtectedRoute>
-                    <PulsifyLibraryPlaylists />
+                    <LibraryPage />
                   </ProtectedRoute>
                 }
               />
 
               {/* Albums - Module 13 */}
-              <Route path="/albums/:albumId" element={<PulsifyAlbumDetailView />} />
+              <Route
+                path="/albums/:albumId"
+                element={<PulsifyAlbumDetailView />}
+              />
 
               {/* Premium - Module 12 */}
               <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />

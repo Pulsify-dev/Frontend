@@ -1,19 +1,19 @@
-import React, { useMemo } from "react";
+import React from "react";
 import "./PulsifyTrackRow.css";
 import { usePlayer } from "../../hooks/usePlayer";
 import ReportModal from "./ReportModal";
 
-const PulsifyTrackRow = ({
-  track,
-  onLike,
-  onRepost,
-  isLiked,
-  isReposted,
-  hideContext = false,
-}) => {
+const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
   const { currentTrack, isPlaying, togglePlay } = usePlayer();
-  const isActive = currentTrack?.trackId === track.trackId;
-  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
+  const isActive = currentTrack?.id === track.trackId;
+  const resolvedArtistName =
+    track.artist?.name ?? track.artist ?? "Unknown artist";
+  const resolvedLiked = Boolean(
+    isLiked ?? track.viewerHasLiked ?? track.viewer_has_liked,
+  );
+  const resolvedReposted = Boolean(
+    isReposted ?? track.viewerHasReposted ?? track.viewer_has_reposted,
+  );
 
   // Stable waveform heights — seeded from trackId so they never change per track
   const waveformBars = useMemo(() => {
@@ -37,117 +37,83 @@ const PulsifyTrackRow = ({
 
   return (
     <div
-      className="sc-feed-wrapper"
-      data-testid={`feed-wrapper-${track.trackId}`}
+      className={`sc-track-card ${isActive ? "sc-track-active" : ""}`}
+      data-testid={`track-row-${track.trackId}`}
     >
-      {!hideContext && (
-        <div className="sc-feed-item-header">
-          <div className="sc-feed-item-avatar">
-            {track.artist?.avatarUrl ? (
-              <img src={track.artist.avatarUrl} alt={track.artist?.name} />
-            ) : (
-              <div className="sc-avatar-placeholder"></div>
-            )}
-          </div>
-          <div className="sc-feed-item-context">
-            <span className="sc-feed-context-name">
-              {track.artist?.name || "Artist"}
-            </span>
-            <span className="sc-feed-context-action">
-              {track.actionText || "posted a track"}
-            </span>
-            <span className="sc-feed-context-time">
-              {track.uploadedAt || "2 hours ago"}
-            </span>
-          </div>
-        </div>
-      )}
-
       <div
-        className={`sc-track-card ${isActive ? "sc-track-active" : ""}`}
-        data-testid={`track-row-${track.trackId}`}
+        className="sc-track-art-wrap"
+        onClick={() => togglePlay(track, { playbackContext: "discovery" })}
       >
-        <div className="sc-track-art-wrap" onClick={() => togglePlay(track)}>
-          <img
-            src={track.coverArt || "https://via.placeholder.com/160"}
-            alt={track.title}
-            className="sc-track-art"
-          />
-          <div className="sc-play-overlay">
-            <div className="sc-play-circle">
-              {isActive && isPlaying ? "⚽" : "▝"}
-            </div>
-          </div>
-        </div>
-
-        <div className="sc-track-body">
-          <div className="sc-track-header">
-            <div className="sc-track-meta">
-              <span className="sc-track-artist">
-                {track.artist?.name || "Artist"}
-              </span>
-              <span className="sc-track-title">{track.title}</span>
-            </div>
-            {track.genre && (
-              <span className="sc-track-genre">#{track.genre}</span>
-            )}
-          </div>
-
-          <div className="sc-waveform">
-            <div className="sc-waveform-bars">
-              {waveformBars.map((h, i) => (
-                <div
-                  key={i}
-                  className="sc-wave-bar"
-                  style={{ height: `${h}px` }}
-                />
-              ))}
-            </div>
-            <div className="sc-waveform-duration">
-              {formatDuration(track.durationSeconds)}
-            </div>
-          </div>
-
-          <div className="sc-track-footer">
-            <div className="sc-track-actions">
-              <button
-                className={`sc-btn ${isLiked ? "active" : ""}`}
-                onClick={() => onLike(track.trackId)}
-              >
-                ♅ {isLiked ? track.likes + 1 : track.likes}
-              </button>
-              <button
-                className={`sc-btn ${isReposted ? "active" : ""}`}
-                onClick={() => onRepost(track.trackId)}
-              >
-                𓅄 {isReposted ? track.reposts + 1 : track.reposts}
-              </button>
-              <button className="sc-btn">🔥 Share</button>
-              <button className="sc-btn">𝆋 Copy Link</button>
-              <button
-                className="sc-btn"
-                onClick={() => setIsReportModalOpen(true)}
-              >
-                🚩 Report
-              </button>
-              <button className="sc-btn">⋯ More</button>
-            </div>
-            <div className="sc-track-counters">
-              <span className="sc-counter">
-                ▭ {track.plays?.toLocaleString()}
-              </span>
-              <span className="sc-counter">𝒬 {track.comments}</span>
-            </div>
+        <img src={track.coverArt} alt={track.title} className="sc-track-art" />
+        <div className="sc-play-overlay">
+          <div className="sc-play-circle">
+            {isActive && isPlaying ? "Pause" : "Play"}
           </div>
         </div>
       </div>
 
-      <ReportModal
-        isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
-        entityType="Track"
-        entityId={track.trackId}
-      />
+      <div className="sc-track-body">
+        <div className="sc-track-header">
+          <div className="sc-track-meta">
+            <span className="sc-track-artist">{resolvedArtistName}</span>
+            <span className="sc-track-title">{track.title}</span>
+          </div>
+          <span className="sc-track-time">
+            {track.uploadedAt || "Recently"}
+          </span>
+        </div>
+
+        <div className="sc-waveform">
+          <div className="sc-waveform-bars">
+            {Array.from({ length: 80 }).map((_, index) => {
+              const height = 8 + ((index * 11 + track.trackId.length) % 24);
+              return (
+                <div
+                  key={index}
+                  className="sc-wave-bar"
+                  style={{ height: `${height}px` }}
+                />
+              );
+            })}
+          </div>
+          <div className="sc-waveform-duration">
+            {formatDuration(track.durationSeconds)}
+          </div>
+        </div>
+
+        <div className="sc-track-footer">
+          <div className="sc-track-actions">
+            <button
+              className={`sc-btn ${resolvedLiked ? "active" : ""}`}
+              onClick={() => onLike(track.trackId)}
+              data-testid={`like-btn-${track.trackId}`}
+            >
+              {"\u2665"} {resolvedLiked ? "Liked" : "Like"}
+            </button>
+            <button
+              className={`sc-btn ${resolvedReposted ? "active" : ""}`}
+              onClick={() => onRepost(track.trackId)}
+              data-testid={`repost-btn-${track.trackId}`}
+            >
+              {"\u21C4"} Repost
+            </button>
+            <button className="sc-btn">{"\u2197"} Share</button>
+            <button className="sc-btn">{"\u22EF"} More</button>
+          </div>
+
+          <div className="sc-track-counters">
+            <span className="sc-counter" title="Plays">
+              {"\u25B6"} {Number(track.plays ?? 0).toLocaleString()}
+            </span>
+            <span className="sc-counter" title="Likes">
+              {"\u2665"} {Number(track.likes ?? 0).toLocaleString()}
+            </span>
+            <span className="sc-counter" title="Reposts">
+              {"\u21C4"} {Number(track.reposts ?? 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

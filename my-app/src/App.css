@@ -645,6 +645,33 @@
   flex-wrap: wrap;
 }
 
+.playback-state-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid #2f2f2f;
+  background: #171717;
+  color: #d7d7d7;
+  font-size: 0.84rem;
+}
+
+.playback-state-chip.is-playable {
+  color: #b8f1d4;
+  border-color: #214634;
+}
+
+.playback-state-chip.is-preview {
+  color: #ffd7a4;
+  border-color: #5d3d1d;
+}
+
+.playback-state-chip.is-blocked {
+  color: #ffb3b3;
+  border-color: #5c2525;
+}
+
 .action-square,
 .action-link,
 .sidebar-button-row button,
@@ -670,6 +697,36 @@
 .action-square:disabled {
   opacity: 0.65;
   cursor: wait;
+}
+
+.action-square--icon {
+  width: 44px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.action-square--icon svg,
+.action-link--icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.action-link--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-square--icon:hover,
+.action-link--icon:hover {
+  color: #ff7a3d;
+  border-color: #4a4a4a;
 }
 
 .track-stat-row {
@@ -829,6 +886,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .comment-link {
@@ -836,6 +894,12 @@
   border: none;
   background: transparent;
   color: #fff;
+}
+
+.comment-link:disabled,
+.comment-load-more:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .comment-link-danger {
@@ -861,9 +925,45 @@
   margin-left: 22px;
 }
 
+.reply-compose-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-form-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.comment-form-inline input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #2b2b2b;
+  background: #262626;
+  color: #efefef;
+  padding: 0 12px;
+}
+
+.comment-empty-state,
 .reply-empty {
   color: #9d9d9d;
   font-size: 0.92rem;
+}
+
+.comment-thread-footer {
+  padding-top: 16px;
+}
+
+.comment-load-more {
+  border: 1px solid #2f2f2f;
+  background: #191919;
+  color: #fff;
+  border-radius: 4px;
+  padding: 10px 14px;
+  cursor: pointer;
 }
 
 .section-list-panel {
@@ -1012,91 +1112,6 @@
   height: 100%;
 }
 
-/* Player Dock */
-.player-dock-shell {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: 50;
-}
-
-.player-dock {
-  background: #2d2d2d;
-  border-top: 1px solid #404040;
-}
-
-.player-dock-main {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 10px 18px;
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) 320px;
-  align-items: center;
-  gap: 18px;
-}
-
-.dock-control-group,
-.dock-progress-group,
-.dock-side-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dock-icon-button,
-.dock-play-button {
-  border: 1px solid #454545;
-  background: #242424;
-  color: #fff;
-  padding: 9px 12px;
-  cursor: pointer;
-}
-
-.dock-play-button {
-  background: #fff;
-  color: #111;
-  font-weight: 700;
-}
-
-.dock-progress-group {
-  min-width: 0;
-}
-
-.dock-progress-group span,
-.dock-volume span,
-.dock-track p {
-  color: #d2d2d2;
-  font-size: 0.88rem;
-}
-
-.dock-progress-group input,
-.dock-volume input {
-  width: 100%;
-  accent-color: #ff6a21;
-}
-
-.dock-side-group {
-  justify-content: flex-end;
-}
-
-.dock-volume {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 110px;
-}
-
-.dock-track {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-}
-
-.dock-track img {
-  width: 42px;
-  height: 42px;
-}
-
 .cover {
   min-height: 260px;
   background: #1e1e1e;
@@ -1146,17 +1161,12 @@
   .auth-token-panel,
   .topbar-inner,
   .content-grid,
-  .track-hero,
-  .player-dock-main {
+  .track-hero {
     grid-template-columns: 1fr;
   }
 
   .track-hero-art {
     max-width: 320px;
-  }
-
-  .dock-side-group {
-    justify-content: flex-start;
   }
 }
 
@@ -1187,17 +1197,9 @@
   }
 
   .social-comment-bar,
-  .comment-row {
+  .comment-row,
+  .comment-form-inline {
     grid-template-columns: 1fr;
   }
 
-  .player-dock-main {
-    gap: 12px;
-  }
-
-  .dock-control-group,
-  .dock-progress-group,
-  .dock-side-group {
-    flex-wrap: wrap;
-  }
 }

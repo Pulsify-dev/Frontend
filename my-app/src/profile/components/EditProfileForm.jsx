@@ -10,11 +10,11 @@ export default function EditProfileForm({
 }) {
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [bio, setBio] = useState(profile.bio);
-  const [location, setLocation] = useState(profile.location ?? "");
-  const [favoriteGenres, setFavoriteGenres] = useState(
+  const [location, _setLocation] = useState(profile.location ?? "");
+  const [favoriteGenres, _setFavoriteGenres] = useState(
     profile.favoriteGenres.join(", "),
   );
-  const [isPrivate, setIsPrivate] = useState(profile.isPrivate);
+  const [isPrivate, _setIsPrivate] = useState(profile.isPrivate);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl);
   const [links, setLinks] = useState(() => {
     const sl = profile.socialLinks ?? {};
@@ -50,6 +50,7 @@ export default function EditProfileForm({
 
   async function handleSubmit(e) {
     e.preventDefault();
+
     await onSave({
       displayName,
       bio,
@@ -59,12 +60,24 @@ export default function EditProfileForm({
         .map((g) => g.trim())
         .filter(Boolean),
       isPrivate,
-      socialLinks: {
-        instagram: links.find((l) => l.platform === "instagram")?.url ?? "",
-        twitter: links.find((l) => l.platform === "twitter")?.url ?? "",
-        website: links.find((l) => l.platform === "website")?.url ?? "",
-        links: links.filter((l) => l.url),
-      },
+      socialLinks: (() => {
+        const PLATFORMS = [
+          "instagram",
+          "twitter",
+          "youtube",
+          "facebook",
+          "tiktok",
+          "website",
+          "patreon",
+          "kofi",
+        ];
+        const topLevel = {};
+        for (const p of PLATFORMS) {
+          const found = links.find((l) => l.platform === p && l.url);
+          if (found) topLevel[p] = found.url;
+        }
+        return { ...topLevel, links: links.filter((l) => l.url) };
+      })(),
     });
   }
 

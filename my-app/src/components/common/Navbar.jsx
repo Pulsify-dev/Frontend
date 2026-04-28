@@ -352,14 +352,6 @@ const Navbar = () => {
               Upload
             </Link>
 
-            <Link to="/my-tracks" className="auth-nav-text-link">
-              For Artists
-            </Link>
-
-            <Link to="/upload" className="auth-nav-text-link">
-              Upload
-            </Link>
-
             {/* User Menu */}
             <div className="auth-user-menu-container" ref={userMenuRef}>
               <button

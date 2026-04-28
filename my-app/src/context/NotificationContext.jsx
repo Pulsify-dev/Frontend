@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useCallback } from "react";
 import { io } from "socket.io-client";
 import serviceLocator from "../utils/serviceLocator";
 import { adaptNotification } from "../services/notificationService";
+import { readAuthToken } from "../services/api";
 
 // Observer Pattern: broadcasts notification state updates app-wide
 export const NotificationContext = createContext();
@@ -9,10 +10,18 @@ export const NotificationContext = createContext();
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [pushEnabled, setPushEnabled] = useState(Notification.permission === 'granted');
+  const [pushEnabled, setPushEnabled] = useState(
+    Notification.permission === "granted",
+  );
 
   // Fetch notifications from DI service
   const loadNotifications = useCallback(async () => {
+    if (!readAuthToken()) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     try {
       const data = await serviceLocator.notifications.fetchNotifications();
       setNotifications(data);
@@ -34,10 +43,14 @@ export const NotificationProvider = ({ children }) => {
     loadNotifications();
 
     // 1. Establish socket connection
-    const socket = io("http://localhost:3000", {
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
+      "http://localhost:3000";
+    const socket = io(socketUrl, {
       auth: { token },
       // Fallback for query param (as tested in Postman sometimes)
-      query: { token }
+      query: { token },
     });
 
     socket.on("connect", () => {
@@ -64,7 +77,9 @@ export const NotificationProvider = ({ children }) => {
     try {
       await serviceLocator.notifications.markNotificationRead(id);
       setNotifications((prev) =>
-        prev.map((n) => (n._id === id || n.id === id ? { ...n, read: true, is_read: true } : n)),
+        prev.map((n) =>
+          n._id === id || n.id === id ? { ...n, read: true, is_read: true } : n,
+        ),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
@@ -75,7 +90,9 @@ export const NotificationProvider = ({ children }) => {
   const markAllRead = async () => {
     try {
       await serviceLocator.notifications.markAllNotificationsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true, is_read: true })));
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, read: true, is_read: true })),
+      );
       setUnreadCount(0);
     } catch (err) {
       console.error("Failed to mark all read:", err);
@@ -92,11 +109,11 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const requestBrowserNotifications = async () => {
-    if (!('Notification' in window)) return false;
-    
+    if (!("Notification" in window)) return false;
+
     try {
       const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
+      if (permission === "granted") {
         setPushEnabled(true);
         // For production: generate an actual FCM token here before registering.
         // For local development, we send a mocked device string to the server.

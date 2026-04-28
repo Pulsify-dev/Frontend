@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
-import { authService } from "@/services/authService";
+import { authService, getLoginRateLimit } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getSocialToken,
@@ -22,6 +22,24 @@ const buildMockUser = (role = "listener") => ({
   role: role,
   avatar_url: null,
 });
+
+const formatLoginCooldownLabel = (expiresAt) => {
+  const remainingSeconds = Math.max(
+    Math.ceil((Number(expiresAt) - Date.now()) / 1000),
+    0,
+  );
+
+  if (!remainingSeconds) return "0s";
+
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+
+  if (!minutes) {
+    return `${seconds}s`;
+  }
+
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+};
 
 function LoadingSpinner() {
   return (
@@ -96,7 +114,9 @@ const Login = () => {
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const [loginRateLimit, setLoginRateLimit] = useState(() => getLoginRateLimit());
   const recaptchaRef = useRef(null);
+  const submitGuardRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
@@ -111,6 +131,18 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
+  useEffect(() => {
+    if (!loginRateLimit?.expiresAt) return undefined;
+
+    const timerId = window.setInterval(() => {
+      setLoginRateLimit(getLoginRateLimit());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [loginRateLimit?.expiresAt]);
+
   const handleCaptchaChange = (token) => {
     setCaptchaToken(token);
   };
@@ -121,8 +153,16 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitGuardRef.current || isLoading) return;
+
     setError("");
     setSuccess("");
+
+    const activeRateLimit = getLoginRateLimit();
+    if (activeRateLimit) {
+      setLoginRateLimit(activeRateLimit);
+      return;
+    }
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
@@ -142,11 +182,13 @@ const Login = () => {
       return;
     }
 
+    submitGuardRef.current = true;
     setIsLoading(true);
     try {
       const result = await authService.login(trimmedEmail, password);
 
       setSuccess("Login successful! Redirecting...");
+      setLoginRateLimit(getLoginRateLimit());
       login(result.user, result.access_token, result.refresh_token);
       setFailedAttempts(0);
 
@@ -155,6 +197,12 @@ const Login = () => {
         navigate(from, { replace: true });
       }, 1000);
     } catch (err) {
+      if (err?.status === 429) {
+        const nextRateLimit = getLoginRateLimit();
+        setLoginRateLimit(nextRateLimit);
+        return;
+      }
+
       const newFailedAttempts = failedAttempts + 1;
       setFailedAttempts(newFailedAttempts);
 
@@ -168,6 +216,7 @@ const Login = () => {
 
       setError(err?.message || "Invalid email or password. Please try again.");
     } finally {
+      submitGuardRef.current = false;
       setIsLoading(false);
     }
   };
@@ -224,6 +273,13 @@ const Login = () => {
 
   const isFormValid =
     email.trim() && password && (!showCaptcha || captchaToken);
+  const loginCooldownLabel = loginRateLimit?.expiresAt
+    ? formatLoginCooldownLabel(loginRateLimit.expiresAt)
+    : "";
+  const loginRateLimitMessage =
+    loginRateLimit?.expiresAt && loginCooldownLabel
+      ? `${loginRateLimit.message} Try again in ${loginCooldownLabel}.`
+      : "";
   const anyLoading = isLoading || !!oauthLoading;
 
   return (
@@ -261,6 +317,11 @@ const Login = () => {
               />
             </svg>
             {success}
+          </div>
+        )}
+        {loginRateLimitMessage && (
+          <div className="auth-alert auth-alert--error">
+            {loginRateLimitMessage}
           </div>
         )}
         {error && <div className="auth-alert auth-alert--error">{error}</div>}
@@ -370,13 +431,19 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={!isFormValid || anyLoading}
-            className={`auth-submit-btn${!isFormValid || anyLoading ? " disabled" : ""}`}
+            disabled={!isFormValid || anyLoading || !!loginRateLimitMessage}
+            className={`auth-submit-btn${
+              !isFormValid || anyLoading || !!loginRateLimitMessage
+                ? " disabled"
+                : ""
+            }`}
           >
             {isLoading ? (
               <>
                 <LoadingSpinner /> Signing in...
               </>
+            ) : loginRateLimitMessage ? (
+              `Try again in ${loginCooldownLabel}`
             ) : (
               "Sign in"
             )}
