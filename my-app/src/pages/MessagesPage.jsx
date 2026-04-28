@@ -173,7 +173,7 @@ const normalizedUsername = String(recipientUsernameDraft ?? "").trim();
   disabled={isCreatingConversation}
 />
 
-              <label className="messages-modal-field-label">Write your message and add tracks or playlists <span>*</span></label>
+              <label className="messages-modal-field-label">Write your message <span>*</span></label>
               <textarea
                 className="messages-modal-textarea"
                 placeholder="Write a message"
@@ -184,9 +184,6 @@ const normalizedUsername = String(recipientUsernameDraft ?? "").trim();
               />
 
               <div className="messages-modal-actions">
-                <button type="button" className="messages-secondary-btn">
-                  Add track or playlist
-                </button>
 
                 <button type="submit" className="messages-primary-btn" disabled={isCreatingConversation}>
                   {isCreatingConversation ? "Sending" : "Send"}
