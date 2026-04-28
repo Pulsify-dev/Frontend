@@ -61,9 +61,10 @@
 .sc-filter-item {
   font-size: 13px;
   color: var(--sc-text-secondary);
-  padding: 6px 0;
+  padding: 6px 10px;
   cursor: pointer;
-  transition: color 0.1s;
+  transition: color 0.1s, background-color 0.1s;
+  border-radius: 4px;
 }
 
 .sc-filter-item:hover {
@@ -71,10 +72,9 @@
 }
 
 .sc-filter-item.active {
-  color: var(--sc-accent);
+  color: #000;
+  background-color: #fff;
   font-weight: 600;
-  border-left: 3px solid var(--sc-accent);
-  padding-left: 10px;
 }
 
 /* Footer */
@@ -109,6 +109,231 @@
   color: var(--sc-text-muted);
 }
 
+.sc-search-summary-text {
+  font-size: 14px;
+  color: var(--sc-text-secondary, #bbb);
+  margin-bottom: 24px;
+}
+
+.sc-user-row-premium {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--sc-border-light, #333);
+}
+
+.sc-user-row-premium-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+}
+
+.sc-user-premium-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #222;
+}
+
+.sc-user-premium-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-user-premium-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sc-user-premium-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sc-text-primary, #fff);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-verified-badge {
+  color: #38d;
+  font-size: 14px;
+}
+
+.sc-user-premium-location {
+  font-size: 14px;
+  color: var(--sc-text-muted, #999);
+}
+
+.sc-user-premium-followers {
+  font-size: 12px;
+  color: var(--sc-text-secondary, #aaa);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.sc-user-premium-follow-btn {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.sc-user-premium-follow-btn:hover {
+  opacity: 0.8;
+}
+
+.sc-follow-btn-following {
+  background: #333 !important;
+  color: #f50 !important;
+  border: 1px solid #555;
+}
+
+.sc-follow-btn-following:hover {
+  background: #422 !important;
+  color: #f66 !important;
+}
+
+/* Search Results Heading */
+.sc-search-results-heading {
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--sc-text-primary, #fff);
+  margin: 0 0 8px 0;
+}
+
+.sc-results-section-heading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sc-text-secondary, #aaa);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sc-border, #333);
+}
+
+/* Album Cards */
+.sc-album-card {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--sc-border-light, #333);
+  cursor: pointer;
+}
+
+.sc-album-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sc-album-card-art {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #222;
+  flex-shrink: 0;
+}
+
+.sc-album-card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-album-card-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.sc-album-card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--sc-text-primary, #fff);
+}
+
+.sc-album-card-artist {
+  font-size: 12px;
+  color: var(--sc-text-muted, #999);
+}
+
+.sc-album-card-meta {
+  font-size: 11px;
+  color: var(--sc-text-muted, #888);
+  display: flex;
+  gap: 4px;
+}
+
+.sc-album-card-type {
+  background: var(--sc-bg-secondary, #333);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+/* Playlist Cards */
+.sc-playlist-card {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--sc-border-light, #333);
+  cursor: pointer;
+}
+
+.sc-playlist-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sc-playlist-card-art {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #222;
+  flex-shrink: 0;
+}
+
+.sc-playlist-card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-playlist-card-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.sc-playlist-card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--sc-text-primary, #fff);
+}
+
+.sc-playlist-card-creator {
+  font-size: 12px;
+  color: var(--sc-text-muted, #999);
+}
+
+.sc-playlist-card-meta {
+  font-size: 11px;
+  color: var(--sc-text-muted, #888);
+}
+
 @media (max-width: 700px) {
   .sc-search-layout {
     flex-direction: column;
@@ -116,5 +341,9 @@
   .sc-search-sidebar {
     width: 100%;
     min-width: 0;
+  }
+  .sc-user-premium-avatar {
+    width: 80px;
+    height: 80px;
   }
 }

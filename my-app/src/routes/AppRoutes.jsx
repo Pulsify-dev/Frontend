@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 
@@ -12,13 +12,17 @@ import VerifyEmail from "@/pages/VerifyEmail";
 // Module pages
 import { HomeFeedPage } from "@/pages/HomeFeedPage";
 import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
+import FeedPage from "@/pages/FeedPage";
 import SearchHubPage from "@/pages/SearchHubPage";
 import TrendingChartsPage from "@/pages/TrendingChartsPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import AdminContentModerationPage from "@/pages/AdminContentModerationPage";
 import TrackPage from "@/pages/TrackPage";
 import { PulsifyPlaylistsView } from "@/pages/PulsifyPlaylistsView";
 import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
+import PlaybackHistoryPage from "@/pages/PlaybackHistoryPage";
 
 // Profile
 import ProfilePage from "@/profile/pages/ProfilePage";
@@ -26,7 +30,9 @@ import ProfilePage from "@/profile/pages/ProfilePage";
 // Module 3 – Social Graph
 import FollowingPage from "@/social/pages/FollowingPage";
 import FollowersPage from "@/social/pages/FollowersPage";
-import BlockedUsersPage from "@/social/pages/BlockedUsersPage";
+
+// Settings
+import SettingsPage from "@/pages/SettingsPage";
 
 const AppRoutes = () => {
   return (
@@ -53,13 +59,16 @@ const AppRoutes = () => {
         <Route path="/following/:userId" element={<FollowingPage />} />
         <Route path="/followers" element={<FollowersPage />} />
         <Route path="/followers/:userId" element={<FollowersPage />} />
-        <Route path="/blocked" element={<BlockedUsersPage />} />
+        <Route path="/blocked" element={<Navigate to="/settings" replace />} />
+        <Route path="/settings" element={<SettingsPage />} />
 
         {/* Feed - Module 8 */}
-        <Route path="/feed" element={<HomeFeedPage />} />
+        <Route path="/feed" element={<FeedPage />} />
         <Route path="/discover" element={<DiscoveryFeedPage />} />
         <Route path="/search" element={<SearchHubPage />} />
         <Route path="/trending" element={<TrendingChartsPage />} />
+        <Route path="/history" element={<PlaybackHistoryPage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
 
         {/* Track - Module 4/5 */}
         <Route path="/trackpage" element={<TrackPage />} />

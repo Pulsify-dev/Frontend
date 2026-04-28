@@ -3,11 +3,19 @@ import { Link, useLocation } from "react-router-dom";
 const TABS = [
   { label: "Following", path: "/following" },
   { label: "Followers", path: "/followers" },
-  { label: "Blocked Users", path: "/blocked" },
 ];
 
-export default function SocialHeader({ counts, filterValue, onFilterChange }) {
+export default function SocialHeader({
+  counts,
+  filterValue,
+  onFilterChange,
+  userId,
+}) {
   const location = useLocation();
+
+  function getTabPath(tab) {
+    return userId ? `${tab.path}/${userId}` : tab.path;
+  }
 
   function getTabLabel(tab) {
     if (tab.label === "Following" && counts?.followingCount != null) {
@@ -15,9 +23,6 @@ export default function SocialHeader({ counts, filterValue, onFilterChange }) {
     }
     if (tab.label === "Followers" && counts?.followersCount != null) {
       return `Followers ${counts.followersCount}`;
-    }
-    if (tab.label === "Blocked Users" && counts?.blockedCount != null) {
-      return `Blocked ${counts.blockedCount}`;
     }
     return tab.label;
   }
@@ -29,8 +34,8 @@ export default function SocialHeader({ counts, filterValue, onFilterChange }) {
           {TABS.map((tab) => (
             <Link
               key={tab.path}
-              to={tab.path}
-              className={`sc-social-tab ${location.pathname === tab.path ? "sc-social-tab--active" : ""}`}
+              to={getTabPath(tab)}
+              className={`sc-social-tab ${location.pathname === getTabPath(tab) ? "sc-social-tab--active" : ""}`}
             >
               {getTabLabel(tab)}
             </Link>

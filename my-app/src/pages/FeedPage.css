@@ -1,0 +1,594 @@
+/* ====== SoundCloud Feed Page ====== */
+
+.sc-feed-page {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 20px 100px;
+}
+
+.sc-feed-content {
+  display: flex;
+  gap: 30px;
+}
+
+.sc-feed-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Header Row */
+.sc-feed-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.sc-page-heading {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--sc-text-primary, #fff);
+  margin: 0;
+}
+
+/* Reposts Toggle */
+.sc-reposts-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--sc-text-secondary, #999);
+  white-space: nowrap;
+}
+
+.sc-toggle-switch {
+  width: 36px;
+  height: 20px;
+  background: #555;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.sc-toggle-switch.sc-toggle-on {
+  background: #f50;
+}
+
+.sc-toggle-knob {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.2s;
+}
+
+.sc-toggle-switch.sc-toggle-on .sc-toggle-knob {
+  left: 18px;
+}
+
+/* ──── Feed Item Card ──── */
+.sc-feed-item-card {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+}
+
+.sc-feed-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--sc-text-muted, #999);
+}
+
+.sc-feed-header-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.sc-feed-header-name {
+  color: var(--sc-text-secondary, #bbb);
+  cursor: pointer;
+}
+
+.sc-feed-header-name:hover {
+  color: #fff;
+}
+
+/* ──── Track Card ──── */
+.sc-feed-track-card {
+  display: flex;
+  gap: 16px;
+}
+
+.sc-feed-track-art {
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  background: #222;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sc-feed-track-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-feed-play-btn {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  width: 36px;
+  height: 36px;
+  background: #f50;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.sc-feed-track-art:hover .sc-feed-play-btn {
+  opacity: 1;
+}
+
+.sc-feed-track-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sc-feed-track-meta-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.sc-feed-track-names {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sc-feed-track-artist-name {
+  font-size: 12px;
+  color: var(--sc-text-muted, #999);
+  cursor: pointer;
+}
+
+.sc-feed-track-artist-name:hover {
+  color: #fff;
+}
+
+.sc-feed-track-title {
+  font-size: 15px;
+  color: var(--sc-text-primary, #fff);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.sc-feed-track-title:hover {
+  text-decoration: underline;
+}
+
+.sc-genre-tag {
+  background: var(--sc-bg-secondary, #333);
+  color: var(--sc-text-secondary, #aaa);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+/* Waveform */
+.sc-waveform-placeholder {
+  position: relative;
+  height: 60px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  flex: 1;
+}
+
+.sc-waveform-bars {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  gap: 1px;
+  padding: 4px 4px 8px;
+}
+
+.sc-waveform-bar {
+  flex: 1;
+  background: #444;
+  border-radius: 1px 1px 0 0;
+  min-width: 2px;
+  transition: background 0.1s;
+}
+
+.sc-waveform-placeholder:hover .sc-waveform-bar {
+  background: #666;
+}
+
+.sc-waveform-duration {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: var(--sc-text-muted, #888);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* Engagement Bar */
+.sc-engagement-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+}
+
+.sc-engagement-left {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.sc-eng-btn {
+  background: var(--sc-bg-secondary, #333);
+  border: 1px solid var(--sc-border-light, #444);
+  color: var(--sc-text-muted, #999);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.sc-eng-btn:hover {
+  color: var(--sc-text-primary, #fff);
+}
+
+.sc-engagement-right {
+  display: flex;
+  gap: 12px;
+}
+
+.sc-eng-stat {
+  font-size: 11px;
+  color: var(--sc-text-muted, #888);
+}
+
+/* ──── Album Repost Card ──── */
+.sc-feed-album-card {
+  display: flex;
+  gap: 16px;
+  background: var(--sc-bg-secondary, #1e1e1e);
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.sc-feed-album-art {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #222;
+}
+
+.sc-feed-album-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-feed-album-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.sc-feed-album-artist {
+  font-size: 12px;
+  color: var(--sc-text-muted, #999);
+}
+
+.sc-feed-album-title {
+  font-size: 16px;
+  color: var(--sc-text-primary, #fff);
+  font-weight: 500;
+}
+
+.sc-feed-album-meta {
+  font-size: 12px;
+  color: var(--sc-text-secondary, #888);
+}
+
+/* ──── Empty State & Suggestions ──── */
+.sc-empty-state {
+  padding: 30px 0;
+}
+
+.sc-empty-text {
+  color: var(--sc-text-secondary, #aaa);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.sc-link-accent {
+  color: #f50;
+}
+
+.sc-artists-suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0 12px;
+}
+
+.sc-artists-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sc-text-secondary, #aaa);
+  letter-spacing: 0.5px;
+}
+
+.sc-refresh-btn {
+  background: none;
+  border: none;
+  color: var(--sc-text-muted, #888);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sc-artists-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-artist-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--sc-border, #333);
+}
+
+.sc-artist-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #333;
+}
+
+.sc-artist-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sc-artist-name {
+  font-size: 13px;
+  color: var(--sc-text-primary, #fff);
+}
+
+.sc-artist-stats {
+  font-size: 11px;
+  color: var(--sc-text-muted, #888);
+  display: flex;
+  gap: 8px;
+}
+
+.sc-btn-follow {
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  padding: 4px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.sc-btn-follow:hover {
+  opacity: 0.85;
+}
+
+.sc-btn-following {
+  background: #333;
+  color: #f50;
+  border: 1px solid #555;
+}
+
+.sc-btn-following:hover {
+  background: #422;
+  color: #f66;
+}
+
+/* Feed Explainer */
+.sc-feed-explainer {
+  background: var(--sc-bg-secondary, #1a1a1a);
+  border: 1px solid var(--sc-border, #333);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.sc-feed-explainer p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--sc-text-secondary, #bbb);
+  line-height: 1.5;
+}
+
+/* ──── Sidebar ──── */
+.sc-feed-sidebar {
+  width: 300px;
+  min-width: 300px;
+}
+
+.sc-sidebar-section {
+  margin-bottom: 20px;
+}
+
+.sc-sidebar-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sc-text-secondary, #aaa);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.sc-view-all {
+  color: var(--sc-text-muted, #888);
+  font-size: 12px;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.sc-like-item {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.sc-like-art {
+  width: 36px;
+  height: 36px;
+  background: #333;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.sc-like-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sc-like-artist {
+  font-size: 11px;
+  color: var(--sc-text-muted, #999);
+}
+
+.sc-like-title {
+  font-size: 12px;
+  color: var(--sc-text-primary, #fff);
+}
+
+.sc-like-stats {
+  font-size: 11px;
+  color: var(--sc-text-muted, #888);
+}
+
+.sc-mobile-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.sc-app-store-btn,
+.sc-google-play-btn {
+  flex: 1;
+  background: #333;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sc-sidebar-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--sc-border, #333);
+}
+
+.sc-footer-links-row {
+  font-size: 11px;
+  color: var(--sc-text-muted, #666);
+  line-height: 1.8;
+}
+
+.sc-footer-links-row a {
+  color: var(--sc-text-muted, #666);
+  text-decoration: none;
+}
+
+.sc-footer-lang {
+  font-size: 11px;
+  color: var(--sc-text-muted, #666);
+  margin-top: 6px;
+}
+
+.sc-footer-lang a {
+  color: #38d;
+}
+
+/* Loader */
+.sc-loader {
+  padding: 40px 0;
+}
+
+.sc-loader-bar {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #f50, transparent);
+  border-radius: 3px;
+  animation: sc-load 1.2s infinite;
+}
+
+@keyframes sc-load {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sc-feed-content {
+    flex-direction: column;
+  }
+  .sc-feed-sidebar {
+    width: 100%;
+    min-width: 0;
+  }
+  .sc-feed-track-card {
+    flex-direction: column;
+  }
+  .sc-feed-track-art {
+    width: 100%;
+    height: 200px;
+  }
+}

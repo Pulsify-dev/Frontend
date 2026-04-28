@@ -1,0 +1,1204 @@
+.pulsify-upload-page {
+  min-height: 100vh;
+  background-color: #121212;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  color: #fff;
+}
+
+.pulsify-upload-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 28px;
+  background-color: #121212;
+  position: relative;
+}
+
+.pulsify-upload-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pulsify-header-upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #ccc;
+}
+
+.pulsify-header-upload-progress .replace-name {
+  color: #fff;
+}
+
+.pulsify-header-upload-progress .usage-progress-small {
+  width: 100px;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pulsify-header-upload-progress .usage-progress-bar-small {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.pulsify-header-upload-progress .upload-pct {
+  color: #ccc;
+  min-width: 90px;
+}
+
+.pulsify-upload-close-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #2a2a2a;
+  color: #bbb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.pulsify-upload-close-small:hover {
+  color: #fff;
+  background: #3a3a3a;
+}
+
+.pulsify-upload-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #2a2a2a;
+  color: #bbb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pulsify-upload-close:hover {
+  color: #fff;
+  background: #3a3a3a;
+}
+
+.pulsify-upload-usage-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 28px;
+  background: #1a1a1a;
+  border-radius: 4px;
+  margin-bottom: 40px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.pulsify-upload-usage-bar .usage-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.pulsify-upload-usage-bar .usage-cloud-icon {
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.pulsify-upload-usage-bar .usage-text-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pulsify-upload-usage-bar .usage-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.pulsify-upload-usage-bar .usage-upgrade-link {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.pulsify-upload-usage-bar .usage-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pulsify-upload-usage-bar .usage-progress {
+  width: 130px;
+  height: 2px;
+  background: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pulsify-upload-usage-bar .usage-progress-bar {
+  height: 100%;
+  background: #f50;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.pulsify-upload-usage-bar .usage-minutes {
+  white-space: nowrap;
+  color: #999;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.pulsify-upload-usage-bar .usage-cta {
+  margin-left: auto;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 50px;
+  color: #fff;
+  background: #111;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pulsify-upload-usage-bar .usage-cta:hover {
+  background: #222;
+}
+
+.pulsify-upload-body {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 36px 40px;
+}
+
+.pulsify-success-screen-modern {
+  max-width: 800px;
+  margin: 60px auto 40px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-family: inherit;
+  text-align: left;
+}
+
+.success-timeline-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+
+/* Custom Scrollbar for container */
+.success-timeline-container::-webkit-scrollbar {
+  width: 8px;
+}
+.success-timeline-container::-webkit-scrollbar-track {
+  background: #111;
+}
+.success-timeline-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+.success-timeline-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.success-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  padding-left: 10px;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 64px;
+  top: 56px;
+  bottom: 56px;
+  width: 2px;
+  background-image: linear-gradient(to bottom, #888 50%, transparent 50%);
+  background-size: 2px 8px;
+  background-repeat: repeat-y;
+  z-index: 1;
+}
+
+.timeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #111;
+  flex-shrink: 0;
+}
+
+.circle-solid {
+  border: 5px solid #fff;
+  color: #fff;
+  background-color: #111;
+}
+
+.circle-dashed {
+  border: 2px dashed #888;
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 18px;
+}
+
+.success-title-main {
+  font-size: 38px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 0 12px !important;
+  letter-spacing: -0.5px;
+}
+
+.success-subtitle-main {
+  font-size: 18px !important;
+  color: #fff !important;
+  margin: 0 0 28px !important;
+  font-weight: 400 !important;
+}
+
+.success-btn-outline {
+  align-self: flex-start;
+  background: transparent;
+  color: #fff;
+  border: 1px solid #777;
+  border-radius: 500px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.success-btn-outline:hover {
+  background: transparent;
+  border-color: #fff;
+  color: #fff;
+}
+
+.distribute-step {
+}
+
+.distribute-content {
+  position: absolute;
+  left: 150px;
+  top: 12px;
+  padding-top: 0;
+  width: 550px;
+}
+
+.distribute-title {
+  font-size: 34px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 0 14px !important;
+  letter-spacing: -0.5px;
+}
+
+.distribute-subtitle {
+  font-size: 16px !important;
+  color: #fff !important;
+  margin: 0 0 28px !important;
+  line-height: 1.5 !important;
+  max-width: 600px;
+}
+
+.learn-more-link {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.success-btn-white {
+  align-self: flex-start;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 500px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.success-btn-white:hover {
+  background: #eee;
+}
+
+.empty-step {
+}
+
+.pulsify-upload-body h2 {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: #fff;
+}
+
+.pulsify-upload-body .format-note {
+  font-size: 15px;
+  color: #ccc;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+.pulsify-upload-body .format-note .learn-more {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.pulsify-dropzone {
+  border: 2px dashed #444;
+  border-radius: 8px;
+  padding: 60px 40px;
+  text-align: center;
+  background: transparent;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.pulsify-dropzone:hover,
+.pulsify-dropzone.drag-active {
+  border-color: #888;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pulsify-dropzone .drop-icon {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.pulsify-dropzone .drop-cloud-svg {
+  color: #ccc;
+  transition: transform 0.2s;
+}
+
+.pulsify-dropzone:hover .drop-cloud-svg {
+  transform: translateY(-2px);
+}
+
+.pulsify-dropzone .drop-text {
+  font-size: 15px;
+  color: #999;
+  margin: 0 0 22px;
+}
+
+.pulsify-dropzone .choose-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 500px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pulsify-dropzone .choose-btn:hover {
+  background: #eee;
+}
+
+.pulsify-dropzone input[type="file"] {
+  display: none;
+}
+
+.pulsify-upload-error {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(226, 33, 52, 0.08);
+  border: 1px solid #e22134;
+  border-radius: 4px;
+  color: #e22134;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pulsify-mic-section {
+  display: flex;
+  align-items: center;
+  padding: 20px 28px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  margin-top: 24px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pulsify-mic-section:hover {
+  background: #222;
+}
+
+.pulsify-mic-section .mic-icon-area {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #999;
+  flex-shrink: 0;
+  margin-right: 20px;
+}
+
+.pulsify-mic-section .mic-content {
+  flex: 1;
+  text-align: center;
+}
+
+.pulsify-mic-section .mic-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pulsify-mic-section .mic-desc {
+  font-size: 13px;
+  color: #888;
+  margin-top: 3px;
+}
+
+.pulsify-mic-section .mic-chevron {
+  color: #666;
+  flex-shrink: 0;
+  margin-left: 20px;
+}
+
+.pulsify-upload-page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 0 0;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.pulsify-upload-page-footer a {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.pulsify-upload-page-footer a:hover {
+  color: #fff;
+}
+
+.pulsify-upload-page-footer span {
+  color: #444;
+}
+
+.pulsify-trackinfo-page {
+  display: flex;
+  gap: 40px;
+  padding: 8px 0;
+}
+
+.pulsify-trackinfo-page .artwork-section {
+  width: 380px;
+  flex-shrink: 0;
+  text-align: center;
+  margin-left: -20px;
+}
+
+.pulsify-trackinfo-page .artwork-preview {
+  width: 380px;
+  height: 380px;
+  background: #111;
+  border: 1px dashed #555;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.pulsify-trackinfo-page .artwork-preview:hover {
+  border-color: #888;
+}
+
+.pulsify-trackinfo-page .artwork-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pulsify-trackinfo-page .artwork-preview .art-placeholder {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.pulsify-trackinfo-page .artwork-preview .art-placeholder svg {
+  opacity: 0.8;
+}
+
+.pulsify-trackinfo-page .form-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.pulsify-form-group {
+  margin-bottom: 16px;
+}
+
+.pulsify-form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.pulsify-form-group label.with-tooltip {
+  display: flex;
+  align-items: center;
+}
+
+/* Tooltips */
+.pulsify-field-tooltip-container {
+  display: inline-block;
+  position: relative;
+  margin-left: 6px;
+}
+
+.pulsify-field-tooltip-container .tooltip-icon {
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulsify-field-tooltip-container .tooltip-icon:hover {
+  color: #fff;
+}
+
+.pulsify-field-tooltip-container .tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 12px;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+.pulsify-field-tooltip-container:hover .tooltip-bubble {
+  display: block;
+}
+
+.pulsify-field-tooltip-container .tooltip-arrow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #111;
+  border-right: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+.pulsify-field-tooltip-container .tooltip-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.pulsify-field-tooltip-container .tooltip-text {
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.4;
+  white-space: normal;
+  font-weight: 400;
+}
+
+.pulsify-form-group .form-hint {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.pulsify-form-group input[type="text"],
+.pulsify-form-group textarea,
+.pulsify-form-group select {
+  width: 100%;
+  padding: 8px 0;
+  background: transparent;
+  color: #fff;
+  border: none;
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.pulsify-form-group input[type="text"]:focus,
+.pulsify-form-group textarea:focus,
+.pulsify-form-group select:focus {
+  border-bottom-color: #f50;
+}
+
+.pulsify-form-group input::placeholder,
+.pulsify-form-group textarea::placeholder {
+  color: #666;
+  font-size: 14px;
+}
+
+.pulsify-form-group textarea {
+  resize: vertical;
+  min-height: 24px;
+  max-height: 120px;
+}
+
+.pulsify-form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+}
+
+.pulsify-form-group select option {
+  background: #222;
+  color: #fff;
+}
+
+.pulsify-form-group .char-count {
+  text-align: right;
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.pulsify-form-group.track-link-field input {
+  max-width: 280px;
+}
+
+.pulsify-visibility-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.pulsify-visibility-trigger {
+  padding: 16px 18px;
+  background: #1a1a1a;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  transition: background 0.15s;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.pulsify-visibility-trigger:hover {
+  background: #222;
+}
+
+.pulsify-visibility-trigger .vis-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.pulsify-visibility-trigger .vis-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.pulsify-visibility-trigger .vis-icon.public {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.pulsify-visibility-trigger .vis-icon.private {
+  background: rgba(255, 152, 0, 0.15);
+  color: #ff9800;
+}
+
+.pulsify-visibility-trigger .vis-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pulsify-visibility-trigger .vis-desc {
+  font-size: 12px;
+  color: #888;
+  margin: 1px 0 0;
+}
+
+.pulsify-visibility-trigger .vis-chevron {
+  color: #666;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: transform 0.25s ease;
+}
+
+.pulsify-visibility-trigger .vis-chevron.open {
+  transform: rotate(180deg);
+}
+
+.pulsify-visibility-dropdown {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+  opacity: 0;
+  background: #1a1a1a;
+  border-radius: 0 0 6px 6px;
+}
+
+.pulsify-visibility-dropdown.open {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.pulsify-visibility-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-top: 1px solid #2a2a2a;
+}
+
+.pulsify-visibility-option:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pulsify-visibility-option.active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pulsify-visibility-option .opt-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pulsify-visibility-option .opt-icon.public {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.pulsify-visibility-option .opt-icon.private {
+  background: rgba(255, 152, 0, 0.15);
+  color: #ff9800;
+}
+
+.pulsify-visibility-option .opt-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.pulsify-visibility-option .opt-desc {
+  font-size: 12px;
+  color: #888;
+  margin-top: 1px;
+}
+
+.pulsify-upload-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 32px;
+  border-top: 1px solid #333;
+  background: #111;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.pulsify-upload-footer .footer-terms {
+  font-size: 12px;
+  font-weight: 500;
+  color: #999;
+  text-align: center;
+  flex: 1;
+}
+
+.pulsify-upload-footer .footer-terms a {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.pulsify-upload-footer .upload-submit-btn {
+  padding: 12px 80px;
+  background: #148c3f;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.pulsify-upload-footer .upload-submit-btn:hover {
+  background: #119438;
+}
+
+.pulsify-upload-footer .upload-submit-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.pulsify-replace-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #aaa;
+  position: absolute;
+  right: 84px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pulsify-replace-track .replace-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+}
+
+.pulsify-replace-track .replace-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ccc;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.pulsify-replace-track button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.pulsify-replace-track button:hover {
+  color: #f50;
+}
+
+.pulsify-locked-upload {
+  border: 2px solid #e22134;
+  border-radius: 12px;
+  padding: 60px 40px;
+  background: rgba(226, 33, 52, 0.05);
+  text-align: center;
+  max-width: 600px;
+  margin: 80px auto;
+}
+
+.pulsify-locked-upload .lock-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.pulsify-locked-upload h2 {
+  color: #e22134;
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.pulsify-locked-upload p {
+  color: #888;
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.pulsify-locked-upload .upgrade-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: #f50;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.pulsify-locked-upload .upgrade-btn:hover {
+  opacity: 0.9;
+}
+
+/* ===========================
+   Upload Progress Section
+   =========================== */
+.pulsify-upload-progress-section {
+  margin-bottom: 28px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+
+.pulsify-upload-progress-section .progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pulsify-upload-progress-section .progress-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pulsify-upload-progress-section .progress-percent {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pulsify-upload-progress-section .progress-track {
+  width: 100%;
+  height: 4px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pulsify-upload-progress-section .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f50, #ff8a00);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.pulsify-upload-progress-section .progress-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #777;
+}
+
+/* Spinner keyframes */
+@keyframes pulsify-spin {
+  to { transform: rotate(360deg); }
+}
+
+.progress-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #444;
+  border-top-color: #f50;
+  border-radius: 50%;
+  animation: pulsify-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ===========================
+   Success Screen
+   =========================== */
+.pulsify-success-screen {
+  text-align: center;
+  padding-top: 80px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@keyframes pulsify-check-pop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pulsify-success-screen .success-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.08);
+  border: 2px solid rgba(124, 58, 237, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+  animation: pulsify-check-pop 0.5s ease-out;
+}
+
+.pulsify-success-screen .success-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.pulsify-success-screen .success-subtitle {
+  font-size: 15px;
+  color: #888;
+  margin: 0 0 32px;
+}
+
+.pulsify-success-screen .success-track-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 14px 20px;
+  margin-bottom: 32px;
+  min-width: 300px;
+}
+
+.pulsify-success-screen .success-track-art {
+  width: 52px;
+  height: 52px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.pulsify-success-screen .success-track-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.pulsify-success-screen .success-track-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.pulsify-success-screen .success-track-genre {
+  font-size: 12px;
+  color: #888;
+}
+
+.pulsify-success-screen .success-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.success-btn {
+  padding: 11px 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.success-btn-primary {
+  background: #f50;
+  color: #fff;
+}
+
+.success-btn-primary:hover {
+  background: #e04500;
+}
+
+.success-btn-secondary {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #333;
+}
+
+.success-btn-secondary:hover {
+  border-color: #555;
+  color: #fff;
+}

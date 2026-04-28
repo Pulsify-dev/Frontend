@@ -5,9 +5,13 @@ import EngagementListModal from "../components/EngagementListModal";
 import HistoryPanel from "../components/HistoryPanel";
 import LoadingState from "../components/LoadingState";
 import PlayerCard from "../components/PlayerCard";
-import PlayerDock from "../components/PlayerDock";
 import TrackHeader from "../components/TrackHeader";
-import { trackExperienceMockData } from "../mock/trackExperienceData";
+import {
+  CONFIGURED_TRACK_IDS,
+  buildTrackQueueIds,
+} from "../config/trackCatalog";
+import { DEFAULT_TRACK_ID } from "../config/defaultTrack";
+import { usePlayer } from "../hooks/usePlayer";
 import {
   clearAuthToken,
   createComment,
@@ -25,31 +29,27 @@ import {
   getStreamUrl,
   getTrack,
   getTrackPlaylists,
-  registerPlay,
   toggleLike,
   toggleRepost,
+  updateComment,
 } from "../services/api";
 import { useMessaging } from "@/hooks/useMessaging";
 import "../App.css";
 
-const DEFAULT_TRACK_ID = import.meta.env.VITE_TRACK_ID ?? "trk-2026-014";
-const mockTrackOrder = Object.keys(trackExperienceMockData.tracks);
-
-const buildTrackPath = (targetTrackId, view) => {
-  if (view === "overview") {
-    return `/tracks/${targetTrackId}`;
-  }
-
-  return `/tracks/${targetTrackId}/${view}`;
-};
+const configuredApiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL || "your configured API";
 
 const INVALID_FILENAME_CHARS = /[<>:"/\\|?*]/g;
 const CONTROL_CHARACTERS = new RegExp(String.raw`[\x00-\x1f]`, "g");
 
 const sanitizeFilenamePart = (value) =>
   String(value ?? "")
-    .replace(INVALID_FILENAME_CHARS, "")
-    .replace(CONTROL_CHARACTERS, "")
+    .split("")
+    .filter((character) => {
+      const characterCode = character.charCodeAt(0);
+      return characterCode >= 32 && !'<>:"/\\|?*'.includes(character);
+    })
+    .join("")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -69,18 +69,75 @@ const inferDownloadExtension = (url, mimeType) => {
   }
 };
 
+const getCommentCreatedAtMs = (comment) => {
+  const createdAtMs = new Date(comment?.created_at).getTime();
+  return Number.isNaN(createdAtMs) ? 0 : createdAtMs;
+};
+
 const sortCommentsByTimeline = (items) =>
   [...items].sort((left, right) => {
-    const leftTime = left.timestamp_ms ?? Number.MAX_SAFE_INTEGER;
-    const rightTime = right.timestamp_ms ?? Number.MAX_SAFE_INTEGER;
-    return leftTime - rightTime;
+    const leftHasTimeline = typeof left?.timestamp_ms === "number";
+    const rightHasTimeline = typeof right?.timestamp_ms === "number";
+
+    if (leftHasTimeline && rightHasTimeline) {
+      const timelineDifference = left.timestamp_ms - right.timestamp_ms;
+      if (timelineDifference !== 0) return timelineDifference;
+    } else if (leftHasTimeline !== rightHasTimeline) {
+      return leftHasTimeline ? -1 : 1;
+    }
+
+    return getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left);
   });
+
+const mergeById = (items) => {
+  const itemMap = new Map();
+
+  items.forEach((item) => {
+    if (item?.id) {
+      itemMap.set(item.id, item);
+    }
+  });
+
+  return [...itemMap.values()];
+};
+
+const COMMENTS_PAGE_LIMIT = 20;
+const REPLIES_PAGE_LIMIT = 20;
 
 const markCommentAsDeleted = (comment) => ({
   ...comment,
   text: "Comment deleted.",
   isDeleted: true,
 });
+
+const findLatestMatchingComment = (
+  items,
+  { text, parentCommentId = null, timestamp_ms = null } = {},
+) => {
+  const normalizedText = String(text ?? "").trim();
+
+  return (
+    [...(items ?? [])]
+      .filter((item) => {
+        if (!item?.isOwnedByViewer) return false;
+        if (String(item.text ?? "").trim() !== normalizedText) return false;
+        if ((item.parentCommentId ?? null) !== parentCommentId) return false;
+
+        if (
+          typeof timestamp_ms === "number" &&
+          typeof item.timestamp_ms === "number"
+        ) {
+          return item.timestamp_ms === timestamp_ms;
+        }
+
+        return true;
+      })
+      .sort(
+        (left, right) =>
+          getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left),
+      )[0] ?? null
+  );
+};
 
 const getSectionConfig = (
   view,
@@ -133,11 +190,32 @@ const getSectionConfig = (
 
 function TrackPage({ view = "overview" }) {
   const navigate = useNavigate();
-  const { openConversation, shareTrackToConversation } = useMessaging();
-  const { id: routeTrackId, trackId: legacyTrackId } = useParams();
-  const trackId = routeTrackId ?? legacyTrackId ?? DEFAULT_TRACK_ID;
-  const audioRef = useRef(null);
-  const sessionReportedRef = useRef(false);
+  const { trackId: routeTrackId } = useParams();
+  const trackId = routeTrackId ?? DEFAULT_TRACK_ID;
+
+  const {
+    currentTrack: activeTrack,
+    isPlaying: playerIsPlaying,
+    currentTime: playerCurrentTime,
+    duration: playerDuration,
+    playbackState: playerPlaybackState,
+    playerMessage,
+    setPlayerMessage,
+    togglePlay,
+    loadTrack,
+    seekTo,
+    setQueueTrackIds,
+    syncCurrentTrack,
+  } = usePlayer();
+
+  // FIX: keep a stable ref to syncCurrentTrack so we can call it inside
+  // async functions without adding it to useEffect dependency arrays
+  // (it is stable by itself, but being in contextValue ties it to every
+  // context re-render which previously caused the cascade).
+  const syncCurrentTrackRef = useRef(syncCurrentTrack);
+  useEffect(() => {
+    syncCurrentTrackRef.current = syncCurrentTrack;
+  });
 
   const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const [tokenInput, setTokenInput] = useState(() => readAuthToken());
@@ -145,6 +223,7 @@ function TrackPage({ view = "overview" }) {
   const [streamInfo, setStreamInfo] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentTotal, setCommentTotal] = useState(0);
+  const [commentsPagination, setCommentsPagination] = useState(null);
   const [relatedTracks, setRelatedTracks] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [fanLeaderboard, setFanLeaderboard] = useState([]);
@@ -152,17 +231,26 @@ function TrackPage({ view = "overview" }) {
   const [reposters, setReposters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(70);
-  const [playerMessage, setPlayerMessage] = useState("");
+  const [uiMessage, setUiMessage] = useState("");
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
 
-  const playbackState =
-    streamInfo?.playback_state ?? track?.playbackState ?? "Playable";
+  const isTrackIdMissing = !trackId;
+  const isActiveRouteTrack = Boolean(track?.id) && activeTrack?.id === track.id;
+
+  const playbackState = isActiveRouteTrack
+    ? playerPlaybackState
+    : (streamInfo?.playback_state ?? track?.playbackState ?? "Playable");
   const previewDurationSeconds =
     streamInfo?.preview_duration_seconds ?? track?.previewDurationSeconds ?? 0;
+  const currentTime = isActiveRouteTrack ? playerCurrentTime : 0;
+  const duration = isActiveRouteTrack
+    ? playerDuration || track?.duration || 0
+    : track?.duration || 0;
+  const isPlaying = isActiveRouteTrack ? playerIsPlaying : false;
+  const feedbackMessage = isActiveRouteTrack
+    ? playerMessage || uiMessage
+    : uiMessage || playerMessage;
 
   const visibleComments = useMemo(
     () => (view === "overview" ? comments.slice(0, 6) : comments),
@@ -182,35 +270,103 @@ function TrackPage({ view = "overview" }) {
     [view, track, relatedTracks, playlists, likers, reposters],
   );
 
-  const currentTrackIndex = useMemo(
-    () => mockTrackOrder.indexOf(trackId),
-    [trackId],
+  const routeQueueTrackIds = useMemo(
+    () =>
+      buildTrackQueueIds(
+        track?.id ?? trackId,
+        relatedTracks.map((item) => item.id),
+        CONFIGURED_TRACK_IDS,
+      ),
+    [relatedTracks, track?.id, trackId],
   );
 
+  // Navigate when the player switches to a different track via queue controls.
   useEffect(() => {
-    if (!audioRef.current) return;
-    audioRef.current.volume = volume / 100;
-  }, [volume]);
+    if (!activeTrack?.id || !routeTrackId || activeTrack.id === routeTrackId) {
+      return;
+    }
+
+    navigate(
+      view === "overview"
+        ? `/tracks/${activeTrack.id}`
+        : `/tracks/${activeTrack.id}/${view}`,
+    );
+  }, [activeTrack?.id, navigate, routeTrackId, view]);
+
+  // Listen for engagement updates broadcast by other pages/components.
+  useEffect(() => {
+    const handleTrackEngagementUpdate = (event) => {
+      const { trackId: updatedTrackId, track: updatedTrack } =
+        event.detail ?? {};
+
+      if (!updatedTrackId || updatedTrackId !== trackId || !updatedTrack)
+        return;
+
+      setTrack((currentTrack) =>
+        currentTrack
+          ? {
+              ...currentTrack,
+              ...updatedTrack,
+            }
+          : currentTrack,
+      );
+    };
+
+    window.addEventListener(
+      "pulsify:track-engagement-updated",
+      handleTrackEngagementUpdate,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "pulsify:track-engagement-updated",
+        handleTrackEngagementUpdate,
+      );
+    };
+  }, [trackId]);
+
+  const broadcastTrackSnapshot = (nextTrack, extraDetail = {}) => {
+    if (!nextTrack?.id || typeof window === "undefined") return;
+
+    window.dispatchEvent(
+      new CustomEvent("pulsify:track-engagement-updated", {
+        detail: {
+          trackId: nextTrack.id,
+          track: nextTrack,
+          ...extraDetail,
+        },
+      }),
+    );
+  };
 
   const isAuthError =
     error.startsWith("Missing access token.") ||
     error.startsWith("Unauthorized.");
 
+  // FIX: removed syncCurrentTrack from the dependency array.
+  // We call it via syncCurrentTrackRef so the effect only re-runs when
+  // trackId or authRefreshKey actually change — not on every context
+  // re-render caused by currentTime ticks from the audio element.
+  // setQueueTrackIds is stable (useCallback with [] deps) so it's safe to keep.
   useEffect(() => {
+    if (!trackId) {
+      setIsLoading(false);
+      setError("");
+      return;
+    }
+
     let isMounted = true;
 
-    const loadTrack = async () => {
+    const fetchTrackData = async () => {
       setIsLoading(true);
       setError("");
-      setPlayerMessage(
+      setUiMessage(
         hasAuthToken()
           ? ""
           : "Demo mode active. Add a backend token any time to use live data.",
       );
-      setCurrentTime(0);
-      setIsPlaying(false);
       setCommentTotal(0);
-      sessionReportedRef.current = false;
+      setCommentsPagination(null);
 
       if (!isMounted) return;
 
@@ -219,14 +375,15 @@ function TrackPage({ view = "overview" }) {
       try {
         nextTrack = await getTrack(trackId);
       } catch {
+        if (!isMounted) return;
         setError("Track unavailable right now.");
         setIsLoading(false);
         return;
       }
 
       const results = await Promise.allSettled([
-        getStreamUrl(trackId),
-        getComments(trackId),
+        getStreamUrl(trackId, { playbackContext: "track_page" }),
+        getComments(trackId, { page: 1, limit: COMMENTS_PAGE_LIMIT }),
         getLikers(trackId),
         getReposters(trackId),
         getRelatedTracks(trackId),
@@ -237,7 +394,6 @@ function TrackPage({ view = "overview" }) {
       if (!isMounted) return;
 
       setTrack(nextTrack);
-      setDuration(nextTrack.duration ?? 0);
       setStreamInfo(
         results[0].status === "fulfilled"
           ? results[0].value
@@ -245,6 +401,7 @@ function TrackPage({ view = "overview" }) {
             ? {
                 url: "",
                 playback_state: "Blocked",
+                preview_start_seconds: 0,
                 preview_duration_seconds: 0,
                 message:
                   results[0].reason?.message ??
@@ -253,6 +410,7 @@ function TrackPage({ view = "overview" }) {
             : {
                 url: nextTrack.audioUrl,
                 playback_state: nextTrack.playbackState,
+                preview_start_seconds: 0,
                 preview_duration_seconds: nextTrack.previewDurationSeconds,
               },
       );
@@ -260,30 +418,67 @@ function TrackPage({ view = "overview" }) {
       const commentsPayload =
         results[1].status === "fulfilled"
           ? results[1].value
-          : { comments: [], totalCount: nextTrack.commentCount ?? 0 };
+          : {
+              comments: [],
+              totalCount: nextTrack.commentCount ?? 0,
+              pagination: {
+                page: 1,
+                limit: COMMENTS_PAGE_LIMIT,
+                total: nextTrack.commentCount ?? 0,
+                pages: 1,
+              },
+            };
 
       setComments(sortCommentsByTimeline(commentsPayload.comments));
       setCommentTotal(
         commentsPayload.totalCount ?? nextTrack.commentCount ?? 0,
       );
-      setLikers(results[2].status === "fulfilled" ? results[2].value : []);
-      setReposters(results[3].status === "fulfilled" ? results[3].value : []);
-      setRelatedTracks(
-        results[4].status === "fulfilled" ? results[4].value : [],
-      );
-      setPlaylists(results[5].status === "fulfilled" ? results[5].value : []);
+      setCommentsPagination(commentsPayload.pagination ?? null);
+
+      const nextLikers =
+        results[2].status === "fulfilled" ? results[2].value : [];
+      const nextReposters =
+        results[3].status === "fulfilled" ? results[3].value : [];
+      const nextRelatedTracks =
+        results[4].status === "fulfilled" ? results[4].value : [];
+      const nextPlaylists =
+        results[5].status === "fulfilled" ? results[5].value : [];
+
+      setLikers(nextLikers);
+      setReposters(nextReposters);
+      setRelatedTracks(nextRelatedTracks);
+      setPlaylists(nextPlaylists);
       setFanLeaderboard(
         results[6].status === "fulfilled" ? results[6].value : [],
       );
+
+      setQueueTrackIds(
+        buildTrackQueueIds(
+          nextTrack.id,
+          nextRelatedTracks.map((item) => item.id),
+          CONFIGURED_TRACK_IDS,
+        ),
+      );
+
+      // Use the ref so this call doesn't become a dep of the effect.
+      syncCurrentTrackRef.current(nextTrack);
+
       setIsLoading(false);
     };
 
-    loadTrack();
+    fetchTrackData();
 
     return () => {
       isMounted = false;
     };
-  }, [authRefreshKey, trackId]);
+    // FIX: syncCurrentTrack intentionally omitted — called via ref above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authRefreshKey, setQueueTrackIds, trackId]);
+
+  // FIX: removed the second useEffect that called syncCurrentTrack whenever
+  // `track` or `isActiveRouteTrack` changed. That created a state → render →
+  // context change → re-render → effect loop. The single call at the end of
+  // fetchTrackData above is sufficient.
 
   const handleTokenSubmit = (event) => {
     event.preventDefault();
@@ -306,6 +501,7 @@ function TrackPage({ view = "overview" }) {
     setStreamInfo(null);
     setComments([]);
     setCommentTotal(0);
+    setCommentsPagination(null);
     setRelatedTracks([]);
     setPlaylists([]);
     setFanLeaderboard([]);
@@ -316,52 +512,27 @@ function TrackPage({ view = "overview" }) {
     );
   };
 
-  const submitPlayEvent = async () => {
-    const playedMs = Math.round(
-      (audioRef.current?.currentTime ?? currentTime) * 1000,
-    );
-
-    if (!track || playedMs < 5000 || sessionReportedRef.current) {
-      return;
-    }
-
-    sessionReportedRef.current = true;
-
-    try {
-      await registerPlay(track.id, { duration_played_ms: playedMs });
-      setTrack((currentTrack) =>
-        currentTrack
-          ? {
-              ...currentTrack,
-              playCount: currentTrack.playCount + 1,
-            }
-          : currentTrack,
-      );
-    } catch (registerError) {
-      sessionReportedRef.current = false;
-      console.error(registerError);
-    }
-  };
-
   const handleSeek = (nextValue) => {
-    if (!audioRef.current) return;
-
     if (playbackState === "Blocked") {
       setPlayerMessage("Playback is blocked for this account or region.");
       return;
     }
 
-    const targetTime =
-      playbackState === "Preview" && previewDurationSeconds
-        ? Math.min(nextValue, previewDurationSeconds)
-        : nextValue;
+    if (isActiveRouteTrack) {
+      seekTo(nextValue);
+      return;
+    }
 
-    audioRef.current.currentTime = targetTime;
-    setCurrentTime(targetTime);
+    loadTrack(track, {
+      autoplay: false,
+      playbackContext: "track_page",
+      queueIds: routeQueueTrackIds,
+      startTime: nextValue,
+    });
   };
 
   const handleTogglePlay = async () => {
-    if (!audioRef.current || !track) return;
+    if (!track) return;
 
     if (playbackState === "Blocked") {
       setPlayerMessage(
@@ -370,97 +541,52 @@ function TrackPage({ view = "overview" }) {
       return;
     }
 
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      await submitPlayEvent();
+    if (isActiveRouteTrack) {
+      await togglePlay();
       return;
     }
 
-    if (
-      playbackState === "Preview" &&
-      previewDurationSeconds &&
-      currentTime >= previewDurationSeconds
-    ) {
-      audioRef.current.currentTime = 0;
-      setCurrentTime(0);
-    }
-
-    try {
-      await audioRef.current.play();
-      setIsPlaying(true);
-      setPlayerMessage(
-        playbackState === "Preview"
-          ? `Preview access active for ${previewDurationSeconds} seconds.`
-          : "",
-      );
-    } catch (playError) {
-      setPlayerMessage("Audio playback could not start.");
-      console.error(playError);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-
-    const nextTime = audioRef.current.currentTime;
-
-    if (
-      playbackState === "Preview" &&
-      previewDurationSeconds &&
-      nextTime >= previewDurationSeconds
-    ) {
-      audioRef.current.currentTime = previewDurationSeconds;
-      audioRef.current.pause();
-      setCurrentTime(previewDurationSeconds);
-      setIsPlaying(false);
-      setPlayerMessage(
-        `Preview ended at ${Math.floor(previewDurationSeconds)} seconds.`,
-      );
-      return;
-    }
-
-    setCurrentTime(nextTime);
-  };
-
-  const handleLoadedMetadata = () => {
-    if (!audioRef.current) return;
-
-    if (!Number.isNaN(audioRef.current.duration)) {
-      setDuration(Math.floor(audioRef.current.duration));
-    }
-  };
-
-  const handlePause = async () => {
-    setIsPlaying(false);
-    await submitPlayEvent();
-  };
-
-  const handleEnded = async () => {
-    setIsPlaying(false);
-    await submitPlayEvent();
+    await loadTrack(track, {
+      autoplay: true,
+      playbackContext: "track_page",
+      queueIds: routeQueueTrackIds,
+    });
   };
 
   const handleLikeToggle = async () => {
     if (!track) return;
 
+    const previousViewerHasLiked = Boolean(track.viewerHasLiked);
     const shouldLike = !track.viewerHasLiked;
-
-    setTrack((currentTrack) => ({
-      ...currentTrack,
+    const optimisticTrack = {
+      ...track,
       viewerHasLiked: shouldLike,
-      likeCount: Math.max(currentTrack.likeCount + (shouldLike ? 1 : -1), 0),
-    }));
+      likeCount: Math.max(track.likeCount + (shouldLike ? 1 : -1), 0),
+    };
+
+    setTrack(optimisticTrack);
+    syncCurrentTrackRef.current(optimisticTrack);
+    broadcastTrackSnapshot(optimisticTrack, {
+      viewerHasLiked: shouldLike,
+      previousViewerHasLiked,
+    });
 
     try {
       await toggleLike(track.id, shouldLike);
       setLikers(await getLikers(track.id));
     } catch (toggleError) {
-      setTrack((currentTrack) => ({
-        ...currentTrack,
-        viewerHasLiked: !shouldLike,
-        likeCount: Math.max(currentTrack.likeCount + (shouldLike ? -1 : 1), 0),
-      }));
+      const rollbackTrack = {
+        ...track,
+        viewerHasLiked: previousViewerHasLiked,
+        likeCount: track.likeCount,
+      };
+
+      setTrack(rollbackTrack);
+      syncCurrentTrackRef.current(rollbackTrack);
+      broadcastTrackSnapshot(rollbackTrack, {
+        viewerHasLiked: previousViewerHasLiked,
+        previousViewerHasLiked: shouldLike,
+      });
       console.error(toggleError);
     }
   };
@@ -468,29 +594,37 @@ function TrackPage({ view = "overview" }) {
   const handleRepostToggle = async () => {
     if (!track) return;
 
+    const previousViewerHasReposted = Boolean(track.viewerHasReposted);
     const shouldRepost = !track.viewerHasReposted;
-
-    setTrack((currentTrack) => ({
-      ...currentTrack,
+    const optimisticTrack = {
+      ...track,
       viewerHasReposted: shouldRepost,
-      repostCount: Math.max(
-        currentTrack.repostCount + (shouldRepost ? 1 : -1),
-        0,
-      ),
-    }));
+      repostCount: Math.max(track.repostCount + (shouldRepost ? 1 : -1), 0),
+    };
+
+    setTrack(optimisticTrack);
+    syncCurrentTrackRef.current(optimisticTrack);
+    broadcastTrackSnapshot(optimisticTrack, {
+      viewerHasReposted: shouldRepost,
+      previousViewerHasReposted,
+    });
 
     try {
       await toggleRepost(track.id, shouldRepost);
       setReposters(await getReposters(track.id));
     } catch (toggleError) {
-      setTrack((currentTrack) => ({
-        ...currentTrack,
-        viewerHasReposted: !shouldRepost,
-        repostCount: Math.max(
-          currentTrack.repostCount + (shouldRepost ? -1 : 1),
-          0,
-        ),
-      }));
+      const rollbackTrack = {
+        ...track,
+        viewerHasReposted: previousViewerHasReposted,
+        repostCount: track.repostCount,
+      };
+
+      setTrack(rollbackTrack);
+      syncCurrentTrackRef.current(rollbackTrack);
+      broadcastTrackSnapshot(rollbackTrack, {
+        viewerHasReposted: previousViewerHasReposted,
+        previousViewerHasReposted: shouldRepost,
+      });
       console.error(toggleError);
     }
   };
@@ -498,28 +632,204 @@ function TrackPage({ view = "overview" }) {
   const handleAddComment = async (payload) => {
     if (!track) return;
 
-    const comment = await createComment(track.id, payload);
-    setComments((currentComments) =>
-      sortCommentsByTimeline([...currentComments, comment]),
+    await createComment(track.id, payload);
+    const refreshedCommentsPayload = await getComments(track.id, {
+      page: 1,
+      limit: COMMENTS_PAGE_LIMIT,
+    });
+    const nextTrack = {
+      ...track,
+      commentCount: (track.commentCount ?? 0) + 1,
+    };
+
+    setComments(
+      sortCommentsByTimeline(refreshedCommentsPayload.comments ?? []),
     );
-    setCommentTotal((currentTotal) => currentTotal + 1);
-    setTrack((currentTrack) => ({
-      ...currentTrack,
-      commentCount: currentTrack.commentCount + 1,
-    }));
+    setCommentTotal(
+      refreshedCommentsPayload.totalCount ?? (commentTotal ?? 0) + 1,
+    );
+    setTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
+    broadcastTrackSnapshot(nextTrack);
+    setCommentsPagination(refreshedCommentsPayload.pagination ?? null);
   };
 
-  const handleLoadReplies = async (commentId) => {
-    const response = await getCommentReplies(commentId);
-    return response.replies;
-  };
+  const handleAddReply = async (parentCommentId, payload) => {
+    if (!track) return null;
 
-  const handleDeleteComment = async (commentId) => {
-    await deleteComment(commentId);
+    const parentComment = comments.find(
+      (comment) => comment.id === parentCommentId,
+    );
+    const replyPayload = {
+      ...payload,
+      parentCommentId,
+      timestamp_ms:
+        typeof payload.timestamp_ms === "number"
+          ? payload.timestamp_ms
+          : (parentComment?.timestamp_ms ?? 0),
+    };
+
+    await createComment(track.id, replyPayload);
+    const refreshedRepliesPayload = await getCommentReplies(parentCommentId, {
+      page: 1,
+      limit: REPLIES_PAGE_LIMIT,
+    });
+    const nextTrack = {
+      ...track,
+      commentCount: (track.commentCount ?? 0) + 1,
+    };
+
     setComments((currentComments) =>
       currentComments.map((comment) =>
-        comment.id === commentId ? markCommentAsDeleted(comment) : comment,
+        comment.id === parentCommentId
+          ? {
+              ...comment,
+              repliesCount: (comment.repliesCount ?? 0) + 1,
+            }
+          : comment,
       ),
+    );
+    setCommentTotal((currentTotal) => currentTotal + 1);
+    setTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
+    broadcastTrackSnapshot(nextTrack);
+    setCommentsPagination((currentPagination) =>
+      currentPagination
+        ? {
+            ...currentPagination,
+            total: (currentPagination.total ?? 0) + 1,
+            pages: Math.max(
+              currentPagination.pages ?? 1,
+              Math.ceil(
+                ((currentPagination.total ?? 0) + 1) /
+                  Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1),
+              ),
+            ),
+          }
+        : currentPagination,
+    );
+
+    return (
+      findLatestMatchingComment(refreshedRepliesPayload.replies, {
+        text: replyPayload.text,
+        parentCommentId,
+        timestamp_ms: replyPayload.timestamp_ms,
+      }) ??
+      refreshedRepliesPayload.replies?.[
+        refreshedRepliesPayload.replies.length - 1
+      ] ??
+      null
+    );
+  };
+
+  const handleLoadReplies = async (commentId, options = {}) => {
+    return getCommentReplies(commentId, {
+      page: options.page ?? 1,
+      limit: options.limit ?? REPLIES_PAGE_LIMIT,
+    });
+  };
+
+  const handleUpdateComment = async (
+    commentId,
+    text,
+    { parentCommentId = null } = {},
+  ) => {
+    const updatedComment = await updateComment(commentId, text);
+
+    if (!parentCommentId) {
+      setComments((currentComments) =>
+        currentComments.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                ...updatedComment,
+              }
+            : comment,
+        ),
+      );
+    }
+
+    return updatedComment;
+  };
+
+  const handleLoadMoreComments = async () => {
+    if (!commentsPagination || isLoadingMoreComments || !track) return;
+
+    const currentPage = commentsPagination.page ?? 1;
+    const totalPages = commentsPagination.pages ?? 1;
+    if (currentPage >= totalPages) return;
+
+    setIsLoadingMoreComments(true);
+
+    try {
+      const nextPayload = await getComments(track.id, {
+        page: currentPage + 1,
+        limit: commentsPagination.limit ?? COMMENTS_PAGE_LIMIT,
+      });
+
+      setComments((currentComments) =>
+        sortCommentsByTimeline(
+          mergeById([...currentComments, ...(nextPayload.comments ?? [])]),
+        ),
+      );
+      setCommentTotal(
+        (currentTotal) =>
+          nextPayload.totalCount ?? commentsPagination.total ?? currentTotal,
+      );
+      setCommentsPagination(nextPayload.pagination ?? commentsPagination);
+    } catch (loadMoreError) {
+      setPlayerMessage(
+        loadMoreError?.message || "Could not load more comments.",
+      );
+    } finally {
+      setIsLoadingMoreComments(false);
+    }
+  };
+
+  const handleDeleteComment = async (
+    commentId,
+    { parentCommentId = null } = {},
+  ) => {
+    await deleteComment(commentId);
+    const nextTrack = {
+      ...track,
+      commentCount: Math.max((track?.commentCount ?? 0) - 1, 0),
+    };
+
+    setComments((currentComments) =>
+      currentComments.map((comment) => {
+        if (comment.id === commentId) {
+          return markCommentAsDeleted(comment);
+        }
+
+        if (parentCommentId && comment.id === parentCommentId) {
+          return {
+            ...comment,
+            repliesCount: Math.max((comment.repliesCount ?? 0) - 1, 0),
+          };
+        }
+
+        return comment;
+      }),
+    );
+    setCommentTotal((currentTotal) => Math.max(currentTotal - 1, 0));
+    setTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
+    broadcastTrackSnapshot(nextTrack);
+    setCommentsPagination((currentPagination) =>
+      currentPagination
+        ? {
+            ...currentPagination,
+            total: Math.max((currentPagination.total ?? 0) - 1, 0),
+            pages: Math.max(
+              1,
+              Math.ceil(
+                Math.max((currentPagination.total ?? 0) - 1, 0) /
+                  Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1),
+              ),
+            ),
+          }
+        : currentPagination,
     );
     setPlayerMessage("Comment deleted successfully.");
   };
@@ -669,37 +979,32 @@ const handleShareToMessage = async () => {
     }
   };
 
-  const handlePreviousTrack = async () => {
-    if (!mockTrackOrder.length) return;
-
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
-
-    const safeIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0;
-    const previousIndex =
-      (safeIndex - 1 + mockTrackOrder.length) % mockTrackOrder.length;
-    navigate(buildTrackPath(mockTrackOrder[previousIndex], view));
-  };
-
-  const handleNextTrack = async () => {
-    if (!mockTrackOrder.length) return;
-
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
-
-    const safeIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0;
-    const nextIndex = (safeIndex + 1) % mockTrackOrder.length;
-    navigate(buildTrackPath(mockTrackOrder[nextIndex], view));
-  };
-
   if (isLoading) {
     return (
       <div className="app-shell">
         <LoadingState label="Loading track experience" />
+      </div>
+    );
+  }
+
+  if (isTrackIdMissing) {
+    return (
+      <div className="app-shell">
+        <main className="page">
+          <section className="auth-token-panel">
+            <div className="auth-token-copy">
+              <span className="tag">Track configuration</span>
+              <h1>Set a real backend track id</h1>
+              <p>
+                The app is now pointed to <code>{configuredApiBaseUrl}</code>,
+                but no live track id is configured yet. Add{" "}
+                <code>VITE_TRACK_ID</code> in <code>.env</code> or open a route
+                like
+                <code> /tracks/&lt;your-track-id&gt;</code>.
+              </p>
+            </div>
+          </section>
+        </main>
       </div>
     );
   }
@@ -773,7 +1078,9 @@ const handleShareToMessage = async () => {
               commentCount={commentTotal}
               currentTime={currentTime}
               isDownloading={isDownloading}
-              message={playerMessage}
+              message={feedbackMessage}
+              playbackState={playbackState}
+              previewDurationSeconds={previewDurationSeconds}
               onAddComment={handleAddComment}
               onDownload={handleDownload}
               onLikeToggle={handleLikeToggle}
@@ -798,6 +1105,15 @@ const handleShareToMessage = async () => {
                 onDeleteComment={handleDeleteComment}
                 onJumpToTime={handleSeek}
                 onLoadReplies={handleLoadReplies}
+                onReplySubmit={handleAddReply}
+                onUpdateComment={handleUpdateComment}
+                onLoadMoreComments={handleLoadMoreComments}
+                hasMoreComments={
+                  view === "comments" &&
+                  (commentsPagination?.page ?? 1) <
+                    (commentsPagination?.pages ?? 1)
+                }
+                isLoadingMoreComments={isLoadingMoreComments}
                 onMessage={setPlayerMessage}
                 mode={view === "comments" ? "page" : "overview"}
               />
@@ -818,29 +1134,6 @@ const handleShareToMessage = async () => {
           />
         </div>
       </main>
-
-      <PlayerDock
-        track={track}
-        isPlaying={isPlaying}
-        currentTime={currentTime}
-        duration={duration}
-        volume={volume}
-        onTogglePlay={handleTogglePlay}
-        onSeek={handleSeek}
-        onVolume={setVolume}
-        playbackState={playbackState}
-        onPreviousTrack={handlePreviousTrack}
-        onNextTrack={handleNextTrack}
-      />
-
-      <audio
-        ref={audioRef}
-        src={streamInfo?.url ?? track.audioUrl}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onPause={handlePause}
-        onEnded={handleEnded}
-      />
     </div>
   );
 }

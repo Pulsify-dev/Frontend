@@ -1,37 +1,43 @@
-import { Link } from 'react-router-dom'
+import { Link } from "react-router-dom";
+
+const getInitialDataUri = (name) => {
+  const letter = (name ?? "?")[0].toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="%23ff5500"/><text x="12" y="17" text-anchor="middle" font-size="11" font-weight="700" font-family="sans-serif" fill="%23fff">${letter}</text></svg>`;
+  return `data:image/svg+xml,${svg}`;
+};
 
 const formatRelativeDate = (value) => {
-  const then = new Date(value)
-  const now = new Date()
-  const diffMs = then.getTime() - now.getTime()
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+  const then = new Date(value);
+  const now = new Date();
+  const diffMs = then.getTime() - now.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
   if (Math.abs(diffDays) < 30) {
-    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+    return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
       diffDays,
-      'day',
-    )
+      "day",
+    );
   }
 
-  const diffMonths = Math.round(diffDays / 30)
+  const diffMonths = Math.round(diffDays / 30);
   if (Math.abs(diffMonths) < 12) {
-    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+    return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
       diffMonths,
-      'month',
-    )
+      "month",
+    );
   }
 
-  return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
     Math.round(diffDays / 365),
-    'year',
-  )
-}
+    "year",
+  );
+};
 
 const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
 
 function TrackHeader({
   track,
@@ -44,21 +50,21 @@ function TrackHeader({
 }) {
   const waveform = track.waveform?.length
     ? track.waveform
-    : Array.from({ length: 140 }, (_, index) => 0.22 + ((index % 7) + 1) / 12)
+    : Array.from({ length: 140 }, (_, index) => 0.22 + ((index % 7) + 1) / 12);
 
   const pinnedComments = comments
-    .filter((comment) => typeof comment.timestamp_ms === 'number')
-    .slice(0, 16)
+    .filter((comment) => typeof comment.timestamp_ms === "number")
+    .slice(0, 16);
 
   return (
     <section className="track-hero">
       <div className="track-hero-main">
         <div className="track-hero-head">
           <button
-            className={`hero-play ${isPlaying ? 'is-playing' : ''}`}
+            className={`hero-play ${isPlaying ? "is-playing" : ""}`}
             type="button"
             onClick={onTogglePlay}
-            aria-label={isPlaying ? 'Pause track' : 'Play track'}
+            aria-label={isPlaying ? "Pause track" : "Play track"}
           >
             <span />
           </button>
@@ -71,7 +77,9 @@ function TrackHeader({
             </Link>
           </div>
 
-          <span className="track-hero-age">{formatRelativeDate(track.postedAt)}</span>
+          <span className="track-hero-age">
+            {formatRelativeDate(track.postedAt)}
+          </span>
         </div>
 
         <div className="track-waveform-card">
@@ -79,19 +87,19 @@ function TrackHeader({
             {waveform.map((point, index) => {
               const barTime = duration
                 ? (index / Math.max(waveform.length - 1, 1)) * duration
-                : 0
-              const isActive = barTime <= currentTime
+                : 0;
+              const isActive = barTime <= currentTime;
 
               return (
                 <button
                   key={`${track.id}-${index}`}
-                  className={`track-wave ${isActive ? 'is-active' : ''}`}
+                  className={`track-wave ${isActive ? "is-active" : ""}`}
                   type="button"
-                  style={{ '--wave-height': `${Math.max(point * 100, 12)}%` }}
+                  style={{ "--wave-height": `${Math.max(point * 100, 12)}%` }}
                   onClick={() => onSeek(barTime)}
                   aria-label={`Seek to ${formatTime(barTime)}`}
                 />
-              )
+              );
             })}
 
             {pinnedComments.map((comment, index) => (
@@ -101,13 +109,21 @@ function TrackHeader({
                 type="button"
                 style={{
                   left: `${(comment.timestamp_ms / 1000 / Math.max(duration, 1)) * 100}%`,
-                  '--comment-offset': `${(index % 4) * 3}px`,
+                  "--comment-offset": `${(index % 4) * 3}px`,
                 }}
                 onClick={() => onSeek(comment.timestamp_ms / 1000)}
                 aria-label={`Jump to comment from ${comment.user.name}`}
                 title={`${comment.user.name}: ${comment.text}`}
               >
-                <img src={comment.user.avatar} alt={comment.user.name} />
+                <img
+                  src={
+                    comment.user.avatar || getInitialDataUri(comment.user.name)
+                  }
+                  alt={comment.user.name}
+                  onError={(e) => {
+                    e.currentTarget.src = getInitialDataUri(comment.user.name);
+                  }}
+                />
               </button>
             ))}
 
@@ -120,7 +136,7 @@ function TrackHeader({
         <img src={track.cover} alt={track.title} />
       </div>
     </section>
-  )
+  );
 }
 
-export default TrackHeader
+export default TrackHeader;

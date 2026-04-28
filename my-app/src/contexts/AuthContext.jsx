@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { authService } from "@/services/authService";
+import { clearAuthToken, saveAuthToken } from "@/services/api";
 
 /**
  * Auth Context
@@ -21,6 +22,15 @@ const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000;
 // Refresh 1 minute before expiry
 const REFRESH_BUFFER = 60 * 1000;
 
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 < Date.now() + REFRESH_BUFFER;
+  } catch {
+    return true;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -36,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     setAccessToken(null);
     setRefreshToken(null);
     localStorage.removeItem(STORAGE_KEYS.USER);
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    clearAuthToken();
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     
     // Clear any pending refresh timeout
@@ -91,9 +101,22 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
         setAccessToken(storedAccessToken);
         setRefreshToken(storedRefreshToken);
-        
-        // Schedule token refresh
-        scheduleTokenRefresh(storedRefreshToken);
+
+        if (isTokenExpired(storedAccessToken)) {
+          // Token already expired — refresh immediately
+          authService.refreshToken(storedRefreshToken)
+            .then((response) => {
+              setAccessToken(response.access_token);
+              setRefreshToken(response.refresh_token);
+              saveAuthToken(response.access_token);
+              localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.access_token);
+              localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refresh_token);
+              scheduleTokenRefresh(response.refresh_token);
+            })
+            .catch(() => clearAuth());
+        } else {
+          scheduleTokenRefresh(storedRefreshToken);
+        }
       } catch {
         // Invalid data, clear storage
         clearAuth();
@@ -128,7 +151,7 @@ export const AuthProvider = ({ children }) => {
       displayName: userData.display_name || userData.username,
       tier: userData.tier || 'Free',
       avatarUrl: userData.avatar_url || null,
-      role: userData.tier === 'Pro' ? 'artist' : 'listener',
+      role: userData.email?.toLowerCase().includes('admin') ? 'Admin' : (userData.role || (userData.tier === 'Pro' ? 'artist' : 'listener')),
     };
 
     setUser(normalizedUser);
@@ -136,7 +159,7 @@ export const AuthProvider = ({ children }) => {
     setRefreshToken(newRefreshToken);
     
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(normalizedUser));
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+    saveAuthToken(newAccessToken);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
     
     // Schedule token refresh
