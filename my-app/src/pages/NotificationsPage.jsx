@@ -116,37 +116,6 @@ const NotificationsPage = () => {
 
         {/* Right Column: Sidebar */}
         <div className="notif-sidebar">
-          <div className="sidebar-section">
-            <div className="sidebar-section-header">
-              <h3>RECENT FOLLOWERS</h3>
-              <Link to="/followers" className="sidebar-view-all">View all</Link>
-            </div>
-            
-            <div className="sidebar-followers-list">
-              {/* Hardcoded mock followers based on the screenshot */}
-              <div className="sidebar-follower-item">
-                <img src={`https://ui-avatars.com/api/?name=MD&background=random`} alt="Follower" className="sidebar-follower-img" />
-                <div className="sidebar-follower-info">
-                  <div className="sidebar-follower-name">Mudollet Designer</div>
-                  <div className="sidebar-follower-stats">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> 5
-                  </div>
-                </div>
-                <button className="sidebar-follow-back">Follow back</button>
-              </div>
-
-              <div className="sidebar-follower-item">
-                <img src={`https://ui-avatars.com/api/?name=RB&background=random`} alt="Follower" className="sidebar-follower-img" />
-                <div className="sidebar-follower-info">
-                  <div className="sidebar-follower-name">Rap Bangers Repost</div>
-                  <div className="sidebar-follower-stats">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> 7,775
-                  </div>
-                </div>
-                <button className="sidebar-follow-back">Follow back</button>
-              </div>
-            </div>
-          </div>
 
           <div className="sidebar-footer">
             <p>

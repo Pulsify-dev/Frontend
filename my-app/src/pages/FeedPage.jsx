@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../hooks/usePlayer';
 import serviceLocator from '../utils/serviceLocator';
+import { getListeningHistory } from '../services/api';
 import ArtistToolsWidget from '../components/common/ArtistToolsWidget';
 import ReportModal from '../components/common/ReportModal';
 import { PulsifyPlaylistCard } from '../components/playlists/PulsifyPlaylistCard';
 import { PulsifyAlbumCard } from '../components/albums/PulsifyAlbumCard';
 import { PulsifyTrackCard } from '../components/discovery/PulsifyTrackCard';
 import './FeedPage.css';
+import './DiscoveryFeedPage.css';
 
 // Format relative time
 const timeAgo = (dateStr) => {
@@ -40,6 +42,7 @@ const FeedPage = () => {
   const [showReposts, setShowReposts] = useState(true);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [followedUsers, setFollowedUsers] = useState(new Set());
+  const [history, setHistory] = useState([]);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportEntity, setReportEntity] = useState({ type: '', id: '' });
 
@@ -47,21 +50,25 @@ const FeedPage = () => {
     let mounted = true;
     const loadFeed = async () => {
       try {
-        const items = await serviceLocator.discovery.fetchFeed();
-        if (mounted) { setFeedItems(items); setLoading(false); }
-
-        // Always load suggested users for the empty state or sidebar
-        const users = await serviceLocator.discovery.getSuggestedUsers(9);
-        if (mounted) setSuggestedUsers(users);
+        const [items, users, historyData] = await Promise.all([
+          serviceLocator.discovery.fetchFeed().catch(() => []),
+          serviceLocator.discovery.getSuggestedUsers(9).catch(() => []),
+          getListeningHistory().catch(() => ({ history: [] })),
+        ]);
+        if (mounted) {
+          setFeedItems(items || []);
+          setSuggestedUsers(users || []);
+          setHistory(historyData?.history || historyData || []);
+        }
       } catch (error) {
         console.error("fetchFeed error:", error);
+      } finally {
         if (mounted) {
-          setLoading(false);
-          // Try loading suggested users even if feed fails
           try {
-            const users = await serviceLocator.discovery.getSuggestedUsers(9);
-            if (mounted) setSuggestedUsers(users);
-          } catch (e) { /* ignore */ }
+            const cached = JSON.parse(localStorage.getItem('pulsify_followed_cache') || '[]');
+            setFollowedUsers(new Set(cached));
+          } catch (e) {}
+          setLoading(false);
         }
       }
     };
@@ -96,10 +103,18 @@ const FeedPage = () => {
   const handleFollow = async (userId) => {
     try {
       await serviceLocator.discovery.followUser(userId);
-      setFollowedUsers(prev => new Set(prev).add(userId));
+      setFollowedUsers(prev => {
+        const next = new Set(prev).add(userId);
+        localStorage.setItem('pulsify_followed_cache', JSON.stringify([...next]));
+        return next;
+      });
     } catch (err) {
       if (err?.response?.status === 409) {
-        setFollowedUsers(prev => new Set(prev).add(userId));
+        setFollowedUsers(prev => {
+          const next = new Set(prev).add(userId);
+          localStorage.setItem('pulsify_followed_cache', JSON.stringify([...next]));
+          return next;
+        });
       } else {
         console.error("Follow failed:", err);
       }
@@ -113,11 +128,19 @@ const FeedPage = () => {
       setFollowedUsers(prev => {
         const next = new Set(prev);
         next.delete(userId);
+        localStorage.setItem('pulsify_followed_cache', JSON.stringify([...next]));
         return next;
       });
     } catch (err) {
       console.error("Unfollow failed:", err);
     }
+  };
+
+  // Navigate to track from history
+  const handleGoToHistoryTrack = (track) => {
+    const t = track.track_id || track;
+    const id = t._id || t.trackId || t.id;
+    if (id) navigate(`/tracks/${id}`);
   };
 
   const renderFeedItem = (item, index) => {
@@ -253,48 +276,93 @@ const FeedPage = () => {
           )}
         </div>
 
-        {/* Right Sidebar */}
-        <aside className="sc-feed-sidebar">
+        {/* Right Sidebar — cloned from Discovery page */}
+        <aside className="sc-discover-sidebar">
           <ArtistToolsWidget />
 
-          <div className="sc-sidebar-section sc-likes-section">
-            <div className="sc-sidebar-heading">
-              <span>5 LIKES</span>
-              <a href="#likes" className="sc-view-all">View all</a>
+          {/* Artists You Should Follow */}
+          <div className="sc-sidebar-widget">
+            <div className="sc-widget-header">
+              <h3>ARTISTS YOU SHOULD FOLLOW</h3>
+              <a href="#" className="sc-widget-header-link">Refresh list</a>
             </div>
-            <div className="sc-like-item">
-              <div className="sc-like-art"></div>
-              <div className="sc-like-info">
-                <span className="sc-like-artist">Someone'</span>
-                <span className="sc-like-title">أديني رجعتلك - عمرو دياب 2001</span>
-                <span className="sc-like-stats">▶ 44.7M ❤️ 1.01M</span>
-              </div>
-            </div>
-            <div className="sc-like-item">
-              <div className="sc-like-art"></div>
-              <div className="sc-like-info">
-                <span className="sc-like-artist">Roqaiaion2</span>
-                <span className="sc-like-title">عمرو دياب - لو كان يرضيك</span>
-                <span className="sc-like-stats">▶ 36.5M ❤️ 892K</span>
-              </div>
+            <div className="sc-follow-list">
+              {suggestedUsers.map((user) => {
+                const userId = user._id || user.id;
+                const isFollowed = followedUsers.has(userId);
+                return (
+                  <div className="sc-follow-row" key={userId}>
+                    <img
+                      className="sc-follow-avatar"
+                      src={user.avatar_url || 'https://via.placeholder.com/40'}
+                      alt={user.display_name || user.username}
+                      onClick={() => navigate(`/profile/${userId}`)}
+                    />
+                    <div className="sc-follow-info" onClick={() => navigate(`/profile/${userId}`)}>
+                      <div className="sc-follow-name">
+                        {user.display_name || user.username}
+                        {user.is_verified && <span className="sc-verified-dot">●</span>}
+                      </div>
+                      <div className="sc-follow-stats">
+                        👤 {(user.followers_count || 0).toLocaleString()} · 🎵 {user.track_count || 0}
+                      </div>
+                    </div>
+                    <button
+                      className={`sc-follow-btn ${isFollowed ? 'sc-follow-btn-following' : ''}`}
+                      onClick={() => isFollowed ? handleUnfollow(userId) : handleFollow(userId)}
+                    >
+                      {isFollowed ? 'Following' : 'Follow'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="sc-sidebar-section sc-mobile-section">
-            <div className="sc-sidebar-heading">
-              <span>GO MOBILE</span>
+          {/* Listening History */}
+          <div className="sc-sidebar-widget">
+            <div className="sc-widget-header">
+              <h3>LISTENING HISTORY</h3>
+              <a href="#" className="sc-widget-header-link">View all</a>
             </div>
-            <div className="sc-mobile-badges">
-              <button className="sc-app-store-btn">App Store</button>
-              <button className="sc-google-play-btn">Google Play</button>
+            <div className="sc-list-items">
+              {history.length > 0 ? (
+                history.slice(0, 5).map((hist, i) => {
+                  const track = hist.track_id || hist;
+                  return (
+                    <div
+                      className="sc-track-mini"
+                      key={hist._id || i}
+                      onClick={() => handleGoToHistoryTrack(track)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img
+                        src={track.artwork_url || track.coverArt || 'https://via.placeholder.com/40'}
+                        alt={track.title}
+                        className="sc-track-mini-art"
+                      />
+                      <div className="sc-track-info">
+                        <div className="sc-track-uploader">
+                          {track.artist_id?.username || track.artist?.name || 'Unknown'}
+                        </div>
+                        <div className="sc-track-title">{track.title}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ color: '#888', padding: '10px 0', fontSize: '13px' }}>
+                  No listening history available.
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="sc-sidebar-footer">
-            <div className="sc-footer-links-row">
-              <a href="#legal">Legal</a> <span>·</span> <a href="#privacy">Privacy</a> <span>·</span> <a href="#cookie">Cookie Policy</a> <span>·</span> <a href="#cookie-manager">Cookie Manager</a> <span>·</span> <a href="#imprint">Imprint</a> <span>·</span> <a href="#artist-resources">Artist Resources</a> <span>·</span> <a href="#newsroom">Newsroom</a> <span>·</span> <a href="#charts">Charts</a> <span>·</span> <a href="#transparency">Transparency Reports</a>
+          <div className="sc-sidebar-footer-links">
+            <a href="#">Legal</a> · <a href="#">Privacy</a> · <a href="#">Cookie Policy/Imprint</a> · <a href="#">Charts</a> · <a href="#">Newsroom</a>
+            <div className="sc-lang" style={{ marginTop: '4px' }}>
+              Language: <a href="#">English (US)</a>
             </div>
-            <div className="sc-footer-lang">Language: <a href="#lang">English (US)</a></div>
           </div>
         </aside>
       </div>
