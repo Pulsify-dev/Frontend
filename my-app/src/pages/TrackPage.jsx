@@ -570,13 +570,13 @@ function TrackPage({ view = "overview" }) {
     await copyShareLink(window.location.href, "Track link copied.");
   };
 
-  const handleShareToMessage = async () => {
-    if (!track || typeof window === "undefined") return;
+const handleShareToMessage = async () => {
+  if (!track || typeof window === "undefined") return;
 
-    const recipientId = window.prompt("Enter recipient user ID");
-    if (!recipientId?.trim()) return;
+  const username = window.prompt("Enter username");
+  if (!username?.trim()) return;
 
-    const conversation = await openConversation(recipientId.trim());
+  const conversation = await openConversation(username.trim());
     if (!conversation?.id) {
       setPlayerMessage("Could not open conversation.");
       return;

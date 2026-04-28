@@ -495,19 +495,19 @@ export const MessagingProvider = ({ children }) => {
     }
   }, []);
 
-  const openConversation = useCallback(async (recipientId) => {
-    const normalizedRecipientId = String(recipientId ?? "").trim();
-    if (!normalizedRecipientId) return null;
+const openConversation = useCallback(async (username) => {
+  const normalizedUsername = String(username ?? "").trim();
+  if (!normalizedUsername) return null;
 
-    if (blockedUserIds.has(normalizedRecipientId)) {
-      setSendingError("You blocked this user. Unblock to send messages.");
-      return null;
-    }
+  if (blockedUserIds.has(normalizedUsername)) {
+    setSendingError("You blocked this user. Unblock to send messages.");
+    return null;
+  }
 
-    try {
-      const conversation = await serviceLocator.messaging.startOrGetConversation(
-        normalizedRecipientId,
-      );
+  try {
+    const conversation = await serviceLocator.messaging.startOrGetConversation(
+      normalizedUsername,
+    );
 
       if (conversation.blockStatus && conversation.blockStatus !== "none") {
         setBlockedStateByConversation((prev) => ({

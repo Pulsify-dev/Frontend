@@ -52,15 +52,15 @@ export const getConversations = async (page = 1, limit = 20) => {
   };
 };
 
-export const startOrGetConversation = async (recipientIdentifier) => {
-  const normalized = String(recipientIdentifier ?? "").trim();
+export const startOrGetConversation = async (username) => {
+  const normalized = String(username ?? "").trim();
   
   if (!normalized) {
-    throw new Error("Recipient username or user ID is required.");
+    throw new Error("Username is required.");
   }
 
   const { data } = await apiClient.post("/conversations", {
-    recipient_id: normalized,
+    username: normalized,
   });
 
   const payload = unwrapData(data);

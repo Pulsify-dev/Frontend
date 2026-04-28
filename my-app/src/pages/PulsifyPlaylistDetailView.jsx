@@ -62,11 +62,11 @@ export const PulsifyPlaylistDetailView = () => {
     } catch { alert('Failed to generate embed code.'); }
   };
 
-  const handleShareToMessages = async () => {
-    const recipientId = window.prompt('Enter recipient user ID');
-    if (!recipientId?.trim()) return;
+const handleShareToMessages = async () => {
+  const username = window.prompt('Enter username');
+  if (!username?.trim()) return;
 
-    const conversation = await openConversation(recipientId.trim());
+  const conversation = await openConversation(username.trim());
     if (!conversation?.id) {
       alert('Could not open conversation.');
       return;

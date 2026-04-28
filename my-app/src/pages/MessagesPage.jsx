@@ -27,7 +27,7 @@ const MessagesPage = () => {
   } = useMessaging();
 
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
-  const [recipientIdDraft, setRecipientIdDraft] = useState("");
+  const [recipientUsernameDraft, setRecipientUsernameDraft] = useState("");
   const [draftMessage, setDraftMessage] = useState("");
   const [newMessageError, setNewMessageError] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -88,19 +88,19 @@ const MessagesPage = () => {
   const handleCreateConversation = async (event) => {
     event.preventDefault();
 
-    const normalizedRecipientId = String(recipientIdDraft ?? "").trim();
-    if (!normalizedRecipientId) {
-      setNewMessageError("Recipient ID is required.");
-      return;
-    }
+const normalizedUsername = String(recipientUsernameDraft ?? "").trim();
+  if (!normalizedUsername) {
+    setNewMessageError("Username is required.");
+    return;
+  }
 
     setIsCreatingConversation(true);
     setNewMessageError("");
 
-    const conversation = await openConversation(normalizedRecipientId);
+    const conversation = await openConversation(normalizedUsername);
 
     if (!conversation?.id) {
-      setNewMessageError("Could not create conversation. Check User ID.");
+      setNewMessageError("Could not create conversation. Check username.");
       setIsCreatingConversation(false);
       return;
     }
@@ -116,7 +116,7 @@ const MessagesPage = () => {
 
     setIsCreatingConversation(false);
     setIsNewMessageOpen(false);
-    setRecipientIdDraft("");
+    setRecipientUsernameDraft("");
     setDraftMessage("");
     setActiveConversation(conversation.id);
     navigate(`/messages/${conversation.id}`);
@@ -164,14 +164,14 @@ const MessagesPage = () => {
 
             <form onSubmit={handleCreateConversation}>
               <label className="messages-modal-field-label">To <span>*</span></label>
-              <input
-                className="messages-modal-input"
-                type="text"
-                placeholder="Enter User ID"
-                value={recipientIdDraft}
-                onChange={(event) => setRecipientIdDraft(event.target.value)}
-                disabled={isCreatingConversation}
-              />
+<input
+  className="messages-modal-input"
+  type="text"
+  placeholder="Enter username"
+  value={recipientUsernameDraft}
+  onChange={(event) => setRecipientUsernameDraft(event.target.value)}
+  disabled={isCreatingConversation}
+/>
 
               <label className="messages-modal-field-label">Write your message and add tracks or playlists <span>*</span></label>
               <textarea
