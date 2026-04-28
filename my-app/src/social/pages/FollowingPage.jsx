@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { socialService } from "../services/socialService";
 import SocialHeader from "../components/SocialHeader";
 import UserCard from "../components/UserCard";
@@ -6,7 +7,18 @@ import SuggestedUsers from "../components/SuggestedUsers";
 import BlockModal from "../components/BlockModal";
 import "../pages/SocialPages.css";
 
+function getStoredUserId() {
+  try {
+    const stored = localStorage.getItem("pulsify_user");
+    return stored ? JSON.parse(stored).id : "me";
+  } catch {
+    return "me";
+  }
+}
+
 export default function FollowingPage({ hideNav = false }) {
+  const { userId } = useParams();
+  const targetUserId = userId || getStoredUserId();
   const [users, setUsers] = useState([]);
   const [counts, setCounts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,28 +31,33 @@ export default function FollowingPage({ hideNav = false }) {
   const [blockTarget, setBlockTarget] = useState(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [page]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const stored = localStorage.getItem("pulsify_user");
-      const myId = stored ? JSON.parse(stored).id : "me";
+      setError("");
       const [followingRes, countsRes] = await Promise.all([
-        socialService.getFollowing(myId, page, 24),
-        socialService.getSocialCounts(myId),
+        socialService.getFollowing(targetUserId, page, 24),
+        socialService.getSocialCounts(targetUserId),
       ]);
       setUsers(followingRes.users);
       setPagination(followingRes.pagination);
       setCounts(countsRes);
     } catch (err) {
+      console.error("Failed to load following list:", err);
       setError("Failed to load following list.");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [page, targetUserId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    setPage(1);
+    setFilter("");
+  }, [targetUserId]);
 
   function handleFollowToggle(userId, nowFollowing) {
     if (!nowFollowing) {
@@ -85,7 +102,9 @@ export default function FollowingPage({ hideNav = false }) {
       <div className="sc-social-page__container">
         <div className="sc-social-page__banner">
           <h2 className="sc-social-page__title">
-            Hear what the people you follow have posted:
+            {userId
+              ? "People this profile follows:"
+              : "Hear what the people you follow have posted:"}
           </h2>
         </div>
 
@@ -94,6 +113,7 @@ export default function FollowingPage({ hideNav = false }) {
             counts={counts}
             filterValue={filter}
             onFilterChange={setFilter}
+            userId={userId}
           />
         )}
         {hideNav && (

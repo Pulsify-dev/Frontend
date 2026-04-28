@@ -716,6 +716,13 @@ export default function ProfileCard({
     if (profile?.id) loadCounts();
   }, [profile?.id]);
 
+  function handleFollowToggle(_userId, nowFollowing) {
+    setSocialCounts((prev) => ({
+      ...prev,
+      followersCount: prev.followersCount + (nowFollowing ? 1 : -1),
+    }));
+  }
+
   async function handleBlockConfirm(userId, reason) {
     await socialService.blockUser(userId, reason);
     setIsBlocked(true);
@@ -1349,7 +1356,7 @@ export default function ProfileCard({
             <button
               className="sc-overview-stat"
               type="button"
-              onClick={() => navigate("/followers")}
+              onClick={() => navigate(`/followers/${profile.id}`)}
             >
               <span>Followers</span>
               <strong>{socialCounts.followersCount}</strong>
@@ -1357,7 +1364,7 @@ export default function ProfileCard({
             <button
               className="sc-overview-stat"
               type="button"
-              onClick={() => navigate("/following")}
+              onClick={() => navigate(`/following/${profile.id}`)}
             >
               <span>Following</span>
               <strong>{socialCounts.followingCount}</strong>
@@ -1632,7 +1639,7 @@ export default function ProfileCard({
               >
                 Station
               </button>
-              <FollowButton userId={profile.id} />
+              <FollowButton userId={profile.id} onToggle={handleFollowToggle} />
               <button
                 className="sc-action-btn sc-share-btn"
                 type="button"
@@ -1752,7 +1759,7 @@ export default function ProfileCard({
           <div className="sc-stats">
             <div
               className="sc-stat sc-stat-link"
-              onClick={() => navigate("/followers")}
+              onClick={() => navigate(`/followers/${profile.id}`)}
               style={{ cursor: "pointer" }}
             >
               <span className="sc-stat-label">Followers</span>
@@ -1762,7 +1769,7 @@ export default function ProfileCard({
             </div>
             <div
               className="sc-stat sc-stat-link"
-              onClick={() => navigate("/following")}
+              onClick={() => navigate(`/following/${profile.id}`)}
               style={{ cursor: "pointer" }}
             >
               <span className="sc-stat-label">Following</span>

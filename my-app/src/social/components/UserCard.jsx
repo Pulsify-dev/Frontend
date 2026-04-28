@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import FollowButton from "./FollowButton";
 
 export default function UserCard({ user, onFollowToggle, showFollowBtn = true, onMoreClick }) {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const isSelf = currentUser?.id === user?.id;
 
   function handleCardClick() {
     navigate(`/profile/${user.id}`);
@@ -44,7 +47,7 @@ export default function UserCard({ user, onFollowToggle, showFollowBtn = true, o
         {formatCount(user.followersCount)} followers
       </p>
 
-      {showFollowBtn && (
+      {showFollowBtn && !isSelf && (
         <div className="sc-user-card__actions" onClick={(e) => e.stopPropagation()}>
           <FollowButton
             userId={user.id}

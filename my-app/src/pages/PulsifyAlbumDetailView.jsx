@@ -11,6 +11,26 @@ import '../components/albums/css/PulsifyAlbums.css';
 
 const waveformBars = Array.from({ length: 200 }, () => Math.random() * 0.7 + 0.3);
 
+const getAlbumEntryTrackId = (entry) => {
+  if (!entry) return "";
+  if (typeof entry.track_id === "string") return entry.track_id;
+  return entry.track_id?._id || entry.track_id?.id || entry.id || entry._id || "";
+};
+
+const normalizeAlbumEntryTrack = (entry) => {
+  const trackData =
+    entry?.track_id && typeof entry.track_id === "object"
+      ? entry.track_id
+      : entry;
+  const trackId = getAlbumEntryTrackId(entry);
+
+  return {
+    ...trackData,
+    id: trackData?.id || trackId,
+    _id: trackData?._id || trackId,
+  };
+};
+
 export const PulsifyAlbumDetailView = () => {
   const { albumId } = useParams();
   const [albumDetail, setAlbumDetail] = useState(null);
@@ -257,7 +277,7 @@ export const PulsifyAlbumDetailView = () => {
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                 onClick={() => {
                   if (albumDetail.tracks && albumDetail.tracks.length > 0) {
-                    const firstTrack = albumDetail.tracks[0].track_id || albumDetail.tracks[0];
+                    const firstTrack = normalizeAlbumEntryTrack(albumDetail.tracks[0]);
                     togglePlay(firstTrack);
                   }
                 }}
@@ -265,7 +285,7 @@ export const PulsifyAlbumDetailView = () => {
                 {(() => {
                   const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
                   const isThisAlbumPlaying = isPlaying && currentTrack && albumDetail.tracks?.some(t => {
-                    const tId = t.track_id?._id || t.track_id || t._id || t.id;
+                    const tId = getAlbumEntryTrackId(t);
                     return tId === currentId;
                   });
                   return isThisAlbumPlaying ? (
@@ -299,7 +319,7 @@ export const PulsifyAlbumDetailView = () => {
               {(() => {
                 const currentId = currentTrack?.track_id?._id || currentTrack?.track_id || currentTrack?._id || currentTrack?.id;
                 const isThisAlbumPlaying = isPlaying && currentTrack && albumDetail.tracks?.some(t => {
-                  const tId = t.track_id?._id || t.track_id || t._id || t.id;
+                  const tId = getAlbumEntryTrackId(t);
                   return tId === currentId;
                 });
                 return !isThisAlbumPlaying;
@@ -446,11 +466,11 @@ export const PulsifyAlbumDetailView = () => {
 
             {albumDetail.tracks && albumDetail.tracks.length > 0 ? (
               albumDetail.tracks.map((track, idx) => {
-                const trackData = track.track_id && typeof track.track_id === 'object' ? track.track_id : track;
+                const trackData = normalizeAlbumEntryTrack(track);
                 return (
                   <PulsifyTrackRow
                     key={trackData._id || trackData.id || idx}
-                    track={{ ...trackData, _id: trackData._id || trackData.id }}
+                    track={trackData}
                     index={idx}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}

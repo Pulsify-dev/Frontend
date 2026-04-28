@@ -98,7 +98,14 @@ export const PulsifyTrackRow = ({
 
   if (!track) return null;
 
-  const resolvedTrackId = track.id || track.track_id || track.trackId || "";
+  const resolvedTrackId =
+    track.trackId ||
+    (typeof track.track_id === "object"
+      ? track.track_id?._id || track.track_id?.id
+      : track.track_id) ||
+    track.id ||
+    track._id ||
+    "";
   const resolvedTitle = track.title || track.track_title || "Untitled track";
   const resolvedArtist =
     track.artist_name || track.artist?.name || track.artist || "Unknown Artist";
@@ -212,54 +219,27 @@ export const PulsifyTrackRow = ({
         <div
           style={{
             display: "flex",
-            gap: "4px",
-            marginRight: "12px",
+            gap: "42px",
+            marginLeft: "auto",
             alignItems: "center",
+            paddingLeft: "8px",
           }}
         >
-          <TrackAction title="Share" onClick={handleShareClick}>
+          <TrackAction title={isLiked ? "Unlike" : "Like"} onClick={handleLikeClick}>
             <svg
-              width="12"
-              height="12"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              fill={isLiked ? "#f50" : "currentColor"}
+              stroke="none"
             >
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </TrackAction>
-          <TrackAction title="Copy link">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect x="9" y="9" width="13" height="13" rx="2" />
-              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-            </svg>
-          </TrackAction>
-          <TrackAction title="Like" onClick={handleLikeClick}>
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </TrackAction>
           <TrackAction title="Repost">
             <svg
-              width="12"
-              height="12"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -271,11 +251,31 @@ export const PulsifyTrackRow = ({
               <path d="M21 13v2a4 4 0 01-4 4H3" />
             </svg>
           </TrackAction>
-          <TrackAction title="More">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="19" cy="12" r="1.5" />
-              <circle cx="5" cy="12" r="1.5" />
+          <TrackAction title="Share" onClick={handleShareClick}>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+          </TrackAction>
+          <TrackAction title="Add to Next up">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="3" width="14" height="14" rx="2" ry="2" />
+              <path d="M7 21h14a2 2 0 0 0 2-2V7" />
             </svg>
           </TrackAction>
           <div style={{ position: "relative" }} ref={menuRef}>
@@ -416,32 +416,6 @@ export const PulsifyTrackRow = ({
         </div>
       )}
 
-      {onRemoveTrack && (
-        <button
-          onClick={(event) => {
-            event.stopPropagation();
-            onRemoveTrack(index);
-          }}
-          style={{
-            background: "none",
-            border: "none",
-            color: hovered ? "#666" : "transparent",
-            cursor: "pointer",
-            fontSize: "14px",
-            padding: "0 4px",
-            transition: "color 0.12s",
-          }}
-          onMouseEnter={(event) => {
-            event.currentTarget.style.color = "#f44";
-          }}
-          onMouseLeave={(event) => {
-            event.currentTarget.style.color = "#666";
-          }}
-          title="Remove track from set"
-        >
-          &times;
-        </button>
-      )}
     </div>
   );
 };
@@ -451,27 +425,18 @@ const TrackAction = ({ children, title, onClick }) => (
     title={title}
     onClick={onClick || ((e) => e.stopPropagation())}
     style={{
-      width: "26px",
-      height: "26px",
-      borderRadius: "50%",
-      border: "1px solid #333",
-      backgroundColor: "#1e1e1e",
-      color: "#888",
+      background: "none",
+      border: "none",
+      padding: "4px",
+      color: "#999",
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: 0,
-      transition: "border-color 0.12s, color 0.12s",
+      transition: "color 0.12s",
     }}
-    onMouseEnter={(event) => {
-      event.currentTarget.style.borderColor = "#666";
-      event.currentTarget.style.color = "#fff";
-    }}
-    onMouseLeave={(event) => {
-      event.currentTarget.style.borderColor = "#333";
-      event.currentTarget.style.color = "#888";
-    }}
+    onMouseEnter={(event) => (event.currentTarget.style.color = "#fff")}
+    onMouseLeave={(event) => (event.currentTarget.style.color = "#999")}
   >
     {children}
   </button>

@@ -1,11 +1,23 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { socialService } from "../services/socialService";
 import SocialHeader from "../components/SocialHeader";
 import UserCard from "../components/UserCard";
 import BlockModal from "../components/BlockModal";
 import "../pages/SocialPages.css";
 
+function getStoredUserId() {
+  try {
+    const stored = localStorage.getItem("pulsify_user");
+    return stored ? JSON.parse(stored).id : "me";
+  } catch {
+    return "me";
+  }
+}
+
 export default function FollowersPage() {
+  const { userId } = useParams();
+  const targetUserId = userId || getStoredUserId();
   const [users, setUsers] = useState([]);
   const [counts, setCounts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,28 +30,33 @@ export default function FollowersPage() {
   const [blockTarget, setBlockTarget] = useState(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [page]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const stored = localStorage.getItem("pulsify_user");
-      const myId = stored ? JSON.parse(stored).id : "me";
+      setError("");
       const [followersRes, countsRes] = await Promise.all([
-        socialService.getFollowers(myId, page, 24),
-        socialService.getSocialCounts(myId),
+        socialService.getFollowers(targetUserId, page, 24),
+        socialService.getSocialCounts(targetUserId),
       ]);
       setUsers(followersRes.users);
       setPagination(followersRes.pagination);
       setCounts(countsRes);
     } catch (err) {
+      console.error("Failed to load followers:", err);
       setError("Failed to load followers.");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [page, targetUserId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    setPage(1);
+    setFilter("");
+  }, [targetUserId]);
 
   function handleFollowToggle(userId, nowFollowing) {
     setUsers((prev) =>
@@ -82,13 +99,16 @@ export default function FollowersPage() {
     <div className="sc-social-page">
       <div className="sc-social-page__container">
         <div className="sc-social-page__banner">
-          <h2 className="sc-social-page__title">People who follow you:</h2>
+          <h2 className="sc-social-page__title">
+            {userId ? "People who follow this profile:" : "People who follow you:"}
+          </h2>
         </div>
 
         <SocialHeader
           counts={counts}
           filterValue={filter}
           onFilterChange={setFilter}
+          userId={userId}
         />
 
         <div className="sc-social-page__body">

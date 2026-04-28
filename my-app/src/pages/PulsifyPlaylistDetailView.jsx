@@ -13,6 +13,26 @@ const waveformBars = Array.from(
   () => Math.random() * 0.7 + 0.3,
 );
 
+const getPlaylistEntryTrackId = (entry) => {
+  if (!entry) return "";
+  if (typeof entry.track_id === "string") return entry.track_id;
+  return entry.track_id?._id || entry.track_id?.id || entry.id || entry._id || "";
+};
+
+const normalizePlaylistEntryTrack = (entry) => {
+  const trackData =
+    entry?.track_id && typeof entry.track_id === "object"
+      ? entry.track_id
+      : entry;
+  const trackId = getPlaylistEntryTrackId(entry);
+
+  return {
+    ...trackData,
+    id: trackData?.id || trackId,
+    _id: trackData?._id || trackId,
+  };
+};
+
 export const PulsifyPlaylistDetailView = () => {
   const { playlistId } = useParams();
   const [playlistDetail, setPlaylistDetail] = useState(null);
@@ -417,9 +437,9 @@ export const PulsifyPlaylistDetailView = () => {
                     playlistDetail.tracks &&
                     playlistDetail.tracks.length > 0
                   ) {
-                    const firstTrack =
-                      playlistDetail.tracks[0].track_id ||
-                      playlistDetail.tracks[0];
+                    const firstTrack = normalizePlaylistEntryTrack(
+                      playlistDetail.tracks[0],
+                    );
                     togglePlay(firstTrack);
                   }
                 }}
@@ -434,8 +454,7 @@ export const PulsifyPlaylistDetailView = () => {
                     isPlaying &&
                     currentTrack &&
                     playlistDetail.tracks?.some((t) => {
-                      const tId =
-                        t.track_id?._id || t.track_id || t._id || t.id;
+                      const tId = getPlaylistEntryTrackId(t);
                       return tId === currentId;
                     });
                   return isThisPlaylistPlaying ? (
@@ -523,7 +542,7 @@ export const PulsifyPlaylistDetailView = () => {
                   isPlaying &&
                   currentTrack &&
                   playlistDetail.tracks?.some((t) => {
-                    const tId = t.track_id?._id || t.track_id || t._id || t.id;
+                    const tId = getPlaylistEntryTrackId(t);
                     return tId === currentId;
                   });
                 return !isThisPlaylistPlaying;
@@ -935,14 +954,11 @@ export const PulsifyPlaylistDetailView = () => {
 
             {playlistDetail.tracks && playlistDetail.tracks.length > 0 ? (
               playlistDetail.tracks.map((track, idx) => {
-                const trackData =
-                  track.track_id && typeof track.track_id === "object"
-                    ? track.track_id
-                    : track;
+                const trackData = normalizePlaylistEntryTrack(track);
                 return (
                   <PulsifyTrackRow
                     key={trackData._id || trackData.id || idx}
-                    track={{ ...trackData, _id: trackData._id || trackData.id }}
+                    track={trackData}
                     index={idx}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}

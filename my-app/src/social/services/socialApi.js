@@ -7,6 +7,16 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
+function normalizeBoolean(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
+  }
+  return false;
+}
+
 function getAuthHeaders() {
   const token =
     localStorage.getItem("pulsify_access_token") ||
@@ -26,6 +36,10 @@ export async function followUserApi(userId) {
     method: "POST",
     headers: { ...getAuthHeaders() },
   });
+  // 409 = already following — not an error
+  if (res.status === 409) return { alreadyFollowing: true };
+  // 403 = blocked by target user
+  if (res.status === 403) throw new Error("BLOCKED_BY_TARGET");
   if (!res.ok) throw new Error("Failed to follow user");
   return res.json();
 }
@@ -35,6 +49,8 @@ export async function unfollowUserApi(userId) {
     method: "DELETE",
     headers: { ...getAuthHeaders() },
   });
+  // 404 = not following anyway — not an error
+  if (res.status === 404) return { alreadyUnfollowed: true };
   if (!res.ok) throw new Error("Failed to unfollow user");
   return res.json();
 }
@@ -44,12 +60,17 @@ export async function unfollowUserApi(userId) {
 export async function getFollowersApi(userId, page = 1, limit = 12) {
   const res = await fetch(
     `${API_BASE_URL}/users/${userId}/followers?page=${page}&limit=${limit}`,
+    { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch followers");
   const data = await res.json();
   const inner = data.data || {};
   return {
-    users: (inner.followers || inner.data || []).map(mapUserDtoToUser),
+    users: (inner.followers || inner.data || []).map((dto) => {
+      // Backend may nest the user object under a 'follower' key
+      const userDto = dto.follower || dto.user || dto;
+      return mapUserDtoToUser(userDto);
+    }),
     pagination: {
       page: inner.page || page,
       limit: inner.limit || limit,
@@ -165,11 +186,16 @@ export async function getRelationshipApi(userId) {
   });
   if (!res.ok) throw new Error("Failed to fetch relationship");
   const data = await res.json();
-  const inner = data.data || {};
+  const inner = data.data || data || {};
   return {
-    isFollowing: inner.is_following || false,
-    isFollowedBy: inner.is_followed_by || false,
-    isBlocked: inner.is_blocked || false,
+    isFollowing: normalizeBoolean(inner.isFollowing ?? inner.is_following),
+    isFollowedBy: normalizeBoolean(inner.isFollowedBy ?? inner.is_followed_by),
+    isBlockedByMe: normalizeBoolean(
+      inner.isBlockedByMe ?? inner.is_blocked_by_me ?? inner.isBlocked ?? inner.is_blocked,
+    ),
+    isBlockedByThem: normalizeBoolean(
+      inner.isBlockedByThem ?? inner.is_blocked_by_them,
+    ),
   };
 }
 

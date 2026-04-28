@@ -126,6 +126,7 @@ export async function getFollowingMock(_userId, page = 1, limit = 12) {
 /* ── Social Counts ─────────────────────────────────── */
 
 export async function getSocialCountsMock(_userId) {
+  void _userId;
   await wait(200);
   return {
     followersCount: mockFollowers.length,
@@ -181,9 +182,10 @@ export async function getBlockedUsersMock(page = 1, limit = 12) {
 export async function getRelationshipMock(userId) {
   await wait(200);
   return {
-    is_following: followingSet.has(userId),
-    is_followed_by: mockFollowers.some((u) => u.id === userId),
-    is_blocked: blockedSet.has(userId),
+    isFollowing: followingSet.has(userId),
+    isFollowedBy: mockFollowers.some((u) => u.id === userId),
+    isBlockedByMe: blockedSet.has(userId),
+    isBlockedByThem: false,
   };
 }
 

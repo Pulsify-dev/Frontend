@@ -20,8 +20,20 @@ const readStoredVolume = () => {
   return Math.min(Math.max(nextValue, 0), 100);
 };
 
-const getTrackId = (track) =>
-  track?.id ?? track?.trackId ?? track?.track_id ?? "";
+const getTrackId = (track) => {
+  if (typeof track === "string") return track;
+
+  const trackId =
+    track?.trackId ??
+    (typeof track?.track_id === "object"
+      ? track.track_id?._id || track.track_id?.id
+      : track?.track_id) ??
+    track?.id ??
+    track?._id ??
+    "";
+
+  return trackId ? String(trackId) : "";
+};
 
 const normalizeTrackInput = (track) => {
   if (!track) return null;
@@ -279,7 +291,12 @@ export const PlayerProvider = ({ children }) => {
 
     // Bare ID string — must fetch.
     if (typeof trackInput === "string") {
-      return getTrack(trackInput);
+      try {
+        return await getTrack(trackInput);
+      } catch (error) {
+        console.warn(`Track not found on backend: ${trackInput}`, error);
+        return null;
+      }
     }
 
     const normalizedTrack = normalizeTrackInput(trackInput);
@@ -348,7 +365,13 @@ export const PlayerProvider = ({ children }) => {
         setQueueTrackIdsState(nextQueueIds);
       }
 
-      const resolvedTrack = await resolveTrack(trackInput);
+      let resolvedTrack = null;
+      try {
+        resolvedTrack = await resolveTrack(trackInput);
+      } catch (error) {
+        console.error(error);
+      }
+
       if (!resolvedTrack) {
         setIsPreparing(false);
         setPlayerMessage("Track unavailable right now.");
@@ -409,6 +432,18 @@ export const PlayerProvider = ({ children }) => {
           nextStreamInfo?.message ??
             "This track is blocked because of plan or region rules.",
         );
+        return resolvedTrack;
+      }
+
+      if (!nextStreamInfo?.url && !resolvedTrack.audioUrl) {
+        setPendingAutoplay({
+          shouldAutoplay: false,
+          trackId: resolvedTrack.id,
+          startTime: 0,
+          previewMessage: "",
+        });
+        setIsPreparing(false);
+        setPlayerMessage("Track audio unavailable right now.");
         return resolvedTrack;
       }
 

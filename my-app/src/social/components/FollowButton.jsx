@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { socialService } from "../services/socialService";
 
 export default function FollowButton({
@@ -7,20 +7,28 @@ export default function FollowButton({
   onToggle,
 }) {
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const [isBlockedByThem, setIsBlockedByThem] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    setIsFollowing(initialFollowing);
+  }, [initialFollowing]);
 
   useEffect(() => {
     if (!userId) return;
     socialService
       .getRelationship(userId)
-      .then((rel) => setIsFollowing(rel?.isFollowing ?? false))
-      .catch(() => {});
+      .then((rel) => {
+        setIsFollowing(rel?.isFollowing ?? false);
+        setIsBlockedByThem(rel?.isBlockedByThem ?? false);
+      })
+      .catch((err) => console.error("Failed to load follow state:", err));
   }, [userId]);
 
   async function handleClick(e) {
     e.stopPropagation();
-    if (isLoading) return;
+    if (isLoading || !userId) return;
     setIsLoading(true);
     try {
       if (isFollowing) {
@@ -38,6 +46,8 @@ export default function FollowButton({
       setIsLoading(false);
     }
   }
+
+  if (isBlockedByThem) return null;
 
   const showUnfollow = isFollowing && isHovered;
 

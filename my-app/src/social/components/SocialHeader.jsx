@@ -5,8 +5,17 @@ const TABS = [
   { label: "Followers", path: "/followers" },
 ];
 
-export default function SocialHeader({ counts, filterValue, onFilterChange }) {
+export default function SocialHeader({
+  counts,
+  filterValue,
+  onFilterChange,
+  userId,
+}) {
   const location = useLocation();
+
+  function getTabPath(tab) {
+    return userId ? `${tab.path}/${userId}` : tab.path;
+  }
 
   function getTabLabel(tab) {
     if (tab.label === "Following" && counts?.followingCount != null) {
@@ -25,8 +34,8 @@ export default function SocialHeader({ counts, filterValue, onFilterChange }) {
           {TABS.map((tab) => (
             <Link
               key={tab.path}
-              to={tab.path}
-              className={`sc-social-tab ${location.pathname === tab.path ? "sc-social-tab--active" : ""}`}
+              to={getTabPath(tab)}
+              className={`sc-social-tab ${location.pathname === getTabPath(tab) ? "sc-social-tab--active" : ""}`}
             >
               {getTabLabel(tab)}
             </Link>
