@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PulsifyPlaylistService } from '../../services/pulsifyPlaylistService';
 
 export const PulsifyEditPlaylistModal = ({ isOpen, onClose, playlist, onSaveSuccess }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
   const [editForm, setEditForm] = useState({ 
     title: '', description: '', is_private: false, cover_url: '', secret_token: '', permalink: '' 
   });
@@ -18,8 +21,18 @@ export const PulsifyEditPlaylistModal = ({ isOpen, onClose, playlist, onSaveSucc
         secret_token: playlist.secret_token || '',
         permalink: playlist.permalink || ''
       });
+      setImageFile(null);
+      setImagePreview(null);
     }
   }, [isOpen, playlist]);
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -27,12 +40,21 @@ export const PulsifyEditPlaylistModal = ({ isOpen, onClose, playlist, onSaveSucc
     setIsSaving(true);
     try {
       const playlistId = playlist._id || playlist.id;
-      const updatePayload = {
-        title: editForm.title || playlist.title,
-      };
-      
-      if (editForm.description || playlist.description) {
-        updatePayload.description = editForm.description || playlist.description || '';
+      let updatePayload;
+
+      if (imageFile) {
+        // Send as FormData so the backend multer middleware can process the file
+        updatePayload = new FormData();
+        updatePayload.append('title', editForm.title || playlist.title);
+        if (editForm.description || playlist.description) {
+          updatePayload.append('description', editForm.description || playlist.description || '');
+        }
+        updatePayload.append('file', imageFile);
+      } else {
+        updatePayload = { title: editForm.title || playlist.title };
+        if (editForm.description || playlist.description) {
+          updatePayload.description = editForm.description || playlist.description || '';
+        }
       }
       
       const result = await PulsifyPlaylistService.updatePlaylist(playlistId, updatePayload);
@@ -51,7 +73,8 @@ export const PulsifyEditPlaylistModal = ({ isOpen, onClose, playlist, onSaveSucc
       }
       
       if (onSaveSuccess) {
-        onSaveSuccess({ ...playlist, ...updatePayload, is_private: finalPrivacy, secret_token: finalSecretToken });
+        const updatedData = result?.data || result || {};
+        onSaveSuccess({ ...playlist, ...updatedData, is_private: finalPrivacy, secret_token: finalSecretToken });
       }
       onClose();
     } catch (e) {
@@ -99,9 +122,10 @@ export const PulsifyEditPlaylistModal = ({ isOpen, onClose, playlist, onSaveSucc
         {/* Modal Body */}
         <div style={{ display: 'flex', padding: '24px', gap: '30px', maxHeight: '70vh', overflowY: 'auto' }}>
           <div style={{ width: '260px', flexShrink: 0 }}>
+            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
             <div style={{ width: '100%', aspectRatio: '1/1', background: 'linear-gradient(135deg, #443 0%, #224 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', position: 'relative', overflow: 'hidden' }}>
-               {editForm.cover_url ? <img src={editForm.cover_url} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} /> : null}
-               <button style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>Upload image</button>
+               {(imagePreview || editForm.cover_url) ? <img src={imagePreview || editForm.cover_url} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} /> : null}
+               <button onClick={() => fileInputRef.current?.click()} style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{imageFile ? 'Change image' : 'Upload image'}</button>
             </div>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>

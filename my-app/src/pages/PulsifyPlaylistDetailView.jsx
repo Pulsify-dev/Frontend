@@ -53,6 +53,7 @@ export const PulsifyPlaylistDetailView = () => {
     playerProgress,
     playerCurrentTime,
     seekTo,
+    duration,
   } = usePlayer();
   const [creatorProfile, setCreatorProfile] = useState(null);
 
@@ -608,8 +609,9 @@ export const PulsifyPlaylistDetailView = () => {
                   }}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const pct = ((e.clientX - rect.left) / rect.width) * 100;
-                    if (seekTo) seekTo(pct);
+                    const pct = (e.clientX - rect.left) / rect.width;
+                    const dur = currentTrack?.duration || duration || totalSec || 0;
+                    if (seekTo && dur > 0) seekTo(pct * dur);
                   }}
                 >
                   <div

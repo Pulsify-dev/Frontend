@@ -36,7 +36,7 @@ const TrackAction = ({ children, title, onClick }) => (
   </button>
 );
 
-const AlbumCardTrackEntry = ({ trackData, i, artistName, albId }) => {
+const AlbumCardTrackEntry = ({ trackData, i, artistName, albId, onRemoveTrack }) => {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -96,7 +96,7 @@ const AlbumCardTrackEntry = ({ trackData, i, artistName, albId }) => {
   const handleShareClick = (e) => {
     e.stopPropagation();
     const trackId = trackData._id || trackData.id;
-    const embedCode = `<iframe src="https://pulsify.page/tracks/embed/${trackId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
+    const embedCode = `<iframe src="${window.location.origin}/tracks/${trackId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
     navigator.clipboard
       .writeText(embedCode)
       .then(() => {
@@ -374,9 +374,18 @@ const AlbumCardTrackEntry = ({ trackData, i, artistName, albId }) => {
                   Add to Next up
                 </button>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
+                    const trackId = trackData._id || trackData.id;
+                    if (!window.confirm(`Remove "${trackData.title || 'this track'}" from the album?`)) return;
+                    try {
+                      await PulsifyAlbumService.removeTrackFromAlbum(albId, trackId);
+                      if (onRemoveTrack) onRemoveTrack(trackId);
+                    } catch (err) {
+                      console.error('Failed to remove track from album:', err);
+                      alert('Failed to remove track: ' + (err?.response?.data?.error || err.message));
+                    }
                   }}
                   style={{
                     display: "flex",
@@ -678,6 +687,15 @@ export const PulsifyAlbumCard = ({ album, onDelete }) => {
                   i={i}
                   artistName={artistName}
                   albId={albId}
+                  onRemoveTrack={(trackId) => {
+                    setLocalAlbum(prev => ({
+                      ...prev,
+                      tracks: prev.tracks.filter(t => {
+                        const tid = t.track_id?._id || t.track_id || t._id || t.id;
+                        return tid !== trackId;
+                      }),
+                    }));
+                  }}
                 />
               );
             })}

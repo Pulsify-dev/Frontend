@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationContext } from "../../context/NotificationContext";
+import { PulsifyAuthVaultContext } from "../../store/PulsifyAuthVault";
 import serviceLocator from "../../utils/serviceLocator";
 import "../../css/navbar-soundcloud.css";
 
@@ -18,7 +19,8 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isArtist, logout } = useAuth();
-  const isPro = user?.tier === "Pro";
+  const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
+  const isPro = subscriptionTier === "PRO";
 
   // Notification context
   const { unreadCount, notifications, markAsRead, markAllRead } = useContext(
@@ -340,9 +342,28 @@ const Navbar = () => {
       <div className="auth-navbar-right">
         {isAuthenticated ? (
           <>
-            <Link to="/premium" className="auth-nav-pro">
-              Upgrade now
-            </Link>
+            {isPro ? (
+              <span style={{
+                background: 'linear-gradient(135deg, #c9a96e, #e8d5a8)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                fontWeight: 700,
+                fontSize: '13px',
+                letterSpacing: '0.5px',
+                padding: '0 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#c9a96e"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                Artist Pro
+              </span>
+            ) : (
+              <Link to="/premium" className="auth-nav-pro">
+                Upgrade now
+              </Link>
+            )}
 
             <Link to="/my-tracks" className="auth-nav-text-link">
               For Artists

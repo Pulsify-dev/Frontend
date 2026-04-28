@@ -21,22 +21,23 @@ const TrackAction = ({ children, title, onClick }) => (
     style={{
       background: "none",
       border: "none",
-      padding: "4px",
+      padding: "6px",
       color: "#999",
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      transition: "color 0.12s",
+      transition: "color 0.12s, background-color 0.12s",
+      borderRadius: "4px",
     }}
-    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-    onMouseLeave={(e) => (e.currentTarget.style.color = "#999")}
+    onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+    onMouseLeave={(e) => { e.currentTarget.style.color = "#999"; e.currentTarget.style.backgroundColor = "transparent"; }}
   >
     {children}
   </button>
 );
 
-const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
+const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId, onRemoveTrack }) => {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -96,7 +97,7 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
   const handleShareClick = (e) => {
     e.stopPropagation();
     const trackId = trackData._id || trackData.id;
-    const embedCode = `<iframe src="https://pulsify.page/tracks/embed/${trackId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
+    const embedCode = `<iframe src="${window.location.origin}/tracks/${trackId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
     navigator.clipboard
       .writeText(embedCode)
       .then(() => {
@@ -181,7 +182,8 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
                 paddingLeft:
                   isPlaying &&
                   currentTrack &&
-                  (currentTrack.trackId === (trackData._id || trackData.id) ||
+                  (currentTrack.id === (trackData._id || trackData.id) ||
+                    currentTrack.trackId === (trackData._id || trackData.id) ||
                     currentTrack._id === (trackData._id || trackData.id))
                     ? "0"
                     : "2px",
@@ -189,7 +191,8 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
             >
               {isPlaying &&
               currentTrack &&
-              (currentTrack.trackId === (trackData._id || trackData.id) ||
+              (currentTrack.id === (trackData._id || trackData.id) ||
+                currentTrack.trackId === (trackData._id || trackData.id) ||
                 currentTrack._id === (trackData._id || trackData.id))
                 ? "⏸"
                 : "▶"}
@@ -251,67 +254,31 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
         <div
           style={{
             display: "flex",
-            gap: "42px",
+            gap: "36px",
             marginLeft: "auto",
             alignItems: "center",
             paddingLeft: "8px",
           }}
         >
+          <TrackAction title="Share" onClick={handleShareClick}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </TrackAction>
+          <TrackAction title="Copy Link" onClick={(e) => {
+            e.stopPropagation();
+            const trackId = trackData._id || trackData.id;
+            navigator.clipboard.writeText(`${window.location.origin}/tracks/${trackId}`);
+            alert('Link copied to clipboard!');
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </TrackAction>
           <TrackAction
             title={isLiked ? "Unlike" : "Like"}
             onClick={handleLikeClick}
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill={isLiked ? "#f50" : "currentColor"}
-              stroke="none"
-            >
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          </TrackAction>
-          <TrackAction title="Repost">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <polyline points="17 1 21 5 17 9" />
-              <path d="M3 11V9a4 4 0 014-4h14" />
-              <polyline points="7 23 3 19 7 15" />
-              <path d="M21 13v2a4 4 0 01-4 4H3" />
-            </svg>
-          </TrackAction>
-          <TrackAction title="Share" onClick={handleShareClick}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={isLiked ? "#f50" : "currentColor"} stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </TrackAction>
           <TrackAction title="Add to Next up">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect x="3" y="3" width="14" height="14" rx="2" ry="2" />
-              <path d="M7 21h14a2 2 0 0 0 2-2V7" />
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h10v2H3v-2zm13-1v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/></svg>
           </TrackAction>
           <div style={{ position: "relative" }} ref={menuRef}>
             <TrackAction
@@ -321,16 +288,7 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
                 setMenuOpen(!menuOpen);
               }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <circle cx="5" cy="12" r="1.5" />
-                <circle cx="12" cy="12" r="1.5" />
-                <circle cx="19" cy="12" r="1.5" />
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
             </TrackAction>
             {menuOpen && (
               <div
@@ -375,23 +333,22 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
                     e.currentTarget.style.color = "#ccc";
                   }}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <rect x="3" y="3" width="14" height="14" rx="2" ry="2" />
-                    <path d="M7 21h14a2 2 0 0 0 2-2V7" />
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h10v2H3v-2zm13-1v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/></svg>
                   Add to Next up
                 </button>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
+                    const trackId = trackData._id || trackData.id;
+                    if (!window.confirm(`Remove "${trackData.title || 'this track'}" from the playlist?`)) return;
+                    try {
+                      await PulsifyPlaylistService.removeTrackFromPlaylist(plId, trackId);
+                      if (onRemoveTrack) onRemoveTrack(trackId);
+                    } catch (err) {
+                      console.error('Failed to remove track from playlist:', err);
+                      alert('Failed to remove track: ' + (err?.response?.data?.error || err.message));
+                    }
                   }}
                   style={{
                     display: "flex",
@@ -415,19 +372,7 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
                     e.currentTarget.style.color = "#ccc";
                   }}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   Delete track
                 </button>
                 {/* ─── Download Track (Pro-gated) ─── */}
@@ -501,18 +446,7 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId }) => {
                     e.currentTarget.style.color = isPro ? "#ccc" : "#666";
                   }}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   <span>Download track</span>
                   <span
                     style={{
@@ -815,6 +749,15 @@ export const PulsifyPlaylistCard = ({ playlist, onDelete }) => {
                   i={i}
                   creatorName={creatorName}
                   plId={plId}
+                  onRemoveTrack={(trackId) => {
+                    setLocalPlaylist(prev => ({
+                      ...prev,
+                      tracks: prev.tracks.filter(t => {
+                        const tid = t.track_id?._id || t.track_id || t._id || t.id;
+                        return tid !== trackId;
+                      }),
+                    }));
+                  }}
                 />
               );
             })}

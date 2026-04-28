@@ -670,6 +670,9 @@ export const PlayerProvider = ({ children }) => {
 
   const clearPlayerMessage = useCallback(() => setPlayerMessage(""), []);
 
+  const playerProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const playerCurrentTime = currentTime;
+
   const contextValue = useMemo(
     () => ({
       currentTrack,
@@ -686,6 +689,8 @@ export const PlayerProvider = ({ children }) => {
       isPreparing,
       hasPrevious,
       hasNext,
+      playerProgress,
+      playerCurrentTime,
       loadTrack,
       togglePlay,
       seekTo,
@@ -710,7 +715,9 @@ export const PlayerProvider = ({ children }) => {
       playNext,
       playPrevious,
       playbackState,
+      playerCurrentTime,
       playerMessage,
+      playerProgress,
       previewDurationSeconds,
       previewEndSeconds,
       previewStartSeconds,

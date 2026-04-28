@@ -42,7 +42,7 @@ export const PulsifyAlbumDetailView = () => {
   const dragOverItem = useRef(null);
   const navigate = useNavigate();
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || { subscriptionTier: 'FREE' };
-  const { togglePlay, isPlaying, currentTrack, playerProgress, playerCurrentTime, seekTo } = usePlayer();
+  const { togglePlay, isPlaying, currentTrack, playerProgress, playerCurrentTime, seekTo, duration } = usePlayer();
   const [artistProfile, setArtistProfile] = useState(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -341,8 +341,9 @@ export const PulsifyAlbumDetailView = () => {
                   style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', gap: '2px', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const pct = ((e.clientX - rect.left) / rect.width) * 100;
-                    if (seekTo) seekTo(pct);
+                    const pct = (e.clientX - rect.left) / rect.width;
+                    const dur = currentTrack?.duration || duration || totalSec || 0;
+                    if (seekTo && dur > 0) seekTo(pct * dur);
                   }}
                 >
                   <div style={{ position: 'absolute', left: 0, bottom: '15px', backgroundColor: '#000', color: '#f50', fontSize: '10px', padding: '2px 4px', zIndex: 2 }}>{formatTime(playerCurrentTime)}</div>
