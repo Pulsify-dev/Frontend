@@ -55,6 +55,10 @@ const DiscoveryFeedPage = () => {
       } catch (err) {
         console.error("Failed to load discover data:", err);
       } finally {
+        try {
+          const cached = JSON.parse(localStorage.getItem('pulsify_followed_cache') || '[]');
+          setFollowedUsers(new Set(cached));
+        } catch (e) {}
         setLoading(false);
       }
     };
@@ -72,7 +76,7 @@ const DiscoveryFeedPage = () => {
       trackId: t._id || t.trackId || t.id,
       title: t.title,
       coverArt: t.artwork_url || t.coverArt,
-      audioUrl: t.audio_url || t.audioUrl,
+      audioUrl: t.audio_url || t.audioUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
       artist: {
         name:
           t.artist_id?.display_name ||
@@ -94,11 +98,19 @@ const DiscoveryFeedPage = () => {
   const handleFollow = async (userId) => {
     try {
       await serviceLocator.discovery.followUser(userId);
-      setFollowedUsers((prev) => new Set(prev).add(userId));
+      setFollowedUsers((prev) => {
+        const next = new Set(prev).add(userId);
+        localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+        return next;
+      });
     } catch (err) {
-      // 409 = already following — treat as success
+      // 409 = already following â€” treat as success
       if (err?.response?.status === 409) {
-        setFollowedUsers((prev) => new Set(prev).add(userId));
+        setFollowedUsers((prev) => {
+          const next = new Set(prev).add(userId);
+          localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+          return next;
+        });
       } else {
         console.error("Follow failed:", err);
       }
@@ -112,6 +124,7 @@ const DiscoveryFeedPage = () => {
       setFollowedUsers((prev) => {
         const next = new Set(prev);
         next.delete(userId);
+        localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
         return next;
       });
     } catch (err) {
