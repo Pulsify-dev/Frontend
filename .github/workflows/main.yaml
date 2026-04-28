@@ -30,6 +30,8 @@ jobs:
             --build-arg VITE_TRACK_ID="${{secrets.VITE_TRACK_ID}}" \
             --build-arg VITE_FACEBOOK_APP_ID="${{secrets.VITE_FACEBOOK_APP_ID}}" \
             --build-arg VITE_APPLE_CLIENT_ID="${{secrets.VITE_APPLE_CLIENT_ID}}" \
+            --build-arg VITE_TRACK_QUEUE_IDS="${{secrets.VITE_TRACK_QUEUE_IDS}}" \
+            --build-arg VITE_SOCKET_URL="${{secrets.VITE_SOCKET_URL}}" \
             -t ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest \
             ./my-app
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/pulsify-frontend:latest
