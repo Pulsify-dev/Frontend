@@ -1,0 +1,123 @@
+.pulsify-admin-users {
+  padding: 20px;
+  color: #fff;
+}
+
+.pulsify-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pulsify-admin-title {
+  margin: 0;
+  font-size: 24px;
+}
+
+.pulsify-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.pulsify-search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.pulsify-search-form input {
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  padding: 6px 12px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.pulsify-filter-group label {
+  color: #999;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.pulsify-filter-group select {
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  padding: 6px 12px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.pulsify-role-select {
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Data Table */
+.pulsify-data-table-container {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pulsify-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.pulsify-data-table th {
+  background: #2a2a2a;
+  color: #aaa;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+}
+
+.pulsify-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #222;
+  color: #dedede;
+  vertical-align: middle;
+}
+
+.pulsify-data-table tbody tr:hover {
+  background: #242424;
+}
+
+/* Badges & Buttons */
+.pulsify-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.pulsify-badge-success { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+.pulsify-badge-danger { background: rgba(220, 38, 38, 0.15); color: #ef4444; }
+
+.pulsify-btn-small {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pulsify-btn-small:hover { background: #444; }
+
+.pulsify-btn-success { background: #16a34a; color: white; }
+.pulsify-btn-success:hover { background: #15803d; }
+.pulsify-btn-danger { background: #dc2626; color: white; }
+.pulsify-btn-danger:hover { background: #b91c1c; }

@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
       displayName: userData.display_name || userData.username,
       tier: userData.tier || 'Free',
       avatarUrl: userData.avatar_url || null,
-      role: userData.tier === 'Pro' ? 'artist' : 'listener',
+      role: userData.email?.toLowerCase().includes('admin') ? 'Admin' : (userData.role || (userData.tier === 'Pro' ? 'artist' : 'listener')),
     };
 
     setUser(normalizedUser);

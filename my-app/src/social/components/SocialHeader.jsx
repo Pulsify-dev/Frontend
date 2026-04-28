@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 const TABS = [
   { label: "Following", path: "/following" },
   { label: "Followers", path: "/followers" },
-  { label: "Blocked Users", path: "/blocked" },
 ];
 
 export default function SocialHeader({ counts, filterValue, onFilterChange }) {
@@ -15,9 +14,6 @@ export default function SocialHeader({ counts, filterValue, onFilterChange }) {
     }
     if (tab.label === "Followers" && counts?.followersCount != null) {
       return `Followers ${counts.followersCount}`;
-    }
-    if (tab.label === "Blocked Users" && counts?.blockedCount != null) {
-      return `Blocked ${counts.blockedCount}`;
     }
     return tab.label;
   }

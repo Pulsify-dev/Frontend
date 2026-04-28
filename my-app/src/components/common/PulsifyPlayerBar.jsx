@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { usePlayer } from '../../hooks/usePlayer'
-import { getTrack, toggleLike } from '../../services/api'
-import PlayerDock from '../PlayerDock'
-import './PulsifyPlayerBar.css'
+import { useEffect, useState } from "react";
+import { usePlayer } from "../../hooks/usePlayer";
+import { getTrack, toggleLike } from "../../services/api";
+import PlayerDock from "../PlayerDock";
+import "./PulsifyPlayerBar.css";
 
 const PulsifyPlayerBar = () => {
   const {
@@ -27,24 +27,24 @@ const PulsifyPlayerBar = () => {
     clearPlayerMessage,
     setPlayerMessage,
     syncCurrentTrack,
-  } = usePlayer()
-  const [queueTracks, setQueueTracks] = useState([])
-  const [pendingLikeTrackIds, setPendingLikeTrackIds] = useState({})
+  } = usePlayer();
+  const [queueTracks, setQueueTracks] = useState([]);
+  const [pendingLikeTrackIds, setPendingLikeTrackIds] = useState({});
 
   useEffect(() => {
-    let isCancelled = false
+    let isCancelled = false;
 
     const loadQueueTracks = async () => {
       if (!queueTrackIds.length) {
-        setQueueTracks(currentTrack ? [currentTrack] : [])
-        return
+        setQueueTracks(currentTrack ? [currentTrack] : []);
+        return;
       }
 
       const results = await Promise.allSettled(
         queueTrackIds.map((trackId) => getTrack(trackId)),
-      )
+      );
 
-      if (isCancelled) return
+      if (isCancelled) return;
 
       setQueueTracks(
         results
@@ -52,50 +52,54 @@ const PulsifyPlayerBar = () => {
             const fallbackTrack =
               currentTrack?.id === queueTrackIds[index]
                 ? currentTrack
-                : { id: queueTrackIds[index], title: 'Untitled track' }
+                : { id: queueTrackIds[index], title: "Untitled track" };
 
-            return result.status === 'fulfilled'
+            return result.status === "fulfilled"
               ? {
                   ...fallbackTrack,
                   ...result.value,
                 }
-              : fallbackTrack
+              : fallbackTrack;
           })
           .filter((track) => track?.id),
-      )
-    }
+      );
+    };
 
-    loadQueueTracks()
+    loadQueueTracks();
 
     return () => {
-      isCancelled = true
-    }
-  }, [currentTrack, queueTrackIds])
+      isCancelled = true;
+    };
+  }, [currentTrack, queueTrackIds]);
 
   useEffect(() => {
-    if (!currentTrack?.id) return
+    if (!currentTrack?.id) return;
 
     setQueueTracks((currentTracks) => {
-      if (!currentTracks.length) return [currentTrack]
+      if (!currentTracks.length) return [currentTrack];
 
       return currentTracks.map((track) =>
         track.id === currentTrack.id ? { ...track, ...currentTrack } : track,
-      )
-    })
-  }, [currentTrack])
+      );
+    });
+  }, [currentTrack]);
 
   const setPendingLikeState = (trackId, value) => {
     setPendingLikeTrackIds((current) => ({
       ...current,
       [trackId]: value,
-    }))
-  }
+    }));
+  };
 
-  const broadcastTrackLikeChange = (trackId, nextTrack, previousViewerHasLiked) => {
-    if (typeof window === 'undefined') return
+  const broadcastTrackLikeChange = (
+    trackId,
+    nextTrack,
+    previousViewerHasLiked,
+  ) => {
+    if (typeof window === "undefined") return;
 
     window.dispatchEvent(
-      new CustomEvent('pulsify:track-engagement-updated', {
+      new CustomEvent("pulsify:track-engagement-updated", {
         detail: {
           trackId,
           track: nextTrack,
@@ -103,8 +107,8 @@ const PulsifyPlayerBar = () => {
           previousViewerHasLiked,
         },
       }),
-    )
-  }
+    );
+  };
 
   const applyLocalTrackSnapshot = (trackId, snapshot) => {
     setQueueTracks((currentTracks) =>
@@ -116,22 +120,22 @@ const PulsifyPlayerBar = () => {
             }
           : track,
       ),
-    )
+    );
 
     if (currentTrack?.id === trackId) {
-      syncCurrentTrack(snapshot)
+      syncCurrentTrack(snapshot);
     }
-  }
+  };
 
   const handleLikeTrack = async (trackInput = currentTrack) => {
-    const trackId = trackInput?.id
-    if (!trackId || pendingLikeTrackIds[trackId]) return
+    const trackId = trackInput?.id;
+    if (!trackId || pendingLikeTrackIds[trackId]) return;
 
     const sourceTrack =
       queueTracks.find((track) => track.id === trackId) ??
-      (currentTrack?.id === trackId ? currentTrack : trackInput)
-    const previousViewerHasLiked = Boolean(sourceTrack?.viewerHasLiked)
-    const shouldLike = !previousViewerHasLiked
+      (currentTrack?.id === trackId ? currentTrack : trackInput);
+    const previousViewerHasLiked = Boolean(sourceTrack?.viewerHasLiked);
+    const shouldLike = !previousViewerHasLiked;
     const optimisticTrack = {
       ...sourceTrack,
       viewerHasLiked: shouldLike,
@@ -139,43 +143,43 @@ const PulsifyPlayerBar = () => {
         Number(sourceTrack?.likeCount ?? 0) + (shouldLike ? 1 : -1),
         0,
       ),
-    }
+    };
 
-    setPendingLikeState(trackId, true)
-    applyLocalTrackSnapshot(trackId, optimisticTrack)
-    broadcastTrackLikeChange(trackId, optimisticTrack, previousViewerHasLiked)
+    setPendingLikeState(trackId, true);
+    applyLocalTrackSnapshot(trackId, optimisticTrack);
+    broadcastTrackLikeChange(trackId, optimisticTrack, previousViewerHasLiked);
 
     try {
-      await toggleLike(trackId, shouldLike)
+      await toggleLike(trackId, shouldLike);
     } catch (error) {
       const rollbackTrack = {
         ...sourceTrack,
         viewerHasLiked: previousViewerHasLiked,
         likeCount: Number(sourceTrack?.likeCount ?? 0),
-      }
+      };
 
-      applyLocalTrackSnapshot(trackId, rollbackTrack)
-      broadcastTrackLikeChange(trackId, rollbackTrack, shouldLike)
-      setPlayerMessage?.('Could not update likes right now.')
-      console.error(error)
+      applyLocalTrackSnapshot(trackId, rollbackTrack);
+      broadcastTrackLikeChange(trackId, rollbackTrack, shouldLike);
+      setPlayerMessage?.("Could not update likes right now.");
+      console.error(error);
     } finally {
-      setPendingLikeState(trackId, false)
+      setPendingLikeState(trackId, false);
     }
-  }
+  };
 
   const handleQueueTrackSelect = async (track) => {
-    if (!track?.id) return
+    if (!track?.id) return;
 
     await loadTrack(track, {
       queueIds: queueTrackIds,
-      playbackContext: 'player_queue',
+      playbackContext: "player_queue",
       autoplay: true,
-    })
-  }
+    });
+  };
 
   const handleClearQueue = () => {
-    setQueueTrackIds(currentTrack?.id ? [currentTrack.id] : [])
-  }
+    setQueueTrackIds(currentTrack?.id ? [currentTrack.id] : []);
+  };
 
   return (
     <PlayerDock
@@ -204,7 +208,7 @@ const PulsifyPlayerBar = () => {
       onQueueTrackLike={handleLikeTrack}
       pendingQueueLikeIds={pendingLikeTrackIds}
     />
-  )
-}
+  );
+};
 
-export default PulsifyPlayerBar
+export default PulsifyPlayerBar;

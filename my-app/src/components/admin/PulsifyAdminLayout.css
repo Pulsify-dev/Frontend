@@ -1,0 +1,86 @@
+.pulsify-admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #111;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+}
+
+.pulsify-admin-sidebar {
+  width: 250px;
+  background-color: #222;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.pulsify-admin-logo {
+  padding: 20px;
+  border-bottom: 1px solid #333;
+  color: #f50;
+}
+
+.pulsify-admin-logo h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.pulsify-admin-nav {
+  padding: 20px 0;
+}
+
+.pulsify-admin-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pulsify-admin-nav li {
+  padding: 15px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  color: #aaa;
+}
+
+.pulsify-admin-nav li:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.pulsify-admin-nav li.active {
+  background-color: #f50;
+  color: #fff;
+  font-weight: bold;
+}
+
+.pulsify-admin-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pulsify-admin-header {
+  height: 60px;
+  background-color: #222;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+.pulsify-admin-header h1 {
+  margin: 0;
+  font-size: 18px;
+  color: #ddd;
+}
+
+.pulsify-admin-profile {
+  font-weight: bold;
+  color: #aaa;
+}
+
+.pulsify-admin-page-content {
+  padding: 30px;
+  overflow-y: auto;
+}

@@ -30,7 +30,7 @@ const timeAgo = (dateStr) => {
 };
 
 const PulsifyNotificationList = ({ onClose }) => {
-  const { notifications, markAsRead, markAllRead } = useNotifications();
+  const { notifications, markAsRead, markAllRead, pushEnabled, requestBrowserNotifications } = useNotifications();
 
   return (
     <div className="sc-notif-panel" data-testid="notification-list-panel">
@@ -44,6 +44,16 @@ const PulsifyNotificationList = ({ onClose }) => {
           Mark all as read
         </button>
       </div>
+
+      {!pushEnabled && ('Notification' in window) && (
+        <div className="sc-notif-push-banner" onClick={requestBrowserNotifications}>
+          <div className="sc-notif-push-icon">🔔</div>
+          <div className="sc-notif-push-text">
+            <strong>Enable push notifications</strong>
+            <span>Never miss a message or new track.</span>
+          </div>
+        </div>
+      )}
 
       <div className="sc-notif-items">
         {notifications.length === 0 ? (

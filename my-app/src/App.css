@@ -848,6 +848,20 @@
   border-radius: 50%;
 }
 
+.comment-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f50;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 .comment-content {
   display: flex;
   flex-direction: column;
@@ -993,6 +1007,21 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
+  object-fit: cover;
+}
+
+.section-list-row.is-user .avatar-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f50;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .section-list-row p,

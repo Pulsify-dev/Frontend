@@ -182,7 +182,9 @@
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%) translateY(8px);
-  transition: opacity 0.14s ease, transform 0.14s ease;
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease;
 }
 
 .dock-volume-popover::after {
@@ -535,4 +537,10 @@
     bottom: 58px;
     width: calc(100vw - 16px);
   }
+}
+
+.sc-player-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

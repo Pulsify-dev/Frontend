@@ -90,15 +90,15 @@ const decodeBase64Url = (value = "") => {
   try {
     const normalizedValue = value.replace(/-/g, "+").replace(/_/g, "/");
     const paddedValue =
-      normalizedValue +
-      "=".repeat((4 - (normalizedValue.length % 4)) % 4);
+      normalizedValue + "=".repeat((4 - (normalizedValue.length % 4)) % 4);
     const decodedValue = window.atob(paddedValue);
 
     return decodeURIComponent(
       decodedValue
         .split("")
-        .map((character) =>
-          `%${character.charCodeAt(0).toString(16).padStart(2, "0")}`,
+        .map(
+          (character) =>
+            `%${character.charCodeAt(0).toString(16).padStart(2, "0")}`,
         )
         .join(""),
     );
@@ -358,26 +358,26 @@ const resolveCommentTimestampMs = (comment = {}) => {
 const hasMeaningfulUserData = (user) =>
   Boolean(
     user &&
-      typeof user === "object" &&
-      [
-        user.id,
-        user._id,
-        user.user_id,
-        user.userId,
-        user.author_id,
-        user.authorId,
-        user.name,
-        user.display_name,
-        user.displayName,
-        user.full_name,
-        user.fullName,
-        user.username,
-        user.avatar,
-        user.avatarUrl,
-        user.avatar_url,
-        user.profile_picture,
-        user.profile_image,
-      ].some((value) => value != null && String(value).trim() !== ""),
+    typeof user === "object" &&
+    [
+      user.id,
+      user._id,
+      user.user_id,
+      user.userId,
+      user.author_id,
+      user.authorId,
+      user.name,
+      user.display_name,
+      user.displayName,
+      user.full_name,
+      user.fullName,
+      user.username,
+      user.avatar,
+      user.avatarUrl,
+      user.avatar_url,
+      user.profile_picture,
+      user.profile_image,
+    ].some((value) => value != null && String(value).trim() !== ""),
   );
 
 const getViewerFallbackUser = (viewer = {}) => ({
@@ -428,7 +428,10 @@ const normalizeUser = (user = {}) => ({
     null,
 });
 
-const normalizeComment = (comment = {}, { assumeViewerOwnership = false } = {}) => {
+const normalizeComment = (
+  comment = {},
+  { assumeViewerOwnership = false } = {},
+) => {
   const viewer = getStoredViewerIdentity();
   const viewerUserId = String(viewer.userId ?? "").trim();
   const viewerIdentityCandidates = [
@@ -459,8 +462,7 @@ const normalizeComment = (comment = {}, { assumeViewerOwnership = false } = {}) 
         comment.is_mine ??
         comment.isMine ??
         comment.mine,
-    ) ??
-    (assumeViewerOwnership ? true : null);
+    ) ?? (assumeViewerOwnership ? true : null);
   const fallbackCommentUser =
     hasMeaningfulUserData(commentUserSource) ||
     hasMeaningfulUserData({
@@ -512,8 +514,8 @@ const normalizeComment = (comment = {}, { assumeViewerOwnership = false } = {}) 
             comment.profile_image,
         }
       : rawOwnership
-      ? getViewerFallbackUser(viewer)
-      : null;
+        ? getViewerFallbackUser(viewer)
+        : null;
   const user = normalizeUser(
     commentUserSource ?? fallbackCommentUser ?? undefined,
   );
@@ -641,7 +643,7 @@ const normalizeComment = (comment = {}, { assumeViewerOwnership = false } = {}) 
   );
   const canEdit = Boolean(
     (rawCanEdit === true || rawCanDelete === true || isOwnedByViewer) &&
-      !isDeleted,
+    !isDeleted,
   );
 
   return {
@@ -683,12 +685,7 @@ const normalizeComment = (comment = {}, { assumeViewerOwnership = false } = {}) 
           comment.edited ??
           comment.was_edited ??
           comment.wasEdited,
-      ) ??
-      Boolean(
-        updatedAt &&
-          createdAt &&
-          updatedAt !== createdAt,
-      ),
+      ) ?? Boolean(updatedAt && createdAt && updatedAt !== createdAt),
     isDeleted,
     isOwnedByViewer,
     canEdit,
@@ -866,7 +863,8 @@ const getViewerTrackEngagementCollections = () => {
         ? viewerCollections.liked
         : {},
     reposted:
-      viewerCollections.reposted && typeof viewerCollections.reposted === "object"
+      viewerCollections.reposted &&
+      typeof viewerCollections.reposted === "object"
         ? viewerCollections.reposted
         : {},
   };
@@ -904,10 +902,8 @@ const updateViewerTrackEngagementCache = (track = {}) => {
   if (!trackId) return;
 
   const currentCollections = getViewerTrackEngagementCollections();
-  const existingSnapshot =
-    currentCollections.liked?.[trackId] ??
-    currentCollections.reposted?.[trackId] ??
-    { id: trackId, trackId };
+  const existingSnapshot = currentCollections.liked?.[trackId] ??
+    currentCollections.reposted?.[trackId] ?? { id: trackId, trackId };
   const nextSnapshot = normalizeViewerTrackCacheSnapshot({
     ...existingSnapshot,
     ...track,
@@ -988,7 +984,11 @@ const unwrapEntity = (payload, preferredKeys = []) => {
 
   for (const key of ["data", "result", "item"]) {
     const candidate = payload?.[key];
-    if (candidate && !Array.isArray(candidate) && typeof candidate === "object") {
+    if (
+      candidate &&
+      !Array.isArray(candidate) &&
+      typeof candidate === "object"
+    ) {
       return unwrapEntity(candidate, preferredKeys);
     }
   }
@@ -1049,12 +1049,8 @@ const unwrapCollection = (payload) => {
 
 const resolvePagination = (payload, fallbackPage = 1, fallbackLimit = 20) => {
   const pagination = payload?.pagination;
-  const page = Number(
-    pagination?.page ?? payload?.page ?? fallbackPage,
-  );
-  const limit = Number(
-    pagination?.limit ?? payload?.limit ?? fallbackLimit,
-  );
+  const page = Number(pagination?.page ?? payload?.page ?? fallbackPage);
+  const limit = Number(pagination?.limit ?? payload?.limit ?? fallbackLimit);
   const total = Number(
     pagination?.total ??
       payload?.total ??
@@ -1204,7 +1200,10 @@ const getHistoryTrackSource = (entry = {}) =>
   entry.trackData ??
   entry;
 
-const getHistoryTrackId = (entry = {}, trackSource = getHistoryTrackSource(entry)) =>
+const getHistoryTrackId = (
+  entry = {},
+  trackSource = getHistoryTrackSource(entry),
+) =>
   trackSource?.id ??
   trackSource?._id ??
   trackSource?.track_id ??
@@ -1296,7 +1295,9 @@ const dedupeHistoryEntriesByTrack = (items = []) => {
 };
 
 const normalizeHistoryCollection = (payload) =>
-  sortHistoryEntriesDescending(unwrapCollection(payload).map(normalizeHistoryEntry));
+  sortHistoryEntriesDescending(
+    unwrapCollection(payload).map(normalizeHistoryEntry),
+  );
 
 const buildSeedUsers = () => {
   const userMap = new Map();
@@ -1749,7 +1750,9 @@ export const checkTrackLiked = async (trackId) => {
 
   const payload = await request(`/tracks/${trackId}/liked`);
   return {
-    liked: Boolean(payload?.liked ?? payload?.is_liked ?? payload?.viewerHasLiked),
+    liked: Boolean(
+      payload?.liked ?? payload?.is_liked ?? payload?.viewerHasLiked,
+    ),
   };
 };
 
@@ -1848,7 +1851,10 @@ export const getComments = async (trackId, { page = 1, limit = 20 } = {}) => {
       comments,
       totalCount: comments.length,
       pagination: resolvePagination(
-        { total: comments.length, pages: Math.ceil(comments.length / Math.max(limit, 1)) },
+        {
+          total: comments.length,
+          pages: Math.ceil(comments.length / Math.max(limit, 1)),
+        },
         page,
         limit,
       ),
@@ -1980,7 +1986,9 @@ export const getCommentReplies = async (
       {
         ...payload,
         replies_count:
-          payload?.replies_count ?? payload?.pagination?.total ?? replies.length,
+          payload?.replies_count ??
+          payload?.pagination?.total ??
+          replies.length,
       },
       page,
       limit,

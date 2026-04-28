@@ -209,17 +209,104 @@ a.sc-tab {
 }
 
 .sc-content-area {
-  display: flex;
-  flex-direction: column;
-  gap: 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: start;
   padding: 24px;
 }
 
-.sc-profile-overview-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+.sc-main-content {
+  min-width: 0;
+}
+
+.sc-sidebar {
+  min-width: 0;
+  position: sticky;
+  top: 20px;
+}
+
+.sc-stats {
+  display: flex;
   gap: 24px;
-  align-items: start;
+  margin-bottom: 20px;
+}
+
+.sc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sc-stat-label {
+  font-size: 11px;
+  color: #8b8b8b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sc-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sc-sidebar-bio {
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #a2a2a2;
+  line-height: 1.6;
+}
+
+.sc-upgrade-card {
+  margin-top: 20px;
+  background: #181818;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.sc-upgrade-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sc-upgrade-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.sc-upgrade-card p {
+  font-size: 12px;
+  color: #a2a2a2;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.sc-upgrade-card-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.sc-upgrade-card-btn:hover {
+  background: #e0e0e0;
+}
+
+.sc-profile-overview-strip {
+  display: none;
 }
 
 .sc-profile-overview-copy h2 {
@@ -288,10 +375,9 @@ a.sc-tab {
 }
 
 .sc-profile-showcase-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  display: flex;
+  flex-direction: column;
   gap: 28px;
-  align-items: start;
 }
 
 .sc-profile-showcase-main,
@@ -307,6 +393,7 @@ a.sc-tab {
 
 .sc-profile-likes-rail {
   padding-top: 10px;
+  display: none;
 }
 
 .sc-profile-section {
@@ -599,46 +686,104 @@ a.sc-tab {
     transform 0.2s;
 }
 
-.sc-recent-surface-btn:hover:not(:disabled) {
-  border-color: #626262;
-  background: #343434;
-  color: #fff;
+/* ── More menu ─────────────────────────────────────── */
+.sc-more-menu-wrap {
+  position: relative;
 }
 
-.sc-recent-surface-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.sc-more-btn {
+  padding: 7px 10px;
 }
 
-.sc-recent-surface-btn.is-active {
-  border-color: rgba(255, 85, 0, 0.65);
-  background: rgba(255, 85, 0, 0.16);
-  color: #ff7a3d;
+.sc-more-icon-btn {
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.sc-recent-surface-btn.is-open {
-  border-color: #575757;
-  background: #303030;
-}
-
-.sc-recent-action-menu {
+.sc-more-menu {
   position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  min-width: 188px;
-  padding: 8px 0;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #1a1a1a;
+  border: 1px solid #333;
   border-radius: 6px;
-  border: 1px solid #383838;
-  background: #111;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
-  z-index: 20;
+  min-width: 200px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  overflow: hidden;
+  padding: 4px 0;
 }
 
-.sc-recent-menu-item {
+.sc-more-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  border: 0;
   background: none;
+  border: none;
+  color: #ccc;
+  font-size: 13px;
+  padding: 11px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.sc-more-menu__item:hover {
+  background: #262626;
   color: #fff;
+}
+
+.sc-more-menu__item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.sc-more-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  min-width: 190px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.sc-more-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 14px;
+  padding: 12px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.sc-more-dropdown__item:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+.sc-more-dropdown__item--danger {
+  color: #f55;
+}
+.sc-more-dropdown__item--danger:hover {
+  background: #2a1515;
+  color: #ff6b6b;
+}
+
+/* Content area */
+.sc-recent-menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1449,6 +1594,41 @@ a.sc-tab {
   gap: 10px;
 }
 
+/* Link rows in edit form */
+.sc-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sc-link-icon {
+  flex-shrink: 0;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+}
+.sc-link-delete-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+.sc-link-delete-btn:hover {
+  border-color: #f44;
+  color: #f44;
+}
+
 .sc-add-link-btn {
   background: none;
   border: 1px solid #555;
@@ -1531,14 +1711,50 @@ a.sc-tab {
   background: #e04a00;
 }
 
-@media (max-width: 1100px) {
-  .sc-profile-showcase-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sc-profile-footer-meta {
-    grid-template-columns: 1fr 1fr;
-  }
+/* ── Artist Pro upgrade card ──────────── */
+.sc-upgrade-card {
+  margin-top: 20px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 14px 16px;
+  background: #111;
+}
+.sc-upgrade-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sc-upgrade-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+.sc-upgrade-card-desc {
+  font-size: 12px;
+  color: #aaa;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+.sc-upgrade-card-btn {
+  display: block;
+  width: 100%;
+  padding: 9px 0;
+  background: #fff;
+  color: #111;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.sc-upgrade-card-btn:hover {
+  background: #e0e0e0;
 }
 
 @media (max-width: 900px) {
@@ -1546,6 +1762,14 @@ a.sc-tab {
   .sc-content-area {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .sc-content-area {
+    grid-template-columns: 1fr;
+  }
+
+  .sc-sidebar {
+    position: static;
   }
 
   .sc-tabs-bar,

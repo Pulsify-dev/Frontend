@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import AlbumEngagementPanel from "@/components/AlbumEngagementPanel";
 import LoadingState from "@/components/LoadingState";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/hooks/usePlayer";
 import { profileService } from "@/profile/services/profileService";
+import { PulsifyPlaylistService } from "@/services/pulsifyPlaylistService";
+import { PulsifyAlbumService } from "@/services/pulsifyAlbumService";
+import { PulsifySquarePlaylistCard } from "@/components/playlists/PulsifySquarePlaylistCard";
+import FollowingPage from "@/social/pages/FollowingPage";
 import {
   getListeningHistory,
   getRecentlyPlayed,
@@ -25,10 +28,10 @@ const LIBRARY_TABS = [
   { label: "Popular tracks", value: "popular-tracks" },
   { label: "Likes", value: "likes" },
   { label: "Reposts", value: "reposts" },
-  { label: "Playlists", path: "/playlists" },
+  { label: "Playlists", value: "playlists" },
   { label: "Albums", value: "albums" },
   { label: "Stations", value: "stations" },
-  { label: "Following", path: "/following" },
+  { label: "Following", value: "following" },
   { label: "History", path: "/history" },
 ];
 
@@ -52,7 +55,9 @@ const formatRelativePlayedAt = (value) => {
   const playedAt = new Date(value);
   if (Number.isNaN(playedAt.getTime())) return "Just now";
 
-  const secondsDifference = Math.round((playedAt.getTime() - Date.now()) / 1000);
+  const secondsDifference = Math.round(
+    (playedAt.getTime() - Date.now()) / 1000,
+  );
   const absSeconds = Math.abs(secondsDifference);
   const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
@@ -136,7 +141,9 @@ const mergeTrackSnapshot = (track = {}, detail = {}) => ({
   postedAt: detail.postedAt ?? track.postedAt ?? null,
   typeLabel: detail.typeLabel ?? track.typeLabel ?? "Music",
   viewerHasLiked: Boolean(detail.viewerHasLiked ?? track.viewerHasLiked),
-  viewerHasReposted: Boolean(detail.viewerHasReposted ?? track.viewerHasReposted),
+  viewerHasReposted: Boolean(
+    detail.viewerHasReposted ?? track.viewerHasReposted,
+  ),
 });
 
 const enrichLibraryEntry = (entry, detail = {}) => {
@@ -163,7 +170,9 @@ const getPlayedAtTime = (entry = {}) => {
 };
 
 const sortLibraryEntriesByPlayedAt = (entries = []) =>
-  [...entries].sort((left, right) => getPlayedAtTime(right) - getPlayedAtTime(left));
+  [...entries].sort(
+    (left, right) => getPlayedAtTime(right) - getPlayedAtTime(left),
+  );
 
 const dedupeLibraryEntriesByTrack = (entries = []) => {
   const entryMap = new Map();
@@ -192,15 +201,16 @@ const removeTrackFromCollection = (collection, trackId) =>
   collection.filter((track) => track.id !== trackId);
 
 const getActiveLibraryTab = (tabValue) => {
-  if (
-    ["likes", "popular-tracks", "reposts", "albums", "stations"].includes(
-      tabValue,
-    )
-  ) {
-    return tabValue;
-  }
-
-  return "overview";
+  const validTabs = [
+    "likes",
+    "popular-tracks",
+    "reposts",
+    "albums",
+    "playlists",
+    "stations",
+    "following",
+  ];
+  return validTabs.includes(tabValue) ? tabValue : "overview";
 };
 
 const getLibraryPathForTab = (tabValue) =>
@@ -222,7 +232,13 @@ const broadcastTrackSnapshot = (trackId, track, previousViewerHasLiked) => {
 };
 
 const PlayGlyph = ({ isPlaying = false }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    aria-hidden="true"
+  >
     {isPlaying ? (
       <>
         <rect x="6" y="5" width="4" height="14" rx="1.5" />
@@ -235,7 +251,13 @@ const PlayGlyph = ({ isPlaying = false }) => (
 );
 
 const StatPlayIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    aria-hidden="true"
+  >
     <path d="M8 5.14v13.72a1 1 0 0 0 1.51.86l10.5-6.86a1 1 0 0 0 0-1.72L9.51 4.28A1 1 0 0 0 8 5.14Z" />
   </svg>
 );
@@ -310,7 +332,11 @@ function TrackMetricLink({ to, icon, label, value }) {
   if (value === null || value === undefined || value === "") return null;
 
   return (
-    <Link className="sc-track-metric sc-track-metric-link" to={to} title={label}>
+    <Link
+      className="sc-track-metric sc-track-metric-link"
+      to={to}
+      title={label}
+    >
       {icon}
       <span>{value}</span>
     </Link>
@@ -339,7 +365,10 @@ function RecentWaveform({ track, isActive, currentTime, onSeek }) {
       : playedProgress;
 
   return (
-    <div className="sc-recent-wave-shell" aria-label={`Waveform for ${track.title}`}>
+    <div
+      className="sc-recent-wave-shell"
+      aria-label={`Waveform for ${track.title}`}
+    >
       <div className="sc-recent-waveform" aria-hidden="true">
         {waveform.map((point, index) => {
           const nextTime =
@@ -365,12 +394,21 @@ function RecentWaveform({ track, isActive, currentTime, onSeek }) {
         })}
       </div>
 
-      <span className="sc-recent-duration">{formatDuration(track.duration)}</span>
+      <span className="sc-recent-duration">
+        {formatDuration(track.duration)}
+      </span>
     </div>
   );
 }
 
-function LibraryTile({ title, subtitle, image, isProfile = false, onClick, isActive = false }) {
+function LibraryTile({
+  title,
+  subtitle,
+  image,
+  isProfile = false,
+  onClick,
+  isActive = false,
+}) {
   return (
     <button
       className={`library-media-card ${isProfile ? "library-media-card--profile" : ""} ${
@@ -384,7 +422,12 @@ function LibraryTile({ title, subtitle, image, isProfile = false, onClick, isAct
           {image ? (
             <img src={image} alt={title} />
           ) : (
-            <span>{String(title ?? "Y").trim().charAt(0).toUpperCase()}</span>
+            <span>
+              {String(title ?? "Y")
+                .trim()
+                .charAt(0)
+                .toUpperCase()}
+            </span>
           )}
         </div>
       ) : (
@@ -425,6 +468,18 @@ export default function LibraryPage() {
   const [historyTracks, setHistoryTracks] = useState([]);
   const [pendingLikeTrackIds, setPendingLikeTrackIds] = useState({});
   const [pendingRepostTrackIds, setPendingRepostTrackIds] = useState({});
+
+  // Playlists state (from main branch)
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [playlistsError, setPlaylistsError] = useState(null);
+  const [playlistFilter, setPlaylistFilter] = useState("");
+
+  // Albums state
+  const [albums, setAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(false);
+  const [albumsError, setAlbumsError] = useState(null);
+  const [albumFilter, setAlbumFilter] = useState("");
   const currentTrackRef = useRef(null);
   const lastPinnedRecentTrackIdRef = useRef("");
 
@@ -469,12 +524,13 @@ export default function LibraryPage() {
         setIsLoading(true);
         setErrorMessage("");
 
-        const [likes, reposts, recentEntries, historyEntries] = await Promise.all([
-          getViewerLikedTracks(),
-          getViewerRepostedTracks(),
-          getRecentlyPlayed(),
-          getListeningHistory(),
-        ]);
+        const [likes, reposts, recentEntries, historyEntries] =
+          await Promise.all([
+            getViewerLikedTracks(),
+            getViewerRepostedTracks(),
+            getRecentlyPlayed(),
+            getListeningHistory(),
+          ]);
 
         const trackIds = [
           ...new Set(
@@ -548,6 +604,75 @@ export default function LibraryPage() {
     };
   }, [syncCurrentTrack]);
 
+  // Load playlists when Playlists tab is active (from main branch)
+  useEffect(() => {
+    if (activeTab !== "playlists") return;
+    let isMounted = true;
+
+    const loadPlaylists = async () => {
+      setPlaylistsLoading(true);
+      setPlaylistsError(null);
+      try {
+        const data = await PulsifyPlaylistService.retrieveAllPlaylists("me");
+        if (isMounted) {
+          const rawPlaylists = Array.isArray(data)
+            ? data
+            : data.playlists || [];
+          setPlaylists(rawPlaylists);
+        }
+      } catch (err) {
+        if (isMounted)
+          setPlaylistsError(err.message || "Failed to retrieve playlists.");
+      } finally {
+        if (isMounted) setPlaylistsLoading(false);
+      }
+    };
+
+    loadPlaylists();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab]);
+
+  // Load albums when Albums tab is active
+  useEffect(() => {
+    if (activeTab !== "albums") return;
+    let isMounted = true;
+
+    const loadAlbums = async () => {
+      setAlbumsLoading(true);
+      setAlbumsError(null);
+      try {
+        // Try getArtistAlbums with user id first (most reliable), fall back to getMyAlbums
+        let rawAlbums = [];
+        if (user?.id) {
+          const data = await PulsifyAlbumService.getArtistAlbums(user.id);
+          rawAlbums = Array.isArray(data)
+            ? data
+            : data.albums || data.data || [];
+        }
+        // If artist endpoint returned nothing, try the /albums endpoint
+        if (rawAlbums.length === 0) {
+          const data2 = await PulsifyAlbumService.retrieveAllAlbums();
+          rawAlbums = Array.isArray(data2)
+            ? data2
+            : data2.albums || data2.data || [];
+        }
+        if (isMounted) setAlbums(rawAlbums);
+      } catch (err) {
+        if (isMounted)
+          setAlbumsError(err.message || "Failed to retrieve albums.");
+      } finally {
+        if (isMounted) setAlbumsLoading(false);
+      }
+    };
+
+    loadAlbums();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, user?.id]);
+
   useEffect(() => {
     const activeTrack = currentTrackRef.current;
 
@@ -558,33 +683,43 @@ export default function LibraryPage() {
     const playedAt = new Date().toISOString();
 
     setRecentTracks((current) => {
-      const existingTrack = current.find((track) => track.id === activeTrack.id);
+      const existingTrack = current.find(
+        (track) => track.id === activeTrack.id,
+      );
       const nextTrack = enrichLibraryEntry(
         {
           ...(existingTrack ?? {}),
           ...activeTrack,
           played_at: playedAt,
           playedAt,
-          duration_played_ms: Math.max(Number(activeTrack.duration ?? 0) * 1000, 0),
+          duration_played_ms: Math.max(
+            Number(activeTrack.duration ?? 0) * 1000,
+            0,
+          ),
         },
         activeTrack,
       );
 
-      return [nextTrack, ...current.filter((track) => track.id !== activeTrack.id)].slice(
-        0,
-        8,
-      );
+      return [
+        nextTrack,
+        ...current.filter((track) => track.id !== activeTrack.id),
+      ].slice(0, 8);
     });
 
     setHistoryTracks((current) => {
-      const existingTrack = current.find((track) => track.id === activeTrack.id);
+      const existingTrack = current.find(
+        (track) => track.id === activeTrack.id,
+      );
       const nextTrack = enrichLibraryEntry(
         {
           ...(existingTrack ?? {}),
           ...activeTrack,
           played_at: playedAt,
           playedAt,
-          duration_played_ms: Math.max(Number(activeTrack.duration ?? 0) * 1000, 0),
+          duration_played_ms: Math.max(
+            Number(activeTrack.duration ?? 0) * 1000,
+            0,
+          ),
         },
         activeTrack,
       );
@@ -604,8 +739,21 @@ export default function LibraryPage() {
     [historyTracks, likedTracks, recentTracks, repostedTracks],
   );
 
-  const quickRecentTracks = useMemo(() => recentTracks.slice(0, 5), [recentTracks]);
-  const likedPreviewTracks = useMemo(() => likedTracks.slice(0, 6), [likedTracks]);
+  const quickRecentTracks = useMemo(
+    () => recentTracks.slice(0, 5),
+    [recentTracks],
+  );
+  const filteredPlaylists = useMemo(() => {
+    if (!playlistFilter.trim()) return playlists;
+    const q = playlistFilter.trim().toLowerCase();
+    return playlists.filter((pl) =>
+      (pl.title ?? pl.name ?? "").toLowerCase().includes(q),
+    );
+  }, [playlists, playlistFilter]);
+  const likedPreviewTracks = useMemo(
+    () => likedTracks.slice(0, 6),
+    [likedTracks],
+  );
   const activeOverviewTrack = recentTracks[0] ?? historyTracks[0] ?? null;
   const activeTrackId = currentTrack?.id ?? "";
 
@@ -630,8 +778,12 @@ export default function LibraryPage() {
   };
 
   const applyTrackSnapshot = (trackId, snapshot) => {
-    setRecentTracks((current) => updateCollectionTrack(current, trackId, snapshot));
-    setHistoryTracks((current) => updateCollectionTrack(current, trackId, snapshot));
+    setRecentTracks((current) =>
+      updateCollectionTrack(current, trackId, snapshot),
+    );
+    setHistoryTracks((current) =>
+      updateCollectionTrack(current, trackId, snapshot),
+    );
 
     setLikedTracks((current) => {
       const withoutTrack = removeTrackFromCollection(current, trackId);
@@ -640,7 +792,10 @@ export default function LibraryPage() {
       }
 
       const existingTrack = current.find((track) => track.id === trackId);
-      return [mergeTrackSnapshot(existingTrack ?? snapshot, snapshot), ...withoutTrack];
+      return [
+        mergeTrackSnapshot(existingTrack ?? snapshot, snapshot),
+        ...withoutTrack,
+      ];
     });
 
     setRepostedTracks((current) => {
@@ -650,7 +805,10 @@ export default function LibraryPage() {
       }
 
       const existingTrack = current.find((track) => track.id === trackId);
-      return [mergeTrackSnapshot(existingTrack ?? snapshot, snapshot), ...withoutTrack];
+      return [
+        mergeTrackSnapshot(existingTrack ?? snapshot, snapshot),
+        ...withoutTrack,
+      ];
     });
 
     if (currentTrackRef.current?.id === trackId) {
@@ -737,7 +895,11 @@ export default function LibraryPage() {
 
     setPendingTrackState(setPendingLikeTrackIds, trackId, true);
     applyTrackSnapshot(trackId, nextTrackSnapshot);
-    broadcastTrackSnapshot(trackId, nextTrackSnapshot, originalTrack.viewerHasLiked);
+    broadcastTrackSnapshot(
+      trackId,
+      nextTrackSnapshot,
+      originalTrack.viewerHasLiked,
+    );
 
     try {
       await toggleLike(trackId, shouldLike);
@@ -760,19 +922,30 @@ export default function LibraryPage() {
       ...originalTrack,
       viewerHasLiked: originalTrack.viewerHasLiked,
       viewerHasReposted: shouldRepost,
-      repostCount: Math.max(originalTrack.repostCount + (shouldRepost ? 1 : -1), 0),
+      repostCount: Math.max(
+        originalTrack.repostCount + (shouldRepost ? 1 : -1),
+        0,
+      ),
     };
 
     setPendingTrackState(setPendingRepostTrackIds, trackId, true);
     applyTrackSnapshot(trackId, nextTrackSnapshot);
-    broadcastTrackSnapshot(trackId, nextTrackSnapshot, originalTrack.viewerHasLiked);
+    broadcastTrackSnapshot(
+      trackId,
+      nextTrackSnapshot,
+      originalTrack.viewerHasLiked,
+    );
 
     try {
       await toggleRepost(trackId, shouldRepost);
     } catch (error) {
       console.error("Failed to toggle repost from library surface.", error);
       applyTrackSnapshot(trackId, originalTrack);
-      broadcastTrackSnapshot(trackId, originalTrack, originalTrack.viewerHasLiked);
+      broadcastTrackSnapshot(
+        trackId,
+        originalTrack,
+        originalTrack.viewerHasLiked,
+      );
       setPlayerMessage?.("Could not update reposts right now.");
     } finally {
       setPendingTrackState(setPendingRepostTrackIds, trackId, false);
@@ -855,7 +1028,9 @@ export default function LibraryPage() {
             </div>
 
             <div className="sc-recent-head-meta">
-              <span>{formatRelativePlayedAt(track.played_at ?? track.playedAt)}</span>
+              <span>
+                {formatRelativePlayedAt(track.played_at ?? track.playedAt)}
+              </span>
               <span
                 className={`sc-recent-state-pill ${getPlaybackStateTone(track.playbackState)}`}
               >
@@ -880,7 +1055,11 @@ export default function LibraryPage() {
                 className={`sc-recent-surface-btn ${track.viewerHasLiked ? "is-active" : ""}`}
                 type="button"
                 onClick={() => handleLikeToggle(track.id)}
-                aria-label={track.viewerHasLiked ? `Unlike ${track.title}` : `Like ${track.title}`}
+                aria-label={
+                  track.viewerHasLiked
+                    ? `Unlike ${track.title}`
+                    : `Like ${track.title}`
+                }
                 title={track.viewerHasLiked ? "Liked" : "Like"}
                 disabled={isLikePending}
               >
@@ -969,14 +1148,19 @@ export default function LibraryPage() {
           <div className="library-section-header">
             <div>
               <h1>Reposts</h1>
-              <p>Tracks you reposted, loaded from the backend and ready to play.</p>
+              <p>
+                Tracks you reposted, loaded from the backend and ready to play.
+              </p>
             </div>
           </div>
 
           {!repostedTracks.length ? (
             <div className="library-empty-panel">
               <strong>No reposted tracks yet.</strong>
-              <p>Repost a track and it will appear here from your real reposts feed.</p>
+              <p>
+                Repost a track and it will appear here from your real reposts
+                feed.
+              </p>
             </div>
           ) : (
             <div className="library-hero-stack">
@@ -990,7 +1174,287 @@ export default function LibraryPage() {
     }
 
     if (activeTab === "albums") {
-      return <AlbumEngagementPanel />;
+      if (albumsLoading)
+        return (
+          <div style={{ color: "#999", padding: "40px 0" }}>
+            Loading albums...
+          </div>
+        );
+      if (albumsError)
+        return (
+          <div style={{ color: "#f50", padding: "40px 0" }}>{albumsError}</div>
+        );
+      return (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "24px",
+            }}
+          >
+            <h2 style={{ color: "#fff", fontSize: "18px", margin: 0 }}>
+              Your albums and EPs:
+            </h2>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <input
+                type="text"
+                placeholder="Filter"
+                value={albumFilter}
+                onChange={(e) => setAlbumFilter(e.target.value)}
+                style={{
+                  backgroundColor: "#222",
+                  border: "1px solid #333",
+                  color: "#fff",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+          </div>
+          {albums.length === 0 ? (
+            <div style={{ color: "#999", fontSize: "14px", marginTop: "20px" }}>
+              You have no albums yet.{" "}
+              <Link
+                to="/upload"
+                style={{ color: "#f50", textDecoration: "none" }}
+              >
+                Upload multiple tracks
+              </Link>{" "}
+              to create one.
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                gap: "24px",
+                width: "100%",
+              }}
+            >
+              {albums
+                .filter(
+                  (a) =>
+                    !albumFilter.trim() ||
+                    (a.title ?? "")
+                      .toLowerCase()
+                      .includes(albumFilter.trim().toLowerCase()),
+                )
+                .map((album) => {
+                  const albId = album._id || album.id;
+                  const artworkUrl =
+                    album.artwork_url ||
+                    "https://placehold.co/200x200/1a1a1a/333?text=💿";
+                  const creatorName =
+                    album.artist_id?.display_name ||
+                    album.artist_id?.username ||
+                    "You";
+                  const trackCount =
+                    album.track_count || album.tracks?.length || 0;
+                  const albumType = album.type || "Album";
+                  return (
+                    <div
+                      key={albId}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Link
+                        to={`/albums/${albId}`}
+                        style={{ textDecoration: "none" }}
+                      >
+                        <div
+                          style={{
+                            width: "100%",
+                            aspectRatio: "1/1",
+                            position: "relative",
+                            overflow: "hidden",
+                            borderRadius: "4px",
+                            backgroundColor: "#222",
+                          }}
+                        >
+                          <img
+                            src={artworkUrl}
+                            alt={album.title}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://placehold.co/200x200/1a1a1a/333?text=💿";
+                            }}
+                          />
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "8px",
+                              left: "8px",
+                              backgroundColor: "rgba(0,0,0,0.7)",
+                              color: "#fff",
+                              fontSize: "10px",
+                              fontWeight: 700,
+                              padding: "3px 8px",
+                              borderRadius: "3px",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            {albumType}
+                          </div>
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: "8px",
+                              right: "8px",
+                              backgroundColor: "rgba(0,0,0,0.7)",
+                              color: "#ccc",
+                              fontSize: "11px",
+                              padding: "2px 6px",
+                              borderRadius: "3px",
+                            }}
+                          >
+                            {trackCount} track{trackCount !== 1 ? "s" : ""}
+                          </div>
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              backgroundColor: "rgba(0,0,0,0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              opacity: 0,
+                              transition: "opacity 0.2s",
+                              zIndex: 10,
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.opacity = 1)
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.opacity = 0)
+                            }
+                          >
+                            <div
+                              style={{
+                                width: "48px",
+                                height: "48px",
+                                backgroundColor: "#f50",
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="#fff"
+                                style={{ marginLeft: "4px" }}
+                              >
+                                <polygon points="6,3 20,12 6,21" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <Link
+                          to={`/albums/${albId}`}
+                          style={{
+                            color: "#fff",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            textDecoration: "none",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {album.title}
+                        </Link>
+                        <span
+                          style={{
+                            color: "#999",
+                            fontSize: "12px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            marginTop: "2px",
+                          }}
+                        >
+                          {creatorName}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // Playlists tab — uses PulsifySquarePlaylistCard from main branch
+    if (activeTab === "playlists") {
+      return (
+        <section className="library-section">
+          <div className="library-section-header">
+            <div>
+              <h1>Playlists</h1>
+              <p>Your playlists and the playlists you've liked.</p>
+            </div>
+            <input
+              type="text"
+              placeholder="Filter"
+              value={playlistFilter}
+              onChange={(e) => setPlaylistFilter(e.target.value)}
+              className="library-filter-input"
+            />
+          </div>
+          {playlistsLoading ? (
+            <div className="library-empty-panel">Loading playlists...</div>
+          ) : playlistsError ? (
+            <div className="library-empty-panel" style={{ color: "#f50" }}>
+              {playlistsError}
+            </div>
+          ) : filteredPlaylists.length === 0 ? (
+            <div className="library-empty-panel">
+              <strong>No playlists yet.</strong>
+              <p>Create a playlist and it will appear here.</p>
+            </div>
+          ) : (
+            <div className="library-playlist-grid">
+              {filteredPlaylists.map((pl) => (
+                <PulsifySquarePlaylistCard
+                  key={pl._id || pl.id}
+                  playlist={pl}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    // Following tab — renders FollowingPage inline (from main branch)
+    if (activeTab === "following") {
+      return (
+        <section className="library-section">
+          <FollowingPage hideNav />
+        </section>
+      );
     }
 
     if (activeTab === "stations") {
@@ -998,7 +1462,10 @@ export default function LibraryPage() {
         <section className="library-section">
           <div className="library-empty-panel">
             <strong>Stations are not wired into the library yet.</strong>
-            <p>Open Feed to keep discovery moving until that surface is connected.</p>
+            <p>
+              Open Feed to keep discovery moving until that surface is
+              connected.
+            </p>
             <Link to="/feed" className="library-inline-link">
               Open Feed
             </Link>
@@ -1013,7 +1480,10 @@ export default function LibraryPage() {
           <div className="library-section-header">
             <div>
               <h2>Recently played</h2>
-              <p>Picked up from your latest listening session in the same order you played it.</p>
+              <p>
+                Picked up from your latest listening session in the same order
+                you played it.
+              </p>
             </div>
             <Link to="/history" className="library-section-link">
               Open history
@@ -1022,7 +1492,11 @@ export default function LibraryPage() {
 
           <div className="library-media-strip">
             <LibraryTile
-              title={viewerProfile?.displayName ?? user?.displayName ?? "Your Library"}
+              title={
+                viewerProfile?.displayName ??
+                user?.displayName ??
+                "Your Library"
+              }
               subtitle={`Made for ${viewerProfile?.displayName ?? user?.displayName ?? "you"}`}
               image={viewerProfile?.avatarUrl ?? user?.avatarUrl ?? ""}
               isProfile
@@ -1042,7 +1516,10 @@ export default function LibraryPage() {
 
             {!quickRecentTracks.length
               ? Array.from({ length: 5 }).map((_, index) => (
-                  <div className="library-media-placeholder" key={`library-placeholder-${index}`} />
+                  <div
+                    className="library-media-placeholder"
+                    key={`library-placeholder-${index}`}
+                  />
                 ))
               : null}
           </div>
@@ -1052,21 +1529,29 @@ export default function LibraryPage() {
           <div className="library-section-header">
             <div>
               <h2>Latest from your queue</h2>
-              <p>The last track you played stays pinned here with live player progress.</p>
+              <p>
+                The last track you played stays pinned here with live player
+                progress.
+              </p>
             </div>
           </div>
 
           {!activeOverviewTrack ? (
             <div className="library-empty-panel">
               <strong>Your queue is quiet right now.</strong>
-              <p>Play any track and it will appear here using the recent-player layout.</p>
+              <p>
+                Play any track and it will appear here using the recent-player
+                layout.
+              </p>
             </div>
           ) : (
             <div className="library-hero-stack">
               {renderHeroTrackCard(activeOverviewTrack, "overview-current")}
-              {recentTracks.slice(1, 4).map((track, index) =>
-                renderHeroTrackCard(track, `overview-extra-${index}`),
-              )}
+              {recentTracks
+                .slice(1, 4)
+                .map((track, index) =>
+                  renderHeroTrackCard(track, `overview-extra-${index}`),
+                )}
             </div>
           )}
         </section>
@@ -1077,7 +1562,10 @@ export default function LibraryPage() {
               <h2>Likes</h2>
               <p>Quick access to the tracks you already liked.</p>
             </div>
-            <Link to={getLibraryPathForTab("likes")} className="library-section-link">
+            <Link
+              to={getLibraryPathForTab("likes")}
+              className="library-section-link"
+            >
               View all
             </Link>
           </div>
@@ -1085,7 +1573,10 @@ export default function LibraryPage() {
           {!likedPreviewTracks.length ? (
             <div className="library-empty-panel">
               <strong>No likes yet.</strong>
-              <p>When you like tracks, they will appear here and in the Likes tab.</p>
+              <p>
+                When you like tracks, they will appear here and in the Likes
+                tab.
+              </p>
             </div>
           ) : (
             <div className="library-media-strip">

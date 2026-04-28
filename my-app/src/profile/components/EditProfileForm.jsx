@@ -1,77 +1,5 @@
 import { useState } from "react";
-
-const LINK_LABELS = {
-  instagram: "Instagram",
-  twitter: "Twitter",
-  x: "X",
-  website: "Website",
-  support: "Support",
-  support_link: "Support",
-  supportlink: "Support",
-};
-
-const createLinkId = () =>
-  `profile-link-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-const formatLinkLabel = (key) => {
-  const normalizedKey = String(key ?? "").trim().toLowerCase();
-
-  if (LINK_LABELS[normalizedKey]) {
-    return LINK_LABELS[normalizedKey];
-  }
-
-  return String(key ?? "Link")
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-};
-
-const normalizeLinkKey = (value, fallback = "link") => {
-  const normalized = String(value || fallback)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-
-  return normalized || fallback;
-};
-
-const getUniqueLinkKey = (links, baseKey) => {
-  let key = baseKey;
-  let suffix = 2;
-
-  while (Object.prototype.hasOwnProperty.call(links, key)) {
-    key = `${baseKey}_${suffix}`;
-    suffix += 1;
-  }
-
-  return key;
-};
-
-const createLinkRow = (key = "", value = "") => {
-  const isStructuredValue = value && typeof value === "object";
-  const url = isStructuredValue ? value.url ?? value.href ?? "" : value;
-  const label = isStructuredValue ? value.label ?? formatLinkLabel(key) : formatLinkLabel(key);
-
-  return {
-    id: createLinkId(),
-    key,
-    label,
-    url: String(url ?? ""),
-  };
-};
-
-const getInitialLinkRows = (socialLinks = {}) => {
-  const entries = Array.isArray(socialLinks)
-    ? socialLinks.map((link, index) => [
-        link.key ?? link.label ?? `link_${index + 1}`,
-        link,
-      ])
-    : Object.entries(socialLinks ?? {});
-
-  return entries
-    .map(([key, value]) => createLinkRow(key, value))
-    .filter((link) => link.url.trim());
-};
+import { PlatformIcon, detectPlatform } from "./SocialPlatforms";
 
 export default function EditProfileForm({
   profile,
@@ -82,13 +10,38 @@ export default function EditProfileForm({
 }) {
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [bio, setBio] = useState(profile.bio);
-  const [location] = useState(profile.location ?? "");
-  const [favoriteGenres] = useState(
+  const [location, _setLocation] = useState(profile.location ?? "");
+  const [favoriteGenres, _setFavoriteGenres] = useState(
     profile.favoriteGenres.join(", "),
   );
-  const [links, setLinks] = useState(() => getInitialLinkRows(profile.socialLinks));
-  const [isPrivate] = useState(profile.isPrivate);
+  const [isPrivate, _setIsPrivate] = useState(profile.isPrivate);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl);
+  const [links, setLinks] = useState(() => {
+    const sl = profile.socialLinks ?? {};
+    const result = [];
+    if (sl.instagram)
+      result.push({
+        platform: "instagram",
+        url: sl.instagram,
+        isSupport: false,
+      });
+    if (sl.twitter)
+      result.push({ platform: "twitter", url: sl.twitter, isSupport: false });
+    if (sl.website)
+      result.push({ platform: "website", url: sl.website, isSupport: false });
+    if (sl.links) {
+      for (const l of sl.links) {
+        if (!result.some((r) => r.url && r.url === l.url)) {
+          result.push({
+            platform: l.platform ?? detectPlatform(l.url),
+            url: l.url,
+            isSupport: l.isSupport ?? false,
+          });
+        }
+      }
+    }
+    return result;
+  });
 
   // Split location into city/country for SoundCloud-style display
   const locationParts = location.split(",").map((s) => s.trim());
@@ -97,17 +50,6 @@ export default function EditProfileForm({
 
   async function handleSubmit(e) {
     e.preventDefault();
-
-    const socialLinks = links.reduce((result, link, index) => {
-      const url = link.url.trim();
-
-      if (!url) return result;
-
-      const baseKey = normalizeLinkKey(link.label || link.key, `link_${index + 1}`);
-      const linkKey = getUniqueLinkKey(result, baseKey);
-      result[linkKey] = url;
-      return result;
-    }, {});
 
     await onSave({
       displayName,
@@ -118,7 +60,24 @@ export default function EditProfileForm({
         .map((g) => g.trim())
         .filter(Boolean),
       isPrivate,
-      socialLinks,
+      socialLinks: (() => {
+        const PLATFORMS = [
+          "instagram",
+          "twitter",
+          "youtube",
+          "facebook",
+          "tiktok",
+          "website",
+          "patreon",
+          "kofi",
+        ];
+        const topLevel = {};
+        for (const p of PLATFORMS) {
+          const found = links.find((l) => l.platform === p && l.url);
+          if (found) topLevel[p] = found.url;
+        }
+        return { ...topLevel, links: links.filter((l) => l.url) };
+      })(),
     });
   }
 
@@ -133,46 +92,6 @@ export default function EditProfileForm({
     const file = e.target.files?.[0];
     if (!file) return;
     await onCoverUpload(file);
-  }
-
-  function updateLink(linkId, field, value) {
-    setLinks((currentLinks) =>
-      currentLinks.map((link) =>
-        link.id === linkId
-          ? {
-              ...link,
-              [field]: value,
-            }
-          : link,
-      ),
-    );
-  }
-
-  function addLink() {
-    setLinks((currentLinks) => [
-      ...currentLinks,
-      createLinkRow(`link_${currentLinks.length + 1}`, ""),
-    ]);
-  }
-
-  function addSupportLink() {
-    setLinks((currentLinks) => {
-      const existingSupportLink = currentLinks.find(
-        (link) => normalizeLinkKey(link.label || link.key) === "support",
-      );
-
-      if (existingSupportLink) {
-        return currentLinks;
-      }
-
-      return [...currentLinks, createLinkRow("support", "")];
-    });
-  }
-
-  function removeLink(linkId) {
-    setLinks((currentLinks) =>
-      currentLinks.filter((link) => link.id !== linkId),
-    );
   }
 
   return (
@@ -277,27 +196,47 @@ export default function EditProfileForm({
           <span className="sc-edit-label">Your links</span>
         </div>
         <div className="sc-edit-link-fields">
-          {links.map((link) => (
-            <div className="sc-edit-link-row" key={link.id}>
+          {links.map((link, i) => (
+            <div key={i} className="sc-link-row">
+              <span className="sc-link-icon">
+                <PlatformIcon platform={link.platform} size={18} />
+              </span>
               <input
-                className="sc-edit-input sc-edit-link-label-input"
-                value={link.label}
-                onChange={(e) => updateLink(link.id, "label", e.target.value)}
-                placeholder="Label"
-              />
-              <input
-                className="sc-edit-input sc-edit-link-input"
+                className="sc-edit-input sc-edit-link-url-input"
                 value={link.url}
-                onChange={(e) => updateLink(link.id, "url", e.target.value)}
-                placeholder="https://example.com"
-                inputMode="url"
+                onChange={(e) => {
+                  const url = e.target.value;
+                  const updated = [...links];
+                  updated[i] = {
+                    ...updated[i],
+                    url,
+                    platform: link.isSupport
+                      ? link.platform
+                      : detectPlatform(url),
+                  };
+                  setLinks(updated);
+                }}
+                placeholder={
+                  link.isSupport
+                    ? "Support page URL (Patreon, Ko-fi…)"
+                    : "https://"
+                }
+                type="url"
               />
               <button
                 type="button"
-                className="sc-remove-link-btn"
-                onClick={() => removeLink(link.id)}
+                className="sc-link-delete-btn"
+                onClick={() => setLinks(links.filter((_, j) => j !== i))}
+                aria-label="Remove link"
               >
-                Remove
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                </svg>
               </button>
             </div>
           ))}
@@ -306,14 +245,24 @@ export default function EditProfileForm({
           <button
             type="button"
             className="sc-add-link-btn"
-            onClick={addLink}
+            onClick={() =>
+              setLinks([
+                ...links,
+                { platform: "website", url: "", isSupport: false },
+              ])
+            }
           >
             Add link
           </button>
           <button
             type="button"
             className="sc-add-support-btn"
-            onClick={addSupportLink}
+            onClick={() =>
+              setLinks([
+                ...links,
+                { platform: "patreon", url: "", isSupport: true },
+              ])
+            }
           >
             Add support link
           </button>

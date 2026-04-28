@@ -9,6 +9,19 @@ import {
 } from "@/services/socialAuthHelper";
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+//added
+const USE_MOCKS =
+  String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === "true";
+
+const buildMockUser = (role = "listener") => ({
+  user_id: `mock-${role.toLowerCase()}-1`,
+  username: `mock${role.toLowerCase()}`,
+  email: `${role.toLowerCase()}@mock.pulsify.local`,
+  display_name: `Mock ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+  tier: role === "artist" ? "Pro" : "Free",
+  role: role,
+  avatar_url: null,
+});
 
 const formatLoginCooldownLabel = (expiresAt) => {
   const remainingSeconds = Math.max(
@@ -206,6 +219,22 @@ const Login = () => {
       submitGuardRef.current = false;
       setIsLoading(false);
     }
+  };
+  // added
+  const handleMockLogin = (role = "listener") => {
+    const mockUser = buildMockUser(role);
+    const mockAccessToken = `mock-access-token-${role}`;
+    const mockRefreshToken = `mock-refresh-token-${role}`;
+
+    localStorage.setItem("userId", mockUser.user_id);
+    localStorage.setItem("user_id", mockUser.user_id);
+    localStorage.setItem("username", mockUser.username);
+    localStorage.setItem("display_name", mockUser.display_name);
+
+    login(mockUser, mockAccessToken, mockRefreshToken);
+
+    const from = role === "Admin" ? "/admin" : (location.state?.from?.pathname || "/followers");
+    navigate(from, { replace: true });
   };
 
   /**
@@ -419,6 +448,53 @@ const Login = () => {
               "Sign in"
             )}
           </button>
+          {/* added */}
+          {USE_MOCKS && (
+            <div className="auth-footer-row" style={{ marginTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => handleMockLogin("listener")}
+                disabled={anyLoading}
+                className="auth-link"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
+                Continue as mock listener
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMockLogin("artist")}
+                disabled={anyLoading}
+                className="auth-link"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
+                Continue as mock artist
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMockLogin("Admin")}
+                disabled={anyLoading}
+                className="auth-link"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
+                Continue as mock admin
+              </button>
+            </div>
+          )}
         </form>
 
         <div className="auth-footer-row">

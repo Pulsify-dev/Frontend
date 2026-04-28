@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { socialService } from "../services/socialService";
 
-export default function FollowButton({ userId, initialFollowing = false, onToggle }) {
+export default function FollowButton({
+  userId,
+  initialFollowing = false,
+  onToggle,
+}) {
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    socialService
+      .getRelationship(userId)
+      .then((rel) => setIsFollowing(rel?.isFollowing ?? false))
+      .catch(() => {});
+  }, [userId]);
 
   async function handleClick(e) {
     e.stopPropagation();
@@ -43,14 +55,28 @@ export default function FollowButton({ userId, initialFollowing = false, onToggl
         <>
           {showUnfollow ? (
             <>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
               Unfollow
             </>
           ) : (
             <>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               Following

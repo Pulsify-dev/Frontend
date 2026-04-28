@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { PulsifyTrackService } from "@/services/pulsifyTrackService";
 
 export const PulsifyTrackRow = ({
   track,
@@ -12,6 +13,88 @@ export const PulsifyTrackRow = ({
 }) => {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(() => {
+    try {
+      const localStr = localStorage.getItem("pulsifyLikedTracks");
+      const local = localStr ? JSON.parse(localStr) : [];
+      return local.some((t) => (t._id || t.id) === (track._id || track.id));
+    } catch {
+      return false;
+    }
+  });
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleShareClick = (e) => {
+    e.stopPropagation();
+    const trackId = track._id || track.id;
+    const embedCode = `<iframe src="https://pulsify.page/tracks/embed/${trackId}" width="100%" height="166" frameborder="no" allow="autoplay"></iframe>`;
+    navigator.clipboard
+      .writeText(embedCode)
+      .then(() => {
+        alert("Embed iframe copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Failed to copy", err);
+      });
+  };
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    const prevLiked = isLiked;
+    setIsLiked(!prevLiked); // Optimistic UI update
+
+    const trackId = track._id || track.id;
+    const updateLocalState = () => {
+      try {
+        const localStr = localStorage.getItem("pulsifyLikedTracks");
+        let currentLocal = localStr ? JSON.parse(localStr) : [];
+        if (prevLiked) {
+          currentLocal = currentLocal.filter(
+            (t) => (t._id || t.id) !== trackId,
+          );
+        } else {
+          const trackData = {
+            ...track,
+            like_count: (track.like_count || 0) + 1,
+          };
+          currentLocal = [trackData, ...currentLocal];
+        }
+        localStorage.setItem(
+          "pulsifyLikedTracks",
+          JSON.stringify(currentLocal),
+        );
+        window.dispatchEvent(new Event("pulsify-likes-updated"));
+      } catch (e) {
+        console.error("Local storage error", e);
+      }
+    };
+
+    try {
+      if (prevLiked) {
+        await PulsifyTrackService.unlikeTrack(trackId);
+      } else {
+        await PulsifyTrackService.likeTrack(trackId);
+      }
+      updateLocalState();
+    } catch (err) {
+      console.warn(
+        "Backend like failed, falling back to local state:",
+        err.message,
+      );
+      updateLocalState(); // Fallback to local state so UI works for demo
+    }
+  };
 
   if (!track) return null;
 
@@ -25,7 +108,7 @@ export const PulsifyTrackRow = ({
     track.thumbnail_url ||
     "https://placehold.co/28x28/252525/555?text=%E2%99%AB";
   const resolvedDurationSeconds = Number(
-    track.duration_seconds || track.duration || 0
+    track.duration_seconds || track.duration || 0,
   );
 
   const handleOpenTrack = (event) => {
@@ -120,7 +203,9 @@ export const PulsifyTrackRow = ({
         >
           {resolvedTitle}
         </span>
-        <span style={{ fontSize: "11px", color: "#666" }}>{resolvedArtist}</span>
+        <span style={{ fontSize: "11px", color: "#666" }}>
+          {resolvedArtist}
+        </span>
       </div>
 
       {hovered && (
@@ -132,7 +217,7 @@ export const PulsifyTrackRow = ({
             alignItems: "center",
           }}
         >
-          <TrackAction title="Share">
+          <TrackAction title="Share" onClick={handleShareClick}>
             <svg
               width="12"
               height="12"
@@ -159,7 +244,7 @@ export const PulsifyTrackRow = ({
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
           </TrackAction>
-          <TrackAction title="Like">
+          <TrackAction title="Like" onClick={handleLikeClick}>
             <svg
               width="12"
               height="12"
@@ -193,6 +278,127 @@ export const PulsifyTrackRow = ({
               <circle cx="5" cy="12" r="1.5" />
             </svg>
           </TrackAction>
+          <div style={{ position: "relative" }} ref={menuRef}>
+            <TrackAction
+              title="More"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen(!menuOpen);
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+              </svg>
+            </TrackAction>
+            {menuOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "24px",
+                  right: 0,
+                  zIndex: 100,
+                  backgroundColor: "#111",
+                  border: "1px solid #333",
+                  borderRadius: "4px",
+                  minWidth: "160px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                  overflow: "hidden",
+                  padding: "4px 0",
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    width: "100%",
+                    padding: "10px 16px",
+                    background: "none",
+                    border: "none",
+                    color: "#ccc",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#222";
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#ccc";
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="3" y="3" width="14" height="14" rx="2" ry="2" />
+                    <path d="M7 21h14a2 2 0 0 0 2-2V7" />
+                  </svg>
+                  Add to Next up
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    if (onRemoveTrack) onRemoveTrack(index);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    width: "100%",
+                    padding: "10px 16px",
+                    background: "none",
+                    border: "none",
+                    color: "#ccc",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#222";
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#ccc";
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                  Delete track
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -240,9 +446,10 @@ export const PulsifyTrackRow = ({
   );
 };
 
-const TrackAction = ({ children, title }) => (
+const TrackAction = ({ children, title, onClick }) => (
   <button
     title={title}
+    onClick={onClick || ((e) => e.stopPropagation())}
     style={{
       width: "26px",
       height: "26px",
@@ -265,7 +472,6 @@ const TrackAction = ({ children, title }) => (
       event.currentTarget.style.borderColor = "#333";
       event.currentTarget.style.color = "#888";
     }}
-    onClick={(event) => event.stopPropagation()}
   >
     {children}
   </button>

@@ -2,6 +2,54 @@
   background: #111;
 }
 
+.library-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.library-section-header h1,
+.library-section-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.library-section-header p {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+.library-filter-input {
+  background: #222;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 160px;
+  outline: none;
+}
+
+.library-filter-input::placeholder {
+  color: #666;
+}
+
+.library-filter-input:focus {
+  border-color: #555;
+}
+
+.library-playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
 .library-page {
   padding-top: 6px;
 }

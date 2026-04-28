@@ -70,6 +70,15 @@ export const fetchNotifications = async () => {
   });
 };
 
+export const fetchUnreadCount = async () => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const count = mockNotifications.filter(n => !n.read).length;
+      resolve(count);
+    }, 100);
+  });
+};
+
 export const markNotificationRead = async (notifId) => {
   return new Promise(resolve => {
     setTimeout(() => {
@@ -85,6 +94,15 @@ export const markAllNotificationsRead = async () => {
     setTimeout(() => {
       mockNotifications.forEach(n => { n.read = true; });
       resolve({ success: true });
+    }, 100);
+  });
+};
+
+export const registerPushToken = async (token) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      console.log('Mock: Push token registered ->', token);
+      resolve({ success: true, message: 'Mock token registered' });
     }, 100);
   });
 };

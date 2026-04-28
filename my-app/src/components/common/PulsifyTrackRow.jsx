@@ -1,11 +1,13 @@
-import React from 'react';
-import './PulsifyTrackRow.css';
-import { usePlayer } from '../../hooks/usePlayer';
+import React from "react";
+import "./PulsifyTrackRow.css";
+import { usePlayer } from "../../hooks/usePlayer";
+import ReportModal from "./ReportModal";
 
 const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
   const { currentTrack, isPlaying, togglePlay } = usePlayer();
   const isActive = currentTrack?.id === track.trackId;
-  const resolvedArtistName = track.artist?.name ?? track.artist ?? 'Unknown artist';
+  const resolvedArtistName =
+    track.artist?.name ?? track.artist ?? "Unknown artist";
   const resolvedLiked = Boolean(
     isLiked ?? track.viewerHasLiked ?? track.viewer_has_liked,
   );
@@ -14,25 +16,25 @@ const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
   );
 
   const formatDuration = (secs) => {
-    if (!secs) return '0:00';
+    if (!secs) return "0:00";
     const m = Math.floor(secs / 60);
     const s = secs % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
   return (
     <div
-      className={`sc-track-card ${isActive ? 'sc-track-active' : ''}`}
+      className={`sc-track-card ${isActive ? "sc-track-active" : ""}`}
       data-testid={`track-row-${track.trackId}`}
     >
       <div
         className="sc-track-art-wrap"
-        onClick={() => togglePlay(track, { playbackContext: 'discovery' })}
+        onClick={() => togglePlay(track, { playbackContext: "discovery" })}
       >
         <img src={track.coverArt} alt={track.title} className="sc-track-art" />
         <div className="sc-play-overlay">
           <div className="sc-play-circle">
-            {isActive && isPlaying ? 'Pause' : 'Play'}
+            {isActive && isPlaying ? "Pause" : "Play"}
           </div>
         </div>
       </div>
@@ -43,7 +45,9 @@ const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
             <span className="sc-track-artist">{resolvedArtistName}</span>
             <span className="sc-track-title">{track.title}</span>
           </div>
-          <span className="sc-track-time">{track.uploadedAt || 'Recently'}</span>
+          <span className="sc-track-time">
+            {track.uploadedAt || "Recently"}
+          </span>
         </div>
 
         <div className="sc-waveform">
@@ -67,32 +71,32 @@ const PulsifyTrackRow = ({ track, onLike, onRepost, isLiked, isReposted }) => {
         <div className="sc-track-footer">
           <div className="sc-track-actions">
             <button
-              className={`sc-btn ${resolvedLiked ? 'active' : ''}`}
+              className={`sc-btn ${resolvedLiked ? "active" : ""}`}
               onClick={() => onLike(track.trackId)}
               data-testid={`like-btn-${track.trackId}`}
             >
-              {'\u2665'} {resolvedLiked ? 'Liked' : 'Like'}
+              {"\u2665"} {resolvedLiked ? "Liked" : "Like"}
             </button>
             <button
-              className={`sc-btn ${resolvedReposted ? 'active' : ''}`}
+              className={`sc-btn ${resolvedReposted ? "active" : ""}`}
               onClick={() => onRepost(track.trackId)}
               data-testid={`repost-btn-${track.trackId}`}
             >
-              {'\u21C4'} Repost
+              {"\u21C4"} Repost
             </button>
-            <button className="sc-btn">{'\u2197'} Share</button>
-            <button className="sc-btn">{'\u22EF'} More</button>
+            <button className="sc-btn">{"\u2197"} Share</button>
+            <button className="sc-btn">{"\u22EF"} More</button>
           </div>
 
           <div className="sc-track-counters">
             <span className="sc-counter" title="Plays">
-              {'\u25B6'} {Number(track.plays ?? 0).toLocaleString()}
+              {"\u25B6"} {Number(track.plays ?? 0).toLocaleString()}
             </span>
             <span className="sc-counter" title="Likes">
-              {'\u2665'} {Number(track.likes ?? 0).toLocaleString()}
+              {"\u2665"} {Number(track.likes ?? 0).toLocaleString()}
             </span>
             <span className="sc-counter" title="Reposts">
-              {'\u21C4'} {Number(track.reposts ?? 0).toLocaleString()}
+              {"\u21C4"} {Number(track.reposts ?? 0).toLocaleString()}
             </span>
           </div>
         </div>

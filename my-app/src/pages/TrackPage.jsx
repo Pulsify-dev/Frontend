@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Comments from "../components/Comments";
 import EngagementListModal from "../components/EngagementListModal";
@@ -6,7 +6,10 @@ import HistoryPanel from "../components/HistoryPanel";
 import LoadingState from "../components/LoadingState";
 import PlayerCard from "../components/PlayerCard";
 import TrackHeader from "../components/TrackHeader";
-import { CONFIGURED_TRACK_IDS, buildTrackQueueIds } from "../config/trackCatalog";
+import {
+  CONFIGURED_TRACK_IDS,
+  buildTrackQueueIds,
+} from "../config/trackCatalog";
 import { DEFAULT_TRACK_ID } from "../config/defaultTrack";
 import { usePlayer } from "../hooks/usePlayer";
 import {
@@ -31,6 +34,7 @@ import {
   updateComment,
 } from "../services/api";
 import "../App.css";
+
 const configuredApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL || "your configured API";
 
@@ -108,21 +112,27 @@ const findLatestMatchingComment = (
 ) => {
   const normalizedText = String(text ?? "").trim();
 
-  return [...(items ?? [])]
-    .filter((item) => {
-      if (!item?.isOwnedByViewer) return false;
-      if (String(item.text ?? "").trim() !== normalizedText) return false;
-      if ((item.parentCommentId ?? null) !== parentCommentId) return false;
+  return (
+    [...(items ?? [])]
+      .filter((item) => {
+        if (!item?.isOwnedByViewer) return false;
+        if (String(item.text ?? "").trim() !== normalizedText) return false;
+        if ((item.parentCommentId ?? null) !== parentCommentId) return false;
 
-      if (typeof timestamp_ms === "number" && typeof item.timestamp_ms === "number") {
-        return item.timestamp_ms === timestamp_ms;
-      }
+        if (
+          typeof timestamp_ms === "number" &&
+          typeof item.timestamp_ms === "number"
+        ) {
+          return item.timestamp_ms === timestamp_ms;
+        }
 
-      return true;
-    })
-    .sort(
-      (left, right) => getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left),
-    )[0] ?? null;
+        return true;
+      })
+      .sort(
+        (left, right) =>
+          getCommentCreatedAtMs(right) - getCommentCreatedAtMs(left),
+      )[0] ?? null
+  );
 };
 
 const getSectionConfig = (
@@ -131,7 +141,7 @@ const getSectionConfig = (
   relatedTracks,
   playlists,
   likers,
-  reposters
+  reposters,
 ) => {
   if (!track) return null;
 
@@ -178,6 +188,7 @@ function TrackPage({ view = "overview" }) {
   const navigate = useNavigate();
   const { trackId: routeTrackId } = useParams();
   const trackId = routeTrackId ?? DEFAULT_TRACK_ID;
+
   const {
     currentTrack: activeTrack,
     isPlaying: playerIsPlaying,
@@ -192,6 +203,15 @@ function TrackPage({ view = "overview" }) {
     setQueueTrackIds,
     syncCurrentTrack,
   } = usePlayer();
+
+  // FIX: keep a stable ref to syncCurrentTrack so we can call it inside
+  // async functions without adding it to useEffect dependency arrays
+  // (it is stable by itself, but being in contextValue ties it to every
+  // context re-render which previously caused the cascade).
+  const syncCurrentTrackRef = useRef(syncCurrentTrack);
+  useEffect(() => {
+    syncCurrentTrackRef.current = syncCurrentTrack;
+  });
 
   const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const [tokenInput, setTokenInput] = useState(() => readAuthToken());
@@ -210,13 +230,13 @@ function TrackPage({ view = "overview" }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [uiMessage, setUiMessage] = useState("");
   const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
+
   const isTrackIdMissing = !trackId;
   const isActiveRouteTrack = Boolean(track?.id) && activeTrack?.id === track.id;
 
-  const playbackState =
-    isActiveRouteTrack
-      ? playerPlaybackState
-      : streamInfo?.playback_state ?? track?.playbackState ?? "Playable";
+  const playbackState = isActiveRouteTrack
+    ? playerPlaybackState
+    : (streamInfo?.playback_state ?? track?.playbackState ?? "Playable");
   const previewDurationSeconds =
     streamInfo?.preview_duration_seconds ?? track?.previewDurationSeconds ?? 0;
   const currentTime = isActiveRouteTrack ? playerCurrentTime : 0;
@@ -224,11 +244,13 @@ function TrackPage({ view = "overview" }) {
     ? playerDuration || track?.duration || 0
     : track?.duration || 0;
   const isPlaying = isActiveRouteTrack ? playerIsPlaying : false;
-  const feedbackMessage = isActiveRouteTrack ? playerMessage || uiMessage : uiMessage || playerMessage;
+  const feedbackMessage = isActiveRouteTrack
+    ? playerMessage || uiMessage
+    : uiMessage || playerMessage;
 
   const visibleComments = useMemo(
     () => (view === "overview" ? comments.slice(0, 6) : comments),
-    [comments, view]
+    [comments, view],
   );
 
   const sectionConfig = useMemo(
@@ -239,9 +261,9 @@ function TrackPage({ view = "overview" }) {
         relatedTracks,
         playlists,
         likers,
-        reposters
+        reposters,
       ),
-    [view, track, relatedTracks, playlists, likers, reposters]
+    [view, track, relatedTracks, playlists, likers, reposters],
   );
 
   const routeQueueTrackIds = useMemo(
@@ -251,9 +273,10 @@ function TrackPage({ view = "overview" }) {
         relatedTracks.map((item) => item.id),
         CONFIGURED_TRACK_IDS,
       ),
-    [relatedTracks, track?.id, trackId]
+    [relatedTracks, track?.id, trackId],
   );
 
+  // Navigate when the player switches to a different track via queue controls.
   useEffect(() => {
     if (!activeTrack?.id || !routeTrackId || activeTrack.id === routeTrackId) {
       return;
@@ -266,11 +289,14 @@ function TrackPage({ view = "overview" }) {
     );
   }, [activeTrack?.id, navigate, routeTrackId, view]);
 
+  // Listen for engagement updates broadcast by other pages/components.
   useEffect(() => {
     const handleTrackEngagementUpdate = (event) => {
-      const { trackId: updatedTrackId, track: updatedTrack } = event.detail ?? {};
+      const { trackId: updatedTrackId, track: updatedTrack } =
+        event.detail ?? {};
 
-      if (!updatedTrackId || updatedTrackId !== trackId || !updatedTrack) return;
+      if (!updatedTrackId || updatedTrackId !== trackId || !updatedTrack)
+        return;
 
       setTrack((currentTrack) =>
         currentTrack
@@ -278,19 +304,19 @@ function TrackPage({ view = "overview" }) {
               ...currentTrack,
               ...updatedTrack,
             }
-          : currentTrack
+          : currentTrack,
       );
     };
 
     window.addEventListener(
       "pulsify:track-engagement-updated",
-      handleTrackEngagementUpdate
+      handleTrackEngagementUpdate,
     );
 
     return () => {
       window.removeEventListener(
         "pulsify:track-engagement-updated",
-        handleTrackEngagementUpdate
+        handleTrackEngagementUpdate,
       );
     };
   }, [trackId]);
@@ -305,7 +331,7 @@ function TrackPage({ view = "overview" }) {
           track: nextTrack,
           ...extraDetail,
         },
-      })
+      }),
     );
   };
 
@@ -313,6 +339,11 @@ function TrackPage({ view = "overview" }) {
     error.startsWith("Missing access token.") ||
     error.startsWith("Unauthorized.");
 
+  // FIX: removed syncCurrentTrack from the dependency array.
+  // We call it via syncCurrentTrackRef so the effect only re-runs when
+  // trackId or authRefreshKey actually change — not on every context
+  // re-render caused by currentTime ticks from the audio element.
+  // setQueueTrackIds is stable (useCallback with [] deps) so it's safe to keep.
   useEffect(() => {
     if (!trackId) {
       setIsLoading(false);
@@ -322,13 +353,13 @@ function TrackPage({ view = "overview" }) {
 
     let isMounted = true;
 
-    const loadTrack = async () => {
+    const fetchTrackData = async () => {
       setIsLoading(true);
       setError("");
       setUiMessage(
         hasAuthToken()
           ? ""
-          : "Demo mode active. Add a backend token any time to use live data."
+          : "Demo mode active. Add a backend token any time to use live data.",
       );
       setCommentTotal(0);
       setCommentsPagination(null);
@@ -340,6 +371,7 @@ function TrackPage({ view = "overview" }) {
       try {
         nextTrack = await getTrack(trackId);
       } catch {
+        if (!isMounted) return;
         setError("Track unavailable right now.");
         setIsLoading(false);
         return;
@@ -362,21 +394,21 @@ function TrackPage({ view = "overview" }) {
         results[0].status === "fulfilled"
           ? results[0].value
           : results[0].reason?.status === 403
-          ? {
-              url: "",
-              playback_state: "Blocked",
-              preview_start_seconds: 0,
-              preview_duration_seconds: 0,
-              message:
-                results[0].reason?.message ??
-                "This track is blocked for your plan or region.",
-            }
-          : {
-              url: nextTrack.audioUrl,
-              playback_state: nextTrack.playbackState,
-              preview_start_seconds: 0,
-              preview_duration_seconds: nextTrack.previewDurationSeconds,
-            }
+            ? {
+                url: "",
+                playback_state: "Blocked",
+                preview_start_seconds: 0,
+                preview_duration_seconds: 0,
+                message:
+                  results[0].reason?.message ??
+                  "This track is blocked for your plan or region.",
+              }
+            : {
+                url: nextTrack.audioUrl,
+                playback_state: nextTrack.playbackState,
+                preview_start_seconds: 0,
+                preview_duration_seconds: nextTrack.previewDurationSeconds,
+              },
       );
 
       const commentsPayload =
@@ -394,9 +426,13 @@ function TrackPage({ view = "overview" }) {
             };
 
       setComments(sortCommentsByTimeline(commentsPayload.comments));
-      setCommentTotal(commentsPayload.totalCount ?? nextTrack.commentCount ?? 0);
+      setCommentTotal(
+        commentsPayload.totalCount ?? nextTrack.commentCount ?? 0,
+      );
       setCommentsPagination(commentsPayload.pagination ?? null);
-      const nextLikers = results[2].status === "fulfilled" ? results[2].value : [];
+
+      const nextLikers =
+        results[2].status === "fulfilled" ? results[2].value : [];
       const nextReposters =
         results[3].status === "fulfilled" ? results[3].value : [];
       const nextRelatedTracks =
@@ -409,30 +445,36 @@ function TrackPage({ view = "overview" }) {
       setRelatedTracks(nextRelatedTracks);
       setPlaylists(nextPlaylists);
       setFanLeaderboard(
-        results[6].status === "fulfilled" ? results[6].value : []
+        results[6].status === "fulfilled" ? results[6].value : [],
       );
+
       setQueueTrackIds(
         buildTrackQueueIds(
           nextTrack.id,
           nextRelatedTracks.map((item) => item.id),
           CONFIGURED_TRACK_IDS,
-        )
+        ),
       );
-      syncCurrentTrack(nextTrack);
+
+      // Use the ref so this call doesn't become a dep of the effect.
+      syncCurrentTrackRef.current(nextTrack);
+
       setIsLoading(false);
     };
 
-    loadTrack();
+    fetchTrackData();
 
     return () => {
       isMounted = false;
     };
-  }, [authRefreshKey, setQueueTrackIds, syncCurrentTrack, trackId]);
+    // FIX: syncCurrentTrack intentionally omitted — called via ref above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authRefreshKey, setQueueTrackIds, trackId]);
 
-  useEffect(() => {
-    if (!track || !isActiveRouteTrack) return;
-    syncCurrentTrack(track);
-  }, [isActiveRouteTrack, syncCurrentTrack, track]);
+  // FIX: removed the second useEffect that called syncCurrentTrack whenever
+  // `track` or `isActiveRouteTrack` changed. That created a state → render →
+  // context change → re-render → effect loop. The single call at the end of
+  // fetchTrackData above is sufficient.
 
   const handleTokenSubmit = (event) => {
     event.preventDefault();
@@ -462,7 +504,7 @@ function TrackPage({ view = "overview" }) {
     setLikers([]);
     setReposters([]);
     setError(
-      "Missing access token. Add a valid token in localStorage as `accessToken` or `pulsify_token`, then reload."
+      "Missing access token. Add a valid token in localStorage as `accessToken` or `pulsify_token`, then reload.",
     );
   };
 
@@ -490,7 +532,7 @@ function TrackPage({ view = "overview" }) {
 
     if (playbackState === "Blocked") {
       setPlayerMessage(
-        "This track is blocked because of plan or region rules."
+        "This track is blocked because of plan or region rules.",
       );
       return;
     }
@@ -519,7 +561,7 @@ function TrackPage({ view = "overview" }) {
     };
 
     setTrack(optimisticTrack);
-    syncCurrentTrack(optimisticTrack);
+    syncCurrentTrackRef.current(optimisticTrack);
     broadcastTrackSnapshot(optimisticTrack, {
       viewerHasLiked: shouldLike,
       previousViewerHasLiked,
@@ -536,7 +578,7 @@ function TrackPage({ view = "overview" }) {
       };
 
       setTrack(rollbackTrack);
-      syncCurrentTrack(rollbackTrack);
+      syncCurrentTrackRef.current(rollbackTrack);
       broadcastTrackSnapshot(rollbackTrack, {
         viewerHasLiked: previousViewerHasLiked,
         previousViewerHasLiked: shouldLike,
@@ -557,7 +599,7 @@ function TrackPage({ view = "overview" }) {
     };
 
     setTrack(optimisticTrack);
-    syncCurrentTrack(optimisticTrack);
+    syncCurrentTrackRef.current(optimisticTrack);
     broadcastTrackSnapshot(optimisticTrack, {
       viewerHasReposted: shouldRepost,
       previousViewerHasReposted,
@@ -574,7 +616,7 @@ function TrackPage({ view = "overview" }) {
       };
 
       setTrack(rollbackTrack);
-      syncCurrentTrack(rollbackTrack);
+      syncCurrentTrackRef.current(rollbackTrack);
       broadcastTrackSnapshot(rollbackTrack, {
         viewerHasReposted: previousViewerHasReposted,
         previousViewerHasReposted: shouldRepost,
@@ -596,12 +638,14 @@ function TrackPage({ view = "overview" }) {
       commentCount: (track.commentCount ?? 0) + 1,
     };
 
-    setComments(sortCommentsByTimeline(refreshedCommentsPayload.comments ?? []));
+    setComments(
+      sortCommentsByTimeline(refreshedCommentsPayload.comments ?? []),
+    );
     setCommentTotal(
       refreshedCommentsPayload.totalCount ?? (commentTotal ?? 0) + 1,
     );
     setTrack(nextTrack);
-    syncCurrentTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
     broadcastTrackSnapshot(nextTrack);
     setCommentsPagination(refreshedCommentsPayload.pagination ?? null);
   };
@@ -609,14 +653,16 @@ function TrackPage({ view = "overview" }) {
   const handleAddReply = async (parentCommentId, payload) => {
     if (!track) return null;
 
-    const parentComment = comments.find((comment) => comment.id === parentCommentId);
+    const parentComment = comments.find(
+      (comment) => comment.id === parentCommentId,
+    );
     const replyPayload = {
       ...payload,
       parentCommentId,
       timestamp_ms:
         typeof payload.timestamp_ms === "number"
           ? payload.timestamp_ms
-          : parentComment?.timestamp_ms ?? 0,
+          : (parentComment?.timestamp_ms ?? 0),
     };
 
     await createComment(track.id, replyPayload);
@@ -636,12 +682,12 @@ function TrackPage({ view = "overview" }) {
               ...comment,
               repliesCount: (comment.repliesCount ?? 0) + 1,
             }
-          : comment
-      )
+          : comment,
+      ),
     );
     setCommentTotal((currentTotal) => currentTotal + 1);
     setTrack(nextTrack);
-    syncCurrentTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
     broadcastTrackSnapshot(nextTrack);
     setCommentsPagination((currentPagination) =>
       currentPagination
@@ -650,10 +696,13 @@ function TrackPage({ view = "overview" }) {
             total: (currentPagination.total ?? 0) + 1,
             pages: Math.max(
               currentPagination.pages ?? 1,
-              Math.ceil(((currentPagination.total ?? 0) + 1) / Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1))
+              Math.ceil(
+                ((currentPagination.total ?? 0) + 1) /
+                  Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1),
+              ),
             ),
           }
-        : currentPagination
+        : currentPagination,
     );
 
     return (
@@ -662,7 +711,9 @@ function TrackPage({ view = "overview" }) {
         parentCommentId,
         timestamp_ms: replyPayload.timestamp_ms,
       }) ??
-      refreshedRepliesPayload.replies?.[refreshedRepliesPayload.replies.length - 1] ??
+      refreshedRepliesPayload.replies?.[
+        refreshedRepliesPayload.replies.length - 1
+      ] ??
       null
     );
   };
@@ -689,8 +740,8 @@ function TrackPage({ view = "overview" }) {
                 ...comment,
                 ...updatedComment,
               }
-            : comment
-        )
+            : comment,
+        ),
       );
     }
 
@@ -714,15 +765,18 @@ function TrackPage({ view = "overview" }) {
 
       setComments((currentComments) =>
         sortCommentsByTimeline(
-          mergeById([...currentComments, ...(nextPayload.comments ?? [])])
-        )
+          mergeById([...currentComments, ...(nextPayload.comments ?? [])]),
+        ),
       );
-      setCommentTotal((currentTotal) =>
-        nextPayload.totalCount ?? commentsPagination.total ?? currentTotal
+      setCommentTotal(
+        (currentTotal) =>
+          nextPayload.totalCount ?? commentsPagination.total ?? currentTotal,
       );
       setCommentsPagination(nextPayload.pagination ?? commentsPagination);
     } catch (loadMoreError) {
-      setPlayerMessage(loadMoreError?.message || "Could not load more comments.");
+      setPlayerMessage(
+        loadMoreError?.message || "Could not load more comments.",
+      );
     } finally {
       setIsLoadingMoreComments(false);
     }
@@ -752,11 +806,11 @@ function TrackPage({ view = "overview" }) {
         }
 
         return comment;
-      })
+      }),
     );
     setCommentTotal((currentTotal) => Math.max(currentTotal - 1, 0));
     setTrack(nextTrack);
-    syncCurrentTrack(nextTrack);
+    syncCurrentTrackRef.current(nextTrack);
     broadcastTrackSnapshot(nextTrack);
     setCommentsPagination((currentPagination) =>
       currentPagination
@@ -767,11 +821,11 @@ function TrackPage({ view = "overview" }) {
               1,
               Math.ceil(
                 Math.max((currentPagination.total ?? 0) - 1, 0) /
-                  Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1)
-              )
+                  Math.max(currentPagination.limit ?? COMMENTS_PAGE_LIMIT, 1),
+              ),
             ),
           }
-        : currentPagination
+        : currentPagination,
     );
     setPlayerMessage("Comment deleted successfully.");
   };
@@ -866,7 +920,7 @@ function TrackPage({ view = "overview" }) {
       if (downloadError?.status === 403) {
         setPlayerMessage(
           downloadError.message ||
-            "Download is only available on the ArtistPro plan."
+            "Download is only available on the ArtistPro plan.",
         );
         return;
       }
@@ -884,7 +938,7 @@ function TrackPage({ view = "overview" }) {
         fallbackLink.remove();
 
         setPlayerMessage(
-          "Download was triggered. If it did not save, allow downloads in your browser."
+          "Download was triggered. If it did not save, allow downloads in your browser.",
         );
       } catch (fallbackError) {
         console.error(fallbackError);
@@ -912,10 +966,10 @@ function TrackPage({ view = "overview" }) {
               <span className="tag">Track configuration</span>
               <h1>Set a real backend track id</h1>
               <p>
-                The app is now pointed to
-                {" "}<code>{configuredApiBaseUrl}</code>, but no live track id is
-                configured yet.
-                Add <code>VITE_TRACK_ID</code> in <code>.env</code> or open a route like
+                The app is now pointed to <code>{configuredApiBaseUrl}</code>,
+                but no live track id is configured yet. Add{" "}
+                <code>VITE_TRACK_ID</code> in <code>.env</code> or open a route
+                like
                 <code> /tracks/&lt;your-track-id&gt;</code>.
               </p>
             </div>
@@ -1025,7 +1079,8 @@ function TrackPage({ view = "overview" }) {
                 onLoadMoreComments={handleLoadMoreComments}
                 hasMoreComments={
                   view === "comments" &&
-                  (commentsPagination?.page ?? 1) < (commentsPagination?.pages ?? 1)
+                  (commentsPagination?.page ?? 1) <
+                    (commentsPagination?.pages ?? 1)
                 }
                 isLoadingMoreComments={isLoadingMoreComments}
                 onMessage={setPlayerMessage}

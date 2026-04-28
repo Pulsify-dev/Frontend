@@ -61,12 +61,16 @@ export async function getFollowersApi(userId, page = 1, limit = 12) {
 export async function getFollowingApi(userId, page = 1, limit = 12) {
   const res = await fetch(
     `${API_BASE_URL}/users/${userId}/following?page=${page}&limit=${limit}`,
+    { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch following");
   const data = await res.json();
   const inner = data.data || {};
   return {
-    users: (inner.following || inner.data || []).map(mapUserDtoToUser),
+    users: (inner.following || inner.data || []).map((dto) => ({
+      ...mapUserDtoToUser(dto),
+      isFollowing: true,
+    })),
     pagination: {
       page: inner.page || page,
       limit: inner.limit || limit,
@@ -125,14 +129,26 @@ export async function updateBlockReasonApi(userId, reason) {
 
 export async function getBlockedUsersApi(page = 1, limit = 12) {
   const res = await fetch(
-    `${API_BASE_URL}/users/me/blockers?page=${page}&limit=${limit}`,
+    `${API_BASE_URL}/users/me/blocked?page=${page}&limit=${limit}`,
     { headers: { ...getAuthHeaders() } },
   );
   if (!res.ok) throw new Error("Failed to fetch blocked users");
   const data = await res.json();
+  console.log("[getBlockedUsersApi] raw response:", JSON.stringify(data));
   const inner = data.data || {};
+  const rawList = inner.blocked_users || inner.blockedUsers || inner.data || [];
   return {
-    users: (inner.blocked_users || inner.data || []).map(mapBlockedUserDto),
+    users: rawList.map((entry) => {
+      // API may return { blocked_user: {...}, reason, blocked_at }
+      // or a flat user object directly
+      const userDto = entry.blocked_user || entry.user || entry;
+      return mapBlockedUserDto({
+        ...userDto,
+        reason: entry.reason || userDto.reason || "",
+        blocked_at:
+          entry.blocked_at || entry.blockedAt || userDto.blocked_at || null,
+      });
+    }),
     pagination: {
       page: inner.page || page,
       limit: inner.limit || limit,
