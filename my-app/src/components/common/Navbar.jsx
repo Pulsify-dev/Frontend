@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMessaging } from "@/hooks/useMessaging";
 import { NotificationContext } from "../../context/NotificationContext";
 import { PulsifyAuthVaultContext } from "../../store/PulsifyAuthVault";
 import serviceLocator from "../../utils/serviceLocator";
@@ -19,6 +20,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isArtist, logout } = useAuth();
+  const { unreadTotal } = useMessaging();
   const { subscriptionTier } = useContext(PulsifyAuthVaultContext) || {};
   const isPro = subscriptionTier === "PRO";
 
@@ -155,6 +157,8 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const unreadLabel = unreadTotal > 99 ? "99+" : unreadTotal;
+
   return (
     <nav className="auth-navbar">
       <div className="auth-navbar-left">
@@ -171,6 +175,14 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
+          {isAuthenticated && (
+            <Link
+              to="/messages"
+              className={`auth-nav-link${location.pathname.startsWith("/messages") ? " active" : ""}`}
+            >
+              Messages{unreadTotal > 0 ? ` (${unreadLabel})` : ""}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -1161,6 +1173,13 @@ const Navbar = () => {
                 className="auth-mobile-link"
               >
                 Following
+              </Link>
+              <Link
+                to="/messages"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="auth-mobile-link"
+              >
+                Messages{unreadTotal > 0 ? ` (${unreadLabel})` : ""}
               </Link>
               {isArtist() && (
                 <Link

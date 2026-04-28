@@ -42,6 +42,7 @@ import { PulsifyAlbumDetailView } from "@/pages/PulsifyAlbumDetailView";
 // Module 8/10 – Discovery & Notifications (Ahmed Ali)
 import { NotificationProvider } from "./context/NotificationContext";
 import { PlayerProvider } from "./context/PlayerContext";
+import { MessagingProvider } from "./context/MessagingContext";
 import PulsifyPlayerBar from "./components/common/PulsifyPlayerBar";
 import DiscoveryFeedPage from "./pages/DiscoveryFeedPage";
 import FeedPage from "./pages/FeedPage";
@@ -49,7 +50,10 @@ import SearchHubPage from "./pages/SearchHubPage";
 import TrendingChartsPage from "./pages/TrendingChartsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 
-// Module 11 - Admin & Moderation
+// Module 9 – Messaging (Seif Allah Alaa)
+import MessagesPage from "./pages/MessagesPage";
+
+// Module 11 – Admin & Moderation
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminContentModerationPage from "./pages/AdminContentModerationPage";
 import AdminUserManagementPage from "./pages/AdminUserManagementPage";
@@ -64,197 +68,218 @@ const AppRoutes = () => {
 
   return (
     <NotificationProvider>
-      <PlayerProvider>
-        <>
-          <Routes>
-            {/* Auth pages – minimal navbar */}
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-            </Route>
+      <MessagingProvider>
+        <PlayerProvider>
+          <>
+            <Routes>
+              {/* Auth pages – minimal navbar */}
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+              </Route>
 
-            {/* Landing – no layout wrapper, manages its own navbar */}
-            <Route path="/" element={<LandingPage />} />
+              {/* Landing – no layout wrapper, manages its own navbar */}
+              <Route path="/" element={<LandingPage />} />
 
-            {/* App pages – full navbar */}
-            <Route element={<MainLayout />}>
-              <Route path="/home" element={<Home />} />
+              {/* App pages – full navbar */}
+              <Route element={<MainLayout />}>
+                <Route path="/home" element={<Home />} />
 
-              {/* Profile - Module 2 (Protected) */}
+                {/* Profile - Module 2 (Protected) */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/profile/:userId" element={<ProfilePage />} />
+
+                {/* Social Graph - Module 3 */}
+                <Route path="/following" element={<FollowingPage />} />
+                <Route path="/following/:userId" element={<FollowingPage />} />
+                <Route path="/followers" element={<FollowersPage />} />
+                <Route path="/followers/:userId" element={<FollowersPage />} />
+                <Route
+                  path="/blocked"
+                  element={<Navigate to="/settings" replace />}
+                />
+
+                {/* Settings */}
+                <Route path="/settings" element={<SettingsPage />} />
+
+                {/* Tracks & Engagement - Module 4/5/6 */}
+                <Route
+                  path="/trackpage"
+                  element={
+                    HAS_DEFAULT_TRACK_ID ? (
+                      <Navigate to={`/tracks/${DEFAULT_TRACK_ID}`} replace />
+                    ) : (
+                      <TrackPage view="overview" />
+                    )
+                  }
+                />
+                <Route
+                  path="/tracks/:trackId"
+                  element={<TrackPage view="overview" />}
+                />
+                <Route
+                  path="/tracks/:trackId/comments"
+                  element={<TrackPage view="comments" />}
+                />
+                <Route
+                  path="/tracks/:trackId/related"
+                  element={<TrackPage view="related" />}
+                />
+                <Route
+                  path="/tracks/:trackId/playlists"
+                  element={<TrackPage view="playlists" />}
+                />
+                <Route
+                  path="/tracks/:trackId/likes"
+                  element={<TrackPage view="likes" />}
+                />
+                <Route
+                  path="/tracks/:trackId/reposts"
+                  element={<TrackPage view="reposts" />}
+                />
+                <Route path="/history" element={<PlaybackHistoryPage />} />
+                <Route
+                  path="/recently-played"
+                  element={<PlaybackHistoryPage />}
+                />
+
+                {/* Playlists - Module 7 */}
+                <Route path="/playlists" element={<PulsifyPlaylistsView />} />
+                <Route
+                  path="/playlists/:playlistId"
+                  element={<PulsifyPlaylistDetailView />}
+                />
+
+                {/* Library (Protected) */}
+                <Route
+                  path="/library"
+                  element={
+                    <ProtectedRoute>
+                      <LibraryPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Albums - Module 13 */}
+                <Route
+                  path="/albums/:albumId"
+                  element={<PulsifyAlbumDetailView />}
+                />
+
+                {/* Premium - Module 12 */}
+                <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
+
+                {/* Discovery & Notifications - Module 8/10 */}
+                <Route path="/feed" element={<FeedPage />} />
+                <Route path="/discover" element={<DiscoveryFeedPage />} />
+                <Route path="/search" element={<SearchHubPage />} />
+                <Route path="/trending" element={<TrendingChartsPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+
+                {/* Messaging - Module 9 */}
+                <Route
+                  path="/messages"
+                  element={
+                    <ProtectedRoute>
+                      <MessagesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/messages/:conversationId"
+                  element={
+                    <ProtectedRoute>
+                      <MessagesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Admin & Moderation - Module 11 */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboardPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/moderation"
+                  element={
+                    <AdminRoute>
+                      <AdminContentModerationPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <AdminRoute>
+                      <AdminUserManagementPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/tracks"
+                  element={
+                    <AdminRoute>
+                      <AdminTracksManagementPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/albums"
+                  element={
+                    <AdminRoute>
+                      <AdminAlbumsManagementPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/logs"
+                  element={
+                    <AdminRoute>
+                      <AdminSystemLogsPage />
+                    </AdminRoute>
+                  }
+                />
+
+                {/* Resource Resolver (Wildcard) - MUST BE LAST IN MAIN LAYOUT */}
+                <Route path="/*" element={<ResourceResolverPage />} />
+              </Route>
+
+              {/* Upload & My Tracks (standalone, no navbar) */}
               <Route
-                path="/profile"
+                path="/upload"
                 element={
                   <ProtectedRoute>
-                    <ProfilePage />
+                    <PulsifyTrackUploadScreen />
                   </ProtectedRoute>
                 }
               />
-              <Route path="/profile/:userId" element={<ProfilePage />} />
-
-              {/* Social Graph - Module 3 */}
-              <Route path="/following" element={<FollowingPage />} />
-              <Route path="/following/:userId" element={<FollowingPage />} />
-              <Route path="/followers" element={<FollowersPage />} />
-              <Route path="/followers/:userId" element={<FollowersPage />} />
               <Route
-                path="/blocked"
-                element={<Navigate to="/settings" replace />}
-              />
-
-              {/* Settings */}
-              <Route path="/settings" element={<SettingsPage />} />
-
-              {/* Tracks & Engagement - Module 4/5/6 */}
-              <Route
-                path="/trackpage"
-                element={
-                  HAS_DEFAULT_TRACK_ID ? (
-                    <Navigate to={`/tracks/${DEFAULT_TRACK_ID}`} replace />
-                  ) : (
-                    <TrackPage view="overview" />
-                  )
-                }
-              />
-              <Route
-                path="/tracks/:trackId"
-                element={<TrackPage view="overview" />}
-              />
-              <Route
-                path="/tracks/:trackId/comments"
-                element={<TrackPage view="comments" />}
-              />
-              <Route
-                path="/tracks/:trackId/related"
-                element={<TrackPage view="related" />}
-              />
-              <Route
-                path="/tracks/:trackId/playlists"
-                element={<TrackPage view="playlists" />}
-              />
-              <Route
-                path="/tracks/:trackId/likes"
-                element={<TrackPage view="likes" />}
-              />
-              <Route
-                path="/tracks/:trackId/reposts"
-                element={<TrackPage view="reposts" />}
-              />
-              <Route path="/history" element={<PlaybackHistoryPage />} />
-              <Route
-                path="/recently-played"
-                element={<PlaybackHistoryPage />}
-              />
-
-              {/* Playlists - Module 7 */}
-              <Route path="/playlists" element={<PulsifyPlaylistsView />} />
-              <Route
-                path="/playlists/:playlistId"
-                element={<PulsifyPlaylistDetailView />}
-              />
-
-              {/* Library (Protected) */}
-              <Route
-                path="/library"
+                path="/my-tracks"
                 element={
                   <ProtectedRoute>
-                    <LibraryPage />
+                    <PulsifyMyTracksView />
                   </ProtectedRoute>
                 }
               />
+            </Routes>
 
-              {/* Albums - Module 13 */}
-              <Route
-                path="/albums/:albumId"
-                element={<PulsifyAlbumDetailView />}
-              />
-
-              {/* Premium - Module 12 */}
-              <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
-
-              {/* Discovery & Notifications - Module 8/10 */}
-              <Route path="/feed" element={<FeedPage />} />
-              <Route path="/discover" element={<DiscoveryFeedPage />} />
-              <Route path="/search" element={<SearchHubPage />} />
-              <Route path="/trending" element={<TrendingChartsPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboardPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/moderation"
-                element={
-                  <AdminRoute>
-                    <AdminContentModerationPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <AdminRoute>
-                    <AdminUserManagementPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/tracks"
-                element={
-                  <AdminRoute>
-                    <AdminTracksManagementPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/albums"
-                element={
-                  <AdminRoute>
-                    <AdminAlbumsManagementPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/logs"
-                element={
-                  <AdminRoute>
-                    <AdminSystemLogsPage />
-                  </AdminRoute>
-                }
-              />
-
-              {/* Resource Resolver (Wildcard) - MUST BE LAST IN MAIN LAYOUT */}
-              <Route path="/*" element={<ResourceResolverPage />} />
-            </Route>
-
-            {/* Upload & My Tracks (standalone, no navbar) */}
-            <Route
-              path="/upload"
-              element={
-                <ProtectedRoute>
-                  <PulsifyTrackUploadScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-tracks"
-              element={
-                <ProtectedRoute>
-                  <PulsifyMyTracksView />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-
-          {!isUploadPage && <PulsifyPlayerBar />}
-        </>
-      </PlayerProvider>
+            {!isUploadPage && <PulsifyPlayerBar />}
+          </>
+        </PlayerProvider>
+      </MessagingProvider>
     </NotificationProvider>
   );
 };
