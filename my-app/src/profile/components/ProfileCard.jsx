@@ -1800,41 +1800,20 @@ export default function ProfileCard({
           )}
 
           <div className="sc-sidebar-links">
-            {(() => {
-              const sl = profile.socialLinks ?? {};
-              const PLATFORMS = [
-                "instagram",
-                "twitter",
-                "youtube",
-                "facebook",
-                "tiktok",
-                "website",
-                "patreon",
-                "kofi",
-              ];
-              const topLevel = PLATFORMS.filter((p) => sl[p]).map((p) => ({
-                platform: p,
-                url: sl[p],
-              }));
-              const seen = new Set(topLevel.map((l) => l.url));
-              const extra = (sl.links ?? []).filter(
-                (l) => l.url && !seen.has(l.url),
-              );
-              return [...topLevel, ...extra];
-            })().map((link, i) => (
+            {profileLinks.map((link, i) => (
               <a
                 key={i}
-                href={link.url}
+                href={link.href}
                 target="_blank"
                 rel="noreferrer"
                 className="sc-social-link"
               >
                 <PlatformIcon
-                  platform={link.platform ?? detectPlatform(link.url)}
+                  platform={link.platform ?? detectPlatform(link.href)}
                   size={14}
                 />
                 <span>
-                  {link.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
+                  {link.href.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
                 </span>
               </a>
             ))}

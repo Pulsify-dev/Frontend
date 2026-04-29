@@ -1,6 +1,98 @@
 import { useState } from "react";
 import { PlatformIcon, detectPlatform } from "./SocialPlatforms";
 
+const SOCIAL_LINK_PLATFORMS = [
+  "instagram",
+  "twitter",
+  "youtube",
+  "facebook",
+  "tiktok",
+  "website",
+  "patreon",
+  "kofi",
+];
+
+const normalizeLinkUrl = (url) => {
+  const trimmed = String(url ?? "").trim();
+  if (!trimmed) return "";
+  if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+};
+
+const buildInitialLinks = (socialLinks = {}) => {
+  const result = [];
+  const seen = new Set();
+
+  const addLink = (link) => {
+    const url = normalizeLinkUrl(link?.url);
+    if (!url || seen.has(url)) return;
+
+    seen.add(url);
+    result.push({
+      platform: link.platform ?? detectPlatform(url),
+      url,
+      isSupport: link.isSupport ?? ["patreon", "kofi"].includes(link.platform),
+    });
+  };
+
+  SOCIAL_LINK_PLATFORMS.forEach((platform) => {
+    if (socialLinks[platform]) {
+      addLink({
+        platform,
+        url: socialLinks[platform],
+        isSupport: ["patreon", "kofi"].includes(platform),
+      });
+    }
+  });
+
+  if (Array.isArray(socialLinks.links)) {
+    socialLinks.links.forEach(addLink);
+  }
+
+  Object.entries(socialLinks).forEach(([key, value]) => {
+    if (key === "links" || SOCIAL_LINK_PLATFORMS.includes(key)) return;
+
+    if (typeof value === "string") {
+      addLink({ platform: detectPlatform(value), url: value });
+      return;
+    }
+
+    if (value && typeof value === "object") {
+      addLink({
+        platform: value.platform ?? detectPlatform(value.url ?? value.href),
+        url: value.url ?? value.href,
+        isSupport: value.isSupport ?? false,
+      });
+    }
+  });
+
+  return result;
+};
+
+const buildSocialLinksPayload = (links) => {
+  const cleanLinks = links
+    .map((link) => ({
+      platform: link.platform ?? detectPlatform(link.url),
+      url: normalizeLinkUrl(link.url),
+      isSupport: Boolean(link.isSupport),
+    }))
+    .filter((link) => link.url);
+
+  const payload = {};
+
+  cleanLinks.forEach((link, index) => {
+    const platform = link.platform || "website";
+    if (!payload[platform]) {
+      payload[platform] = link.url;
+      return;
+    }
+
+    payload[`link_${index + 1}`] = link.url;
+  });
+
+  return payload;
+};
+
 export default function EditProfileForm({
   profile,
   onSave,
@@ -16,32 +108,7 @@ export default function EditProfileForm({
   );
   const [isPrivate, _setIsPrivate] = useState(profile.isPrivate);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl);
-  const [links, setLinks] = useState(() => {
-    const sl = profile.socialLinks ?? {};
-    const result = [];
-    if (sl.instagram)
-      result.push({
-        platform: "instagram",
-        url: sl.instagram,
-        isSupport: false,
-      });
-    if (sl.twitter)
-      result.push({ platform: "twitter", url: sl.twitter, isSupport: false });
-    if (sl.website)
-      result.push({ platform: "website", url: sl.website, isSupport: false });
-    if (sl.links) {
-      for (const l of sl.links) {
-        if (!result.some((r) => r.url && r.url === l.url)) {
-          result.push({
-            platform: l.platform ?? detectPlatform(l.url),
-            url: l.url,
-            isSupport: l.isSupport ?? false,
-          });
-        }
-      }
-    }
-    return result;
-  });
+  const [links, setLinks] = useState(() => buildInitialLinks(profile.socialLinks));
 
   // Split location into city/country for SoundCloud-style display
   const locationParts = location.split(",").map((s) => s.trim());
@@ -60,24 +127,7 @@ export default function EditProfileForm({
         .map((g) => g.trim())
         .filter(Boolean),
       isPrivate,
-      socialLinks: (() => {
-        const PLATFORMS = [
-          "instagram",
-          "twitter",
-          "youtube",
-          "facebook",
-          "tiktok",
-          "website",
-          "patreon",
-          "kofi",
-        ];
-        const topLevel = {};
-        for (const p of PLATFORMS) {
-          const found = links.find((l) => l.platform === p && l.url);
-          if (found) topLevel[p] = found.url;
-        }
-        return { ...topLevel, links: links.filter((l) => l.url) };
-      })(),
+      socialLinks: buildSocialLinksPayload(links),
     });
   }
 
@@ -221,7 +271,9 @@ export default function EditProfileForm({
                     ? "Support page URL (Patreon, Ko-fi…)"
                     : "https://"
                 }
-                type="url"
+                type="text"
+                inputMode="url"
+                autoComplete="url"
               />
               <button
                 type="button"

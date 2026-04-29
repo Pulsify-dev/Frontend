@@ -641,8 +641,8 @@ export default function ProfilePage() {
       const updated = await profileService.updateMyProfile(payload);
       setProfile(updated);
       closeModal();
-    } catch {
-      setErrorMessage("Failed to update profile.");
+    } catch (error) {
+      setErrorMessage(error?.message || "Failed to update profile.");
     }
   }
 

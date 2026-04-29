@@ -55,7 +55,12 @@ export async function updateMyProfileApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update profile");
+    const errorPayload = await response.json().catch(() => null);
+    throw new Error(
+      errorPayload?.message ||
+        errorPayload?.error ||
+        "Failed to update profile",
+    );
   }
 
   const ProfileDto = await response.json();
