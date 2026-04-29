@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../hooks/useNotifications';
 import './PulsifyNotificationList.css';
 
@@ -31,6 +32,7 @@ const timeAgo = (dateStr) => {
 
 const PulsifyNotificationList = ({ onClose }) => {
   const { notifications, markAsRead, markAllRead, pushEnabled, requestBrowserNotifications } = useNotifications();
+  const navigate = useNavigate();
 
   return (
     <div className="sc-notif-panel" data-testid="notification-list-panel">
@@ -66,7 +68,14 @@ const PulsifyNotificationList = ({ onClose }) => {
               onClick={() => markAsRead(n.id)}
               data-testid={`notification-item-${n.id}`}
             >
-              <div className="sc-notif-avatar">
+              <div className="sc-notif-avatar" style={{ cursor: 'pointer' }} onClick={(e) => {
+                e.stopPropagation();
+                const actorId = n.actorId || n.actor_id?._id || n.actor_id;
+                if (actorId) {
+                  if (onClose) onClose();
+                  navigate(`/profile/${actorId}`);
+                }
+              }}>
                 <img src={n.actorAvatar} alt={n.actorName} />
               </div>
               <div className="sc-notif-content">

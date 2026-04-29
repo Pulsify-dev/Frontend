@@ -55,6 +55,10 @@ const DiscoveryFeedPage = () => {
       } catch (err) {
         console.error("Failed to load discover data:", err);
       } finally {
+        try {
+          const cached = JSON.parse(localStorage.getItem('pulsify_followed_cache') || '[]');
+          setFollowedUsers(new Set(cached));
+        } catch (e) {}
         setLoading(false);
       }
     };
@@ -72,7 +76,7 @@ const DiscoveryFeedPage = () => {
       trackId: t._id || t.trackId || t.id,
       title: t.title,
       coverArt: t.artwork_url || t.coverArt,
-      audioUrl: t.audio_url || t.audioUrl,
+      audioUrl: t.audio_url || t.audioUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
       artist: {
         name:
           t.artist_id?.display_name ||
@@ -94,11 +98,19 @@ const DiscoveryFeedPage = () => {
   const handleFollow = async (userId) => {
     try {
       await serviceLocator.discovery.followUser(userId);
-      setFollowedUsers((prev) => new Set(prev).add(userId));
+      setFollowedUsers((prev) => {
+        const next = new Set(prev).add(userId);
+        localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+        return next;
+      });
     } catch (err) {
-      // 409 = already following — treat as success
+      // 409 = already following â€” treat as success
       if (err?.response?.status === 409) {
-        setFollowedUsers((prev) => new Set(prev).add(userId));
+        setFollowedUsers((prev) => {
+          const next = new Set(prev).add(userId);
+          localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+          return next;
+        });
       } else {
         console.error("Follow failed:", err);
       }
@@ -112,6 +124,7 @@ const DiscoveryFeedPage = () => {
       setFollowedUsers((prev) => {
         const next = new Set(prev);
         next.delete(userId);
+        localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
         return next;
       });
     } catch (err) {
@@ -269,81 +282,24 @@ const DiscoveryFeedPage = () => {
             )}
           </Carousel>
 
-          {/* Row 3 – Trending Tracks (Numbered List) */}
-          <section className="sc-discover-shelf">
-            <div className="sc-shelf-header">
-              <div>
-                <h2 className="sc-shelf-title">Trending on Pulsify</h2>
-                <div className="sc-shelf-subtext">Top tracks by engagement</div>
-              </div>
-              <a href="/trending" className="sc-shelf-viewall">
-                View all
-              </a>
-            </div>
-            <div className="sc-trending-list">
-              {trendingTracks.slice(0, 10).map((track, i) => (
-                <div className="sc-trending-row" key={track.trackId || i}>
-                  <span className="sc-trending-rank">{i + 1}</span>
-                  <div
-                    className="sc-trending-art"
-                    onClick={() => handlePlayTrack(track)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <img
-                      src={track.coverArt || "https://via.placeholder.com/48"}
-                      alt={track.title}
-                    />
-                  </div>
-                  <div
-                    className="sc-trending-info"
-                    onClick={() => handleGoToTrack(track)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="sc-trending-track-title">{track.title}</div>
-                    <div className="sc-trending-track-artist">
-                      {track.artist?.name || "Unknown"}
-                    </div>
-                  </div>
-                  <div
-                    className="sc-trending-stats"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "15px",
-                    }}
-                  >
-                    <span>▶ {(track.plays || 0).toLocaleString()}</span>
-                    <span>♥ {(track.likes || 0).toLocaleString()}</span>
-                    <button
-                      className="sc-trending-report-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenReport(
-                          "Track",
-                          track.trackId || track._id || track.id,
-                        );
-                      }}
-                      title="Report Track"
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#888",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                      }}
-                    >
-                      ⚑
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {trendingTracks.length === 0 && (
-                <div className="sc-carousel-placeholder">
-                  No trending tracks yet.
-                </div>
-              )}
-            </div>
-          </section>
+          {/* Row 3 - Trending Tracks */}
+          <Carousel
+            title="Trending on Pulsify"
+            subtitle="Top tracks by engagement"
+            viewAllLink="/trending"
+          >
+            {trendingTracks.length > 0 ? (
+              trendingTracks.slice(0, 10).map((track, i) => (
+                <TrackCard
+                  key={track.trackId || i}
+                  track={track}
+                  onReport={handleOpenReport}
+                />
+              ))
+            ) : (
+              <div className="sc-carousel-placeholder">No trending tracks yet.</div>
+            )}
+          </Carousel>
 
           {/* Row 4 – Fresh Uploads */}
           {freshUploads.length > 0 && (
