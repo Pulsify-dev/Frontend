@@ -751,7 +751,17 @@ const Navbar = () => {
                                 markAsRead(notif.id || notif._id);
                             }}
                           >
-                            <div style={{ flexShrink: 0 }}>
+                            <div 
+                              style={{ flexShrink: 0, cursor: 'pointer' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const actorId = notif.actorId || notif.actor_id?._id || notif.actor_id;
+                                if (actorId) {
+                                  setIsNotificationsOpen(false);
+                                  navigate(`/profile/${actorId}`);
+                                }
+                              }}
+                            >
                               {notif.actorAvatar ||
                               notif.actor_avatar ||
                               notif.actor_id?.avatar_url ? (

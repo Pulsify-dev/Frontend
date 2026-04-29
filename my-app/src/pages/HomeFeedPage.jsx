@@ -1,7 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { usePulsifyHomeFeed, usePulsifySearch } from '../hooks/usePulsifyHomeFeed.js';
 import { PulsifyTrackCard } from '../components/discovery/PulsifyTrackCard.jsx';
 import { PulsifyFeedSection, PulsifyErrorAlert, PulsifyLoadingSpinner } from '../components/discovery/PulsifyFeedSection.jsx';
+
+import { useNavigate } from "react-router-dom";
+import serviceLocator from "../utils/serviceLocator";
+import { getListeningHistory } from "../services/api";
+import ArtistToolsWidget from "../components/common/ArtistToolsWidget";
+import ReportModal from "../components/common/ReportModal";
+
+import '../pages/DiscoveryFeedPage.css';
 import './HomeFeedPage.css';
 
 export const HomeFeedPage = ({ userId }) => {
@@ -10,6 +18,76 @@ export const HomeFeedPage = ({ userId }) => {
   const [likedTracks, setLikedTracks] = useState(new Set());
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const navigate = useNavigate();
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [followedUsers, setFollowedUsers] = useState(new Set());
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportEntity, setReportEntity] = useState({ type: "", id: "" });
+
+  useEffect(() => {
+    const loadSidebarData = async () => {
+      try {
+        const [historyData, usersData] = await Promise.all([
+          getListeningHistory().catch(() => ({ history: [] })),
+          serviceLocator.discovery.getSuggestedUsers(5).catch(() => []),
+        ]);
+        setHistory(historyData?.history || []);
+        setSuggestedUsers(usersData || []);
+      } catch (err) {
+        console.error("Failed to load sidebar data:", err);
+      } finally {
+        try {
+          const cached = JSON.parse(localStorage.getItem('pulsify_followed_cache') || '[]');
+          setFollowedUsers(new Set(cached));
+        } catch (e) {}
+      }
+    };
+    loadSidebarData();
+  }, []);
+
+  const handleFollow = async (userId) => {
+    try {
+      await serviceLocator.discovery.followUser(userId);
+      setFollowedUsers((prev) => {
+        const next = new Set(prev).add(userId);
+        localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+        return next;
+      });
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        setFollowedUsers((prev) => {
+          const next = new Set(prev).add(userId);
+          localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+          return next;
+        });
+      } else {
+        console.error("Follow failed:", err);
+      }
+    }
+  };
+
+  const handleUnfollow = async (userId) => {
+    try {
+      await serviceLocator.discovery.unfollowUser(userId);
+      setFollowedUsers((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        localStorage.setItem("pulsify_followed_cache", JSON.stringify([...next]));
+        return next;
+      });
+    } catch (err) {
+      console.error("Unfollow failed:", err);
+    }
+  };
+
+  const handleGoToTrack = (track) => {
+    const t = track.track_id || track;
+    const id = t._id || t.trackId || t.id;
+    if (id) navigate(`/tracks/${id}`);
+  };
+
 
   const handlePlayTrack = useCallback((track) => {
     console.log('Playing track:', track.title);
@@ -37,7 +115,7 @@ export const HomeFeedPage = ({ userId }) => {
 
   if (error && !showSearch) {
     return (
-      <div className="pulsify-home-feed" data-testid="home-feed-page">
+      <div className="pulsify-home-feed sc-discover-page" data-testid="home-feed-page">
         <PulsifyErrorAlert
           message={error}
           onRetry={() => window.location.reload()}
@@ -91,7 +169,8 @@ export const HomeFeedPage = ({ userId }) => {
       )}
 
       {!searchQuery && (
-        <main className="pulsify-feed-content" data-testid="feed-content">
+        <div className="sc-discover-content">
+        <main className="pulsify-feed-content sc-discover-main" data-testid="feed-content">
           {isLoading && (
             <div className="pulsify-feed-section">
               <PulsifyLoadingSpinner />
@@ -152,7 +231,104 @@ export const HomeFeedPage = ({ userId }) => {
             </section>
           )}
         </main>
+
+        {/* Right Sidebar cloned from Discovery */}
+        <aside className="sc-discover-sidebar">
+          <ArtistToolsWidget />
+
+          {/* Artists You Should Follow */}
+          <div className="sc-sidebar-widget">
+            <div className="sc-widget-header">
+              <h3>ARTISTS YOU SHOULD FOLLOW</h3>
+              <a href="#" className="sc-widget-header-link">Refresh list</a>
+            </div>
+            <div className="sc-follow-list">
+              {suggestedUsers.map((user) => {
+                const userId = user._id || user.id;
+                const isFollowed = followedUsers.has(userId);
+                return (
+                  <div className="sc-follow-row" key={userId}>
+                    <img
+                      className="sc-follow-avatar"
+                      src={user.avatar_url || "https://via.placeholder.com/40"}
+                      alt={user.display_name || user.username}
+                      onClick={() => navigate(`/profile/${userId}`)}
+                    />
+                    <div
+                      className="sc-follow-info"
+                      onClick={() => navigate(`/profile/${userId}`)}
+                    >
+                      <div className="sc-follow-name">
+                        {user.display_name || user.username}
+                        {user.is_verified && <span className="sc-verified-dot">●</span>}
+                      </div>
+                      <div className="sc-follow-stats">
+                        👤 {(user.followers_count || 0).toLocaleString()} · 🎵 {user.track_count || 0}
+                      </div>
+                    </div>
+                    <button
+                      className={`sc-follow-btn ${isFollowed ? "sc-follow-btn-following" : ""}`}
+                      onClick={() => isFollowed ? handleUnfollow(userId) : handleFollow(userId)}
+                    >
+                      {isFollowed ? "Following" : "Follow"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Listening History */}
+          <div className="sc-sidebar-widget">
+            <div className="sc-widget-header">
+              <h3>LISTENING HISTORY</h3>
+              <a href="#" className="sc-widget-header-link">View all</a>
+            </div>
+            <div className="sc-list-items">
+              {history.length > 0 ? (
+                history.slice(0, 5).map((hist, i) => {
+                  const track = hist.track_id || hist;
+                  return (
+                    <div
+                      className="sc-track-mini"
+                      key={hist._id || i}
+                      onClick={() => handleGoToTrack(track)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <img
+                        src={track.artwork_url || track.coverArt || "https://via.placeholder.com/40"}
+                        alt={track.title}
+                        className="sc-track-mini-art"
+                      />
+                      <div className="sc-track-info">
+                        <div className="sc-track-uploader">
+                          {track.artist_id?.username || track.artist?.name || "Unknown"}
+                        </div>
+                        <div className="sc-track-title">{track.title}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ color: "#888", padding: "10px 0", fontSize: "13px" }}>
+                  No listening history available.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="sc-sidebar-footer-links">
+            <a href="#">Legal</a> · <a href="#">Privacy</a> · <a href="#">Cookie Policy/Imprint</a> · <a href="#">Charts</a> · <a href="#">Newsroom</a>
+            <div className="sc-lang" style={{ marginTop: "4px" }}>
+              Language: <a href="#">English (US)</a>
+            </div>
+          </div>
+        </aside>
+        </div>
+
       )}
+      <ReportModal isOpen={reportModalOpen} onClose={() => setReportModalOpen(false)} entityType={reportEntity.type} entityId={reportEntity.id} />
+
     </div>
   );
 };
