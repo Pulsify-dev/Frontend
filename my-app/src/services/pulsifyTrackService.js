@@ -1,6 +1,11 @@
 import { pulsifyAxiosInstance } from './api';
 
 const isMock = () => String(import.meta.env.VITE_USE_MOCKS) === 'true';
+const likedTrackRequestCache = new Map();
+
+const clearLikedTrackCache = (trackId) => {
+  likedTrackRequestCache.delete(String(trackId ?? ''));
+};
 
 const GENRE_OPTIONS = [
   'Electronic', 'Hip-Hop', 'Rock', 'Pop', 'Jazz',
@@ -266,19 +271,33 @@ export const PulsifyTrackService = {
   async likeTrack(trackId) {
     if (isMock()) return { success: true, message: 'Track liked' };
     const { data } = await pulsifyAxiosInstance.post(`/tracks/${trackId}/like`);
+    clearLikedTrackCache(trackId);
     return data;
   },
 
   async unlikeTrack(trackId) {
     if (isMock()) return { success: true, message: 'Track unliked' };
     const { data } = await pulsifyAxiosInstance.delete(`/tracks/${trackId}/like`);
+    clearLikedTrackCache(trackId);
     return data;
   },
 
   async checkIfLiked(trackId) {
     if (isMock()) return { liked: false };
-    const { data } = await pulsifyAxiosInstance.get(`/tracks/${trackId}/liked`);
-    return data;
+    const cacheKey = String(trackId ?? '');
+    if (!likedTrackRequestCache.has(cacheKey)) {
+      likedTrackRequestCache.set(
+        cacheKey,
+        pulsifyAxiosInstance
+          .get(`/tracks/${trackId}/liked`)
+          .then(({ data }) => data)
+          .catch((error) => {
+            likedTrackRequestCache.delete(cacheKey);
+            throw error;
+          }),
+      );
+    }
+    return likedTrackRequestCache.get(cacheKey);
   },
 
   validateAudioFile(file) {

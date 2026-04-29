@@ -11,6 +11,7 @@ import { PulsifyAlbumService } from "../../services/pulsifyAlbumService";
 import { PulsifyAlbumCard } from "../../components/albums/PulsifyAlbumCard";
 import {
   deleteTrack,
+  getArtistTracks,
   getListeningHistory,
   getRecentlyPlayed,
   getTrack,
@@ -100,6 +101,21 @@ const dedupeLibraryEntriesByTrack = (entries = []) => {
 };
 
 const getLibraryTrackId = (entry = {}) => entry.trackId ?? entry.id ?? "";
+const profileLibrarySurfaceCache = new Map();
+
+const cachedProfileLibraryRequest = (key, requestFn) => {
+  if (!profileLibrarySurfaceCache.has(key)) {
+    profileLibrarySurfaceCache.set(
+      key,
+      requestFn().catch((error) => {
+        profileLibrarySurfaceCache.delete(key);
+        throw error;
+      }),
+    );
+  }
+
+  return profileLibrarySurfaceCache.get(key);
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -163,16 +179,43 @@ export default function ProfilePage() {
 
   // ── Load library surfaces (liked, reposted, recent, history) ────────────────
   useEffect(() => {
+    if (!isOwnProfile && !profile?.id) return;
+
+    let cancelled = false;
+
     async function loadLibrarySurfaces() {
       try {
         setIsLibraryLoading(true);
+        if (!isOwnProfile) {
+          const artistTracksPayload = await cachedProfileLibraryRequest(
+            `profile-artist-tracks:${profile.id}`,
+            () => getArtistTracks(profile.id, { page: 1, limit: 20 }),
+          );
+
+          if (cancelled) return;
+
+          const artistTracks = (artistTracksPayload?.tracks ?? []).map(
+            (track) => mergeTrackSnapshot(track),
+          );
+
+          setLikedTracks([]);
+          setRepostedTracks([]);
+          setRecentTracks(artistTracks);
+          setHistoryTracks([]);
+          return;
+        }
+
         const [likes, reposts, recentEntries, historyEntries] =
-          await Promise.all([
-            getViewerLikedTracks(),
-            getViewerRepostedTracks(),
-            getRecentlyPlayed(),
-            getListeningHistory(),
-          ]);
+          await cachedProfileLibraryRequest(
+            `profile-own-library:${authUser?.id ?? "me"}`,
+            () =>
+              Promise.all([
+                getViewerLikedTracks(),
+                getViewerRepostedTracks(),
+                getRecentlyPlayed(),
+                getListeningHistory(),
+              ]),
+          );
 
         const trackIds = [
           ...new Set(
@@ -202,6 +245,8 @@ export default function ProfilePage() {
             Array.from(failedTrackIds),
           );
         }
+
+        if (cancelled) return;
 
         const filterValidTracks = (entries) =>
           entries.filter(
@@ -255,12 +300,16 @@ export default function ProfilePage() {
       } catch (error) {
         console.error("Failed to load engagement surfaces.", error);
       } finally {
-        setIsLibraryLoading(false);
+        if (!cancelled) setIsLibraryLoading(false);
       }
     }
 
     loadLibrarySurfaces();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser?.id, isOwnProfile, profile?.id]);
 
   // ── Pin currently playing track into recent/history ─────────────────────────
   useEffect(() => {

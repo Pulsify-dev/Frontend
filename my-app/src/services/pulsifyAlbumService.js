@@ -1,6 +1,11 @@
 import { pulsifyAxiosInstance } from './api';
 
 const isMock = () => String(import.meta.env.VITE_USE_MOCKS) === 'true';
+const likedAlbumRequestCache = new Map();
+
+const clearLikedAlbumCache = (albumId) => {
+  likedAlbumRequestCache.delete(String(albumId ?? ''));
+};
 
 /* ────────────────────────────────
    Mock Data (aligned to real API shape)
@@ -238,6 +243,7 @@ export const PulsifyAlbumService = {
   async likeAlbum(albumId) {
     if (isMock()) return { message: 'Album liked successfully.' };
     const { data } = await pulsifyAxiosInstance.post(`/albums/${albumId}/like`);
+    clearLikedAlbumCache(albumId);
     return data;
   },
 
@@ -245,13 +251,61 @@ export const PulsifyAlbumService = {
   async unlikeAlbum(albumId) {
     if (isMock()) return { message: 'Album unliked successfully.' };
     const { data } = await pulsifyAxiosInstance.delete(`/albums/${albumId}/like`);
+    clearLikedAlbumCache(albumId);
     return data;
   },
 
   /** GET /albums/:id/liked — Check if liked */
   async checkIfLiked(albumId) {
     if (isMock()) return { liked: false };
-    const { data } = await pulsifyAxiosInstance.get(`/albums/${albumId}/liked`);
+    const cacheKey = String(albumId ?? '');
+    if (!likedAlbumRequestCache.has(cacheKey)) {
+      likedAlbumRequestCache.set(
+        cacheKey,
+        pulsifyAxiosInstance
+          .get(`/albums/${albumId}/liked`)
+          .then(({ data }) => data)
+          .catch((error) => {
+            likedAlbumRequestCache.delete(cacheKey);
+            throw error;
+          }),
+      );
+    }
+    return likedAlbumRequestCache.get(cacheKey);
+  },
+
+  /** GET /albums/:id/likes — Get album likers */
+  async getLikers(albumId, page = 1, limit = 20) {
+    if (isMock()) return { likers: [], likes_count: 0, pagination: { page, limit, total: 0, pages: 0 } };
+    const { data } = await pulsifyAxiosInstance.get(`/albums/${albumId}/likes`, { params: { page, limit } });
+    return data;
+  },
+
+  /** POST /albums/:id/repost — Repost an album */
+  async repostAlbum(albumId) {
+    if (isMock()) return { message: 'Album reposted successfully.' };
+    const { data } = await pulsifyAxiosInstance.post(`/albums/${albumId}/repost`);
+    return data;
+  },
+
+  /** DELETE /albums/:id/repost — Unrepost an album */
+  async unrepostAlbum(albumId) {
+    if (isMock()) return { message: 'Album unreposted successfully.' };
+    const { data } = await pulsifyAxiosInstance.delete(`/albums/${albumId}/repost`);
+    return data;
+  },
+
+  /** GET /albums/:id/reposted — Check if reposted */
+  async checkIfReposted(albumId) {
+    if (isMock()) return { reposted: false };
+    const { data } = await pulsifyAxiosInstance.get(`/albums/${albumId}/reposted`);
+    return data;
+  },
+
+  /** GET /albums/:id/reposts — Get album reposters */
+  async getReposters(albumId, page = 1, limit = 20) {
+    if (isMock()) return { reposters: [], reposts_count: 0, pagination: { page, limit, total: 0, pages: 0 } };
+    const { data } = await pulsifyAxiosInstance.get(`/albums/${albumId}/reposts`, { params: { page, limit } });
     return data;
   }
 };

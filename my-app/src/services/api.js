@@ -1148,14 +1148,17 @@ const buildCommentMutationBody = (payload = {}) => {
     payload.text ?? payload.content ?? payload.body ?? "",
   ).trim();
   const normalizedTimestampMs = coerceNumber(payload.timestamp_ms);
+  const normalizedTimestampSeconds = coerceNumber(payload.timestamp_seconds);
 
   return {
     text: normalizedText,
     content: normalizedText,
-    ...(normalizedTimestampMs !== null
+    ...(normalizedTimestampMs !== null || normalizedTimestampSeconds !== null
       ? {
           timestamp_seconds: Math.max(
-            Math.round(normalizedTimestampMs / 1000),
+            normalizedTimestampSeconds !== null
+              ? Math.round(normalizedTimestampSeconds)
+              : Math.round(normalizedTimestampMs / 1000),
             0,
           ),
         }
@@ -1179,6 +1182,33 @@ const requestWithOptionalAuth = async (path, options = {}) => {
 
     throw error;
   }
+};
+
+const trackDetailRequestCache = new Map();
+
+const readCachedTrackDetail = (key, requester) => {
+  if (!trackDetailRequestCache.has(key)) {
+    trackDetailRequestCache.set(
+      key,
+      requester().catch((error) => {
+        if (Number(error?.status) !== 404) {
+          trackDetailRequestCache.delete(key);
+        }
+        throw error;
+      }),
+    );
+  }
+
+  return trackDetailRequestCache.get(key);
+};
+
+const clearCachedTrackDetail = (trackId) => {
+  const prefix = `track:${trackId}:`;
+  [...trackDetailRequestCache.keys()].forEach((key) => {
+    if (key.startsWith(prefix)) {
+      trackDetailRequestCache.delete(key);
+    }
+  });
 };
 
 const createTrackSummary = (track, overrides = {}) => ({
@@ -1442,34 +1472,39 @@ export const getTrack = async (trackId, secretToken) => {
     return clone(normalizeTrack(track));
   }
 
-  const query = secretToken ? `?token=${secretToken}` : "";
-  const payload = await request(`/tracks/${trackId}${query}`);
-  const normalizedTrack = normalizeTrack(unwrapEntity(payload, ["track"]));
+  const authCacheKey = getAuthToken() ? "auth" : "anon";
+  const trackCacheKey = `track:${trackId}:${secretToken ?? ""}:${authCacheKey}`;
 
-  if (!hasAuthToken()) {
-    return normalizedTrack;
-  }
+  return readCachedTrackDetail(trackCacheKey, async () => {
+    const query = secretToken ? `?token=${secretToken}` : "";
+    const payload = await request(`/tracks/${trackId}${query}`);
+    const normalizedTrack = normalizeTrack(unwrapEntity(payload, ["track"]));
 
-  const [likedResult, repostedResult] = await Promise.allSettled([
-    checkTrackLiked(trackId),
-    checkTrackReposted(trackId),
-  ]);
+    if (!hasAuthToken()) {
+      return normalizedTrack;
+    }
 
-  const resolvedTrack = {
-    ...normalizedTrack,
-    viewerHasLiked:
-      likedResult.status === "fulfilled"
-        ? Boolean(likedResult.value?.liked)
-        : normalizedTrack.viewerHasLiked,
-    viewerHasReposted:
-      repostedResult.status === "fulfilled"
-        ? Boolean(repostedResult.value?.reposted)
-        : normalizedTrack.viewerHasReposted,
-  };
+    const [likedResult, repostedResult] = await Promise.allSettled([
+      checkTrackLiked(trackId),
+      checkTrackReposted(trackId),
+    ]);
 
-  updateViewerTrackEngagementCache(resolvedTrack);
+    const resolvedTrack = {
+      ...normalizedTrack,
+      viewerHasLiked:
+        likedResult.status === "fulfilled"
+          ? Boolean(likedResult.value?.liked)
+          : normalizedTrack.viewerHasLiked,
+      viewerHasReposted:
+        repostedResult.status === "fulfilled"
+          ? Boolean(repostedResult.value?.reposted)
+          : normalizedTrack.viewerHasReposted,
+    };
 
-  return resolvedTrack;
+    updateViewerTrackEngagementCache(resolvedTrack);
+
+    return resolvedTrack;
+  });
 };
 
 export const getWaveform = async (trackId) => {
@@ -1716,6 +1751,7 @@ export const toggleLike = async (trackId, shouldLike) => {
       trackId,
       viewerHasLiked: shouldLike,
     });
+    clearCachedTrackDetail(trackId);
     return payload;
   } catch (err) {
     // 409 = already in the requested state — treat as success
@@ -1725,6 +1761,7 @@ export const toggleLike = async (trackId, shouldLike) => {
         trackId,
         viewerHasLiked: shouldLike,
       });
+      clearCachedTrackDetail(trackId);
       return { success: true };
     }
     throw err;
@@ -1796,6 +1833,7 @@ export const toggleRepost = async (trackId, shouldRepost) => {
       trackId,
       viewerHasReposted: shouldRepost,
     });
+    clearCachedTrackDetail(trackId);
     return payload;
   } catch (err) {
     // 409 = already in the requested state — treat as success
@@ -1805,6 +1843,7 @@ export const toggleRepost = async (trackId, shouldRepost) => {
         trackId,
         viewerHasReposted: shouldRepost,
       });
+      clearCachedTrackDetail(trackId);
       return { success: true };
     }
     throw err;
@@ -2013,7 +2052,7 @@ export const getRelatedTracks = async (trackId) => {
     });
     return unwrapCollection(payload).map(normalizeTrackCard);
   } catch (err) {
-    if (err?.message?.includes("404")) return [];
+    if (Number(err?.status) === 404 || err?.message?.includes("404")) return [];
     throw err;
   }
 };
@@ -2024,7 +2063,7 @@ export const getDownloadUrl = async (trackId) => {
     return { url: track.audioUrl };
   }
 
-  return request(`/tracks/${trackId}/download-url`);
+  return request(`/tracks/${trackId}/download`);
 };
 
 // ── Module 4: Track Management ─────────────────────────────────────────────
@@ -2139,7 +2178,7 @@ export const getTrackPlaylists = async (trackId) => {
     });
     return unwrapCollection(payload).map(normalizePlaylist);
   } catch (err) {
-    if (err?.message?.includes("404")) return [];
+    if (Number(err?.status) === 404 || err?.message?.includes("404")) return [];
     throw err;
   }
 };

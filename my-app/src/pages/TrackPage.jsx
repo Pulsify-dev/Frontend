@@ -103,6 +103,21 @@ const mergeById = (items) => {
 
 const COMMENTS_PAGE_LIMIT = 20;
 const REPLIES_PAGE_LIMIT = 20;
+const trackPageRequestCache = new Map();
+
+const cachedTrackPageRequest = (key, requestFn) => {
+  if (!trackPageRequestCache.has(key)) {
+    trackPageRequestCache.set(
+      key,
+      requestFn().catch((error) => {
+        trackPageRequestCache.delete(key);
+        throw error;
+      }),
+    );
+  }
+
+  return trackPageRequestCache.get(key);
+};
 
 const markCommentAsDeleted = (comment) => ({
   ...comment,
@@ -190,8 +205,9 @@ const getSectionConfig = (
 
 function TrackPage({ view = "overview" }) {
   const navigate = useNavigate();
-  const { trackId: routeTrackId } = useParams();
-  const trackId = routeTrackId ?? DEFAULT_TRACK_ID;
+  const { trackId: routeTrackId, id: legacyRouteTrackId } = useParams();
+  const resolvedRouteTrackId = routeTrackId ?? legacyRouteTrackId;
+  const trackId = resolvedRouteTrackId ?? DEFAULT_TRACK_ID;
 
   const {
     currentTrack: activeTrack,
@@ -207,6 +223,7 @@ function TrackPage({ view = "overview" }) {
     setQueueTrackIds,
     syncCurrentTrack,
   } = usePlayer();
+  const { openConversation, shareTrackToConversation } = useMessaging();
 
   // FIX: keep a stable ref to syncCurrentTrack so we can call it inside
   // async functions without adding it to useEffect dependency arrays
@@ -372,8 +389,12 @@ function TrackPage({ view = "overview" }) {
 
       let nextTrack = null;
 
+      const cacheKey = `track-core:${trackId}:${authRefreshKey}`;
+
       try {
-        nextTrack = await getTrack(trackId);
+        nextTrack = await cachedTrackPageRequest(cacheKey, () =>
+          getTrack(trackId),
+        );
       } catch {
         if (!isMounted) return;
         setError("Track unavailable right now.");
@@ -382,13 +403,12 @@ function TrackPage({ view = "overview" }) {
       }
 
       const results = await Promise.allSettled([
-        getStreamUrl(trackId, { playbackContext: "track_page" }),
-        getComments(trackId, { page: 1, limit: COMMENTS_PAGE_LIMIT }),
-        getLikers(trackId),
-        getReposters(trackId),
-        getRelatedTracks(trackId),
-        getTrackPlaylists(trackId),
-        getFanLeaderboard(trackId),
+        cachedTrackPageRequest(`track-stream:${trackId}:${authRefreshKey}`, () =>
+          getStreamUrl(trackId, { playbackContext: "track_page" }),
+        ),
+        cachedTrackPageRequest(`track-comments:${trackId}:${authRefreshKey}`, () =>
+          getComments(trackId, { page: 1, limit: COMMENTS_PAGE_LIMIT }),
+        ),
       ]);
 
       if (!isMounted) return;
@@ -435,27 +455,16 @@ function TrackPage({ view = "overview" }) {
       );
       setCommentsPagination(commentsPayload.pagination ?? null);
 
-      const nextLikers =
-        results[2].status === "fulfilled" ? results[2].value : [];
-      const nextReposters =
-        results[3].status === "fulfilled" ? results[3].value : [];
-      const nextRelatedTracks =
-        results[4].status === "fulfilled" ? results[4].value : [];
-      const nextPlaylists =
-        results[5].status === "fulfilled" ? results[5].value : [];
-
-      setLikers(nextLikers);
-      setReposters(nextReposters);
-      setRelatedTracks(nextRelatedTracks);
-      setPlaylists(nextPlaylists);
-      setFanLeaderboard(
-        results[6].status === "fulfilled" ? results[6].value : [],
-      );
+      setLikers([]);
+      setReposters([]);
+      setRelatedTracks([]);
+      setPlaylists([]);
+      setFanLeaderboard([]);
 
       setQueueTrackIds(
         buildTrackQueueIds(
           nextTrack.id,
-          nextRelatedTracks.map((item) => item.id),
+          [],
           CONFIGURED_TRACK_IDS,
         ),
       );
@@ -479,6 +488,63 @@ function TrackPage({ view = "overview" }) {
   // `track` or `isActiveRouteTrack` changed. That created a state → render →
   // context change → re-render → effect loop. The single call at the end of
   // fetchTrackData above is sufficient.
+
+  useEffect(() => {
+    if (!trackId || !track?.id) return;
+
+    let isMounted = true;
+
+    const loadViewData = async () => {
+      if (view === "related") {
+        const nextRelatedTracks = await cachedTrackPageRequest(
+          `track-related:${trackId}:${authRefreshKey}`,
+          () => getRelatedTracks(trackId),
+        ).catch(() => []);
+        if (!isMounted) return;
+        setRelatedTracks(nextRelatedTracks);
+        setQueueTrackIds(
+          buildTrackQueueIds(
+            track.id,
+            nextRelatedTracks.map((item) => item.id),
+            CONFIGURED_TRACK_IDS,
+          ),
+        );
+        return;
+      }
+
+      if (view === "playlists") {
+        const nextPlaylists = await cachedTrackPageRequest(
+          `track-playlists:${trackId}:${authRefreshKey}`,
+          () => getTrackPlaylists(trackId),
+        ).catch(() => []);
+        if (isMounted) setPlaylists(nextPlaylists);
+        return;
+      }
+
+      if (view === "likes") {
+        const nextLikers = await cachedTrackPageRequest(
+          `track-likers:${trackId}:${authRefreshKey}`,
+          () => getLikers(trackId),
+        ).catch(() => []);
+        if (isMounted) setLikers(nextLikers);
+        return;
+      }
+
+      if (view === "reposts") {
+        const nextReposters = await cachedTrackPageRequest(
+          `track-reposters:${trackId}:${authRefreshKey}`,
+          () => getReposters(trackId),
+        ).catch(() => []);
+        if (isMounted) setReposters(nextReposters);
+      }
+    };
+
+    loadViewData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authRefreshKey, track?.id, trackId, view]);
 
   const handleTokenSubmit = (event) => {
     event.preventDefault();
@@ -528,6 +594,7 @@ function TrackPage({ view = "overview" }) {
       playbackContext: "track_page",
       queueIds: routeQueueTrackIds,
       startTime: nextValue,
+      streamInfo,
     });
   };
 
@@ -550,6 +617,7 @@ function TrackPage({ view = "overview" }) {
       autoplay: true,
       playbackContext: "track_page",
       queueIds: routeQueueTrackIds,
+      streamInfo,
     });
   };
 

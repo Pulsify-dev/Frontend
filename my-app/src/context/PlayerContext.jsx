@@ -456,10 +456,9 @@ export const PlayerProvider = ({ children }) => {
         audioRef.current.currentTime = 0;
       }
 
-      const nextStreamInfo = await resolveStreamInfo(
-        resolvedTrack,
-        nextPlaybackContext,
-      );
+      const nextStreamInfo =
+        options.streamInfo ??
+        (await resolveStreamInfo(resolvedTrack, nextPlaybackContext));
       if (loadRequestRef.current !== nextRequestId) {
         return resolvedTrack;
       }
