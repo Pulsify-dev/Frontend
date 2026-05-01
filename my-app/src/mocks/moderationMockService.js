@@ -96,7 +96,6 @@ class ModerationMockService {
   }
 
   async createReport(reportData) {
-    console.log('MOCK: createReport', reportData);
     const report = {
       _id: Date.now().toString(),
       reporter_id: { _id: 'mock-user', username: 'current_user', email: 'current_user@pulsify.dev' },
@@ -114,7 +113,6 @@ class ModerationMockService {
   }
 
   async getReports({ page = 1, limit = 20, status = 'Pending' } = {}) {
-    console.log(`MOCK: getReports status=${status}`);
     const filtered = this.mockReports.filter(r => r.status === status);
     return new Promise(resolve => 
       setTimeout(() => resolve({ status: 'success', data: { reports: filtered, total: filtered.length } }), 500)
@@ -122,7 +120,6 @@ class ModerationMockService {
   }
 
   async resolveReport(reportId, status, adminNotes) {
-    console.log(`MOCK: resolveReport ${reportId} to ${status}`);
     const report = this.mockReports.find(r => r._id === reportId);
     if (report) {
       report.status = status;
@@ -159,21 +156,18 @@ class ModerationMockService {
   }
 
   async suspendUser(userId) {
-    console.log(`MOCK: suspendUser ${userId}`);
     return new Promise(resolve => 
       setTimeout(() => resolve({ status: 'success', message: 'User suspended', data: { user: { _id: userId, is_suspended: true } } }), 500)
     );
   }
 
   async restoreUser(userId) {
-    console.log(`MOCK: restoreUser ${userId}`);
     return new Promise(resolve => 
       setTimeout(() => resolve({ status: 'success', message: 'User restored', data: { user: { _id: userId, is_suspended: false } } }), 500)
     );
   }
 
   async getSystemLogs({ level = 'All' } = {}) {
-    console.log(`MOCK: getSystemLogs (level: ${level})`);
     const logs = [
       { id: 'log-1', category: 'SECURITY', level: 'CRITICAL', action: 'Multiple Failed Logins', user: 'Unknown IP', details: '192.168.1.99 tried 15 times', timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString() },
       { id: 'log-2', category: 'MODERATION', level: 'WARNING', action: 'User Suspended', user: 'Admin (admin@pulsify.com)', details: 'Suspended user ID: user-004', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString() },

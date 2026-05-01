@@ -90,7 +90,6 @@ export const HomeFeedPage = ({ userId }) => {
 
 
   const handlePlayTrack = useCallback((track) => {
-    console.log('Playing track:', track.title);
     // Dispatch to global player state here
   }, []);
 

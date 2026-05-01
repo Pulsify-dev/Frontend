@@ -54,14 +54,12 @@ export const NotificationProvider = ({ children }) => {
     });
 
     socket.on("connect", () => {
-      console.log("Connected to notification web socket");
       // 2. Join the notification room after connecting
       socket.emit("join_notifications");
     });
 
     // 3. Listen for new notifications
     socket.on("new_notification", (notification) => {
-      console.log("New real-time notification:", notification);
       const camelNotif = adaptNotification(notification);
       setNotifications((prev) => [camelNotif, ...prev]);
       setUnreadCount((prev) => prev + 1);
@@ -102,7 +100,6 @@ export const NotificationProvider = ({ children }) => {
   const registerDeviceToken = async (fcmToken) => {
     try {
       await serviceLocator.notifications.registerPushToken(fcmToken);
-      console.log("FCM device token registered with server");
     } catch (err) {
       console.error("Failed to register FCM token:", err);
     }

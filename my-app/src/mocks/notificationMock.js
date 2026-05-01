@@ -101,7 +101,6 @@ export const markAllNotificationsRead = async () => {
 export const registerPushToken = async (token) => {
   return new Promise(resolve => {
     setTimeout(() => {
-      console.log('Mock: Push token registered ->', token);
       resolve({ success: true, message: 'Mock token registered' });
     }, 100);
   });

@@ -215,17 +215,9 @@ const apiRequest = async (endpoint, options = {}) => {
     headers,
   };
 
-  console.log(`[API Request] ${config.method || "GET"} ${url}`);
-  if (options.body) {
-    console.log("[API Request Body]", JSON.parse(options.body));
-  }
-
   try {
     const response = await fetch(url, config);
     const data = await parseResponseBody(response);
-
-    console.log(`[API Response] ${response.status} ${response.statusText}`);
-    console.log("[API Response Data]", data);
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -248,7 +240,7 @@ const apiRequest = async (endpoint, options = {}) => {
         error.retryAfterSeconds = retryAfterSeconds;
         error.expiresAt = expiresAt;
         error.endpoint = endpoint;
-        console.error("[API Error]", error.message, data);
+        console.error("[API Error]", error.message);
         throw error;
       }
 
@@ -257,7 +249,7 @@ const apiRequest = async (endpoint, options = {}) => {
       const error = new Error(data?.message || data?.error || "Request failed");
       error.status = response.status;
       error.data = data;
-      console.error("[API Error]", error.message, data);
+      console.error("[API Error]", error.message);
       throw error;
     }
 

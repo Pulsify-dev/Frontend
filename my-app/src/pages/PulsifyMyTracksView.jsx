@@ -44,7 +44,6 @@ export const PulsifyMyTracksView = () => {
       setError(null);
       const userId = user?._id || user?.id;
       const result = await PulsifyTrackService.getArtistTracks(userId || 'me', 1, 100);
-      console.log('[MyTracks] Fetched tracks:', result);
       // Handle different response shapes from the backend
       const trackList = result?.tracks || result?.data || (Array.isArray(result) ? result : []);
       setTracks(trackList);
@@ -88,12 +87,11 @@ export const PulsifyMyTracksView = () => {
     if (!selectedTrackForPlaylist) return;
     try {
       const trackId = selectedTrackForPlaylist._id || selectedTrackForPlaylist.id;
-      console.log('[AddToPlaylist] playlistId:', playlistId, 'trackId:', trackId);
       await PulsifyPlaylistService.addTrackToPlaylist(playlistId, trackId);
       alert('Added to playlist!');
       setPlaylistSidebarOpen(false);
     } catch (e) {
-      console.error('[AddToPlaylist] Error:', e.response?.status, e.response?.data);
+      console.error('[AddToPlaylist] Error:', e.response?.status || e.message);
       alert('Failed to add track: ' + (e.response?.data?.message || e.message));
     }
   };
@@ -109,10 +107,8 @@ export const PulsifyMyTracksView = () => {
         file: newPlaylistArtwork
       });
       
-      console.log('[CreatePlaylist] Full response:', JSON.stringify(newPlaylist, null, 2));
       const playlistId = newPlaylist.playlist?._id || newPlaylist.data?._id || newPlaylist._id;
       const trackId = selectedTrackForPlaylist._id || selectedTrackForPlaylist.id;
-      console.log('[CreatePlaylist] Extracted playlistId:', playlistId, 'trackId:', trackId);
       
       if (!playlistId) throw new Error("Could not retrieve new playlist ID from server response.");
       
@@ -121,7 +117,7 @@ export const PulsifyMyTracksView = () => {
         await PulsifyPlaylistService.addTrackToPlaylist(playlistId, trackId);
         alert('Playlist created and track added!');
       } catch (addErr) {
-        console.error('[CreatePlaylist] Failed to add track:', addErr.response?.data || addErr.message);
+        console.error('[CreatePlaylist] Failed to add track:', addErr.response?.status || addErr.message);
         alert('Playlist created, but failed to add track: ' + (addErr.response?.data?.message || addErr.message));
       }
       
@@ -136,7 +132,7 @@ export const PulsifyMyTracksView = () => {
       setPlaylistSidebarOpen(false);
     } catch (e) {
       setIsCreatingPlaylist(false);
-      console.error('[CreatePlaylist] Error:', e.response?.data || e.message);
+      console.error('[CreatePlaylist] Error:', e.response?.status || e.message);
       alert('Error creating playlist: ' + (e.response?.data?.message || e.message));
     }
   };

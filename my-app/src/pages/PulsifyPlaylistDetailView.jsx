@@ -119,7 +119,6 @@ export const PulsifyPlaylistDetailView = () => {
           data = data.data;
         }
 
-        console.log("[PlaylistDetail] Resolved playlist data:", data);
         if (isMounted) setPlaylistDetail(data);
 
         // Fetch creator profile for avatar and display name
@@ -188,19 +187,9 @@ export const PulsifyPlaylistDetailView = () => {
       const trackIds = newTracks.map(
         (t) => t.track_id?._id || t.track_id || t.id,
       );
-      console.log(
-        "[Reorder] playlistId:",
-        playlistDetail._id,
-        "trackIds:",
-        trackIds,
-      );
       await PulsifyPlaylistService.reorderTracks(playlistDetail._id, trackIds);
     } catch (err) {
-      console.error(
-        "[Reorder] Failed:",
-        err.response?.status,
-        err.response?.data,
-      );
+      console.error("[Reorder] Failed:", err.response?.status || err.message);
       setFetchError("Failed to persist sequence order.");
     }
   };
@@ -302,7 +291,6 @@ export const PulsifyPlaylistDetailView = () => {
         playlistDetail._id,
         formData,
       );
-      console.log("[Image Upload] PATCH response:", JSON.stringify(res, null, 2));
       // The response shape may vary: res.data.cover_url, res.cover_url, or res.data.data.cover_url
       const newCoverUrl = res?.data?.cover_url || res?.cover_url || res?.data?.data?.cover_url;
       if (newCoverUrl) {

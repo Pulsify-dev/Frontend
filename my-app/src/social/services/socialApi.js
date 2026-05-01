@@ -155,7 +155,6 @@ export async function getBlockedUsersApi(page = 1, limit = 12) {
   );
   if (!res.ok) throw new Error("Failed to fetch blocked users");
   const data = await res.json();
-  console.log("[getBlockedUsersApi] raw response:", JSON.stringify(data));
   const inner = data.data || {};
   const rawList = inner.blocked_users || inner.blockedUsers || inner.data || [];
   return {

@@ -75,10 +75,9 @@ export const PulsifyAlbumService = {
     }
     try {
       const { data } = await pulsifyAxiosInstance.get('/albums', { params: { page, limit } });
-      console.log('[AlbumService] GET /albums response:', data);
       return data;
     } catch (err) {
-      console.error('[AlbumService] GET /albums failed:', err.response?.status, err.response?.data);
+      console.error('[AlbumService] GET /albums failed:', err.response?.status || err.message);
       return { albums: [], total: 0 };
     }
   },
@@ -86,7 +85,6 @@ export const PulsifyAlbumService = {
   /** Convenience: retrieve all albums as flat array */
   async retrieveAllAlbums() {
     const result = await this.getMyAlbums();
-    console.log('[AlbumService] retrieveAllAlbums raw:', result);
     // Backend may wrap in { albums: [...] }, { data: [...] }, or return array directly
     const arr = result.albums || result.data || (Array.isArray(result) ? result : []);
     return arr;

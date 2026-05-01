@@ -196,7 +196,7 @@ const FeedPage = () => {
               likeCount: track.likes || 0
             }}
             onPlayClick={handlePlayTrack}
-            onLikeClick={() => console.log("Like clicked")}
+            onLikeClick={() => {}}
             isLiked={false}
           />
         ) : null}

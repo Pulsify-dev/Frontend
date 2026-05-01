@@ -46,7 +46,7 @@ export const PulsifyEditAlbumModal = ({ isOpen, onClose, album, onSaveSuccess })
       onClose();
     } catch (e) {
       const errorMsg = e.response?.data?.message || e.response?.data?.error || e.message;
-      console.error("Save error details:", e.response?.data);
+      console.error("Save error:", e.response?.status || e.message);
       alert("Failed to save changes: " + errorMsg);
     } finally {
       setIsSaving(false);

@@ -389,7 +389,6 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId, onRemoveTrack 
                           : null) ||
                         trackData._id ||
                         trackData.id;
-                      console.log("[Download] trackId:", trackId);
                       try {
                         const resp = await pulsifyAxiosInstance.get(
                           `/tracks/${trackId}/download`,
@@ -407,12 +406,7 @@ const PulsifyCardTrackEntry = ({ trackData, i, creatorName, plId, onRemoveTrack 
                         a.click();
                         document.body.removeChild(a);
                       } catch (err) {
-                        console.error(
-                          "[Download] Failed:",
-                          err?.response?.status,
-                          err?.response?.data,
-                          err,
-                        );
+                        console.error("[Download] Failed:", err?.response?.status || err.message);
                         alert(
                           err?.response?.status === 403
                             ? "Download requires Artist Pro subscription."

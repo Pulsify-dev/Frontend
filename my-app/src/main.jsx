@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { PulsifyAuthVaultProvider } from "./store/PulsifyAuthVault.jsx";
 import { AuthProvider } from "@/contexts/AuthContext";
+import "./utils/safeConsole.js";
 import "./index.css";
 import "./css/navbar-soundcloud.css";
 import App from "./App.jsx";

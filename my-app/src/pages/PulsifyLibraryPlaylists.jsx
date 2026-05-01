@@ -59,7 +59,6 @@ export const PulsifyLibraryPlaylists = () => {
       setAlbumsError(null);
       try {
         const data = await PulsifyAlbumService.getArtistAlbums(user.id);
-        console.log("[Library] GET artist albums response:", data);
         const rawAlbums =
           data.albums || data.data || (Array.isArray(data) ? data : []);
         if (isMounted) setAlbums(rawAlbums);

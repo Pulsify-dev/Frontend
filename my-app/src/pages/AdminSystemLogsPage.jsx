@@ -15,7 +15,6 @@ const AdminSystemLogsPage = () => {
     setLoading(true);
     try {
       const response = await serviceLocator.moderation.getSystemLogs({ level: filterLevel });
-      console.log("Logs Response:", response);
       setLogs(response.data?.logs || response.logs || response);
     } catch (error) {
       console.error('Failed to fetch system logs:', error);

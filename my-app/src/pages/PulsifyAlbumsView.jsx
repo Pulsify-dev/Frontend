@@ -24,7 +24,6 @@ export const PulsifyAlbumsView = () => {
   const handleCreateAlbum = async (payload) => {
     try {
       const result = await PulsifyAlbumService.createAlbum(payload);
-      console.log('[AlbumsView] Create album raw response:', result);
       // Unwrap: backend may return { album: {...} }, { data: {...} }, or the album directly
       let newAlbum = result;
       if (result?.album && typeof result.album === 'object') newAlbum = result.album;
@@ -44,7 +43,7 @@ export const PulsifyAlbumsView = () => {
       
       setAlbums(prev => [newAlbum, ...prev]);
     } catch (err) {
-      console.error('[AlbumsView] Create album failed:', err.response?.data || err);
+      console.error('[AlbumsView] Create album failed:', err.response?.status || err.message);
       alert('Failed to create album: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -56,10 +55,8 @@ export const PulsifyAlbumsView = () => {
       try {
         setIsLoading(true);
         const data = await PulsifyAlbumService.retrieveAllAlbums();
-        console.log('[AlbumsView] retrieveAllAlbums returned:', data);
         if (isMounted) {
           const rawAlbums = Array.isArray(data) ? data : data.albums || [];
-          console.log('[AlbumsView] rawAlbums array:', rawAlbums);
           
           if (rawAlbums.length === 0) {
             // No albums found — show empty state

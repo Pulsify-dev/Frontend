@@ -87,7 +87,6 @@ export const PulsifyAlbumDetailView = () => {
           data = data.data;
         }
 
-        console.log('[AlbumDetail] Resolved album data:', data);
         if (isMounted) setAlbumDetail(data);
 
         // Fetch artist profile
@@ -134,10 +133,9 @@ export const PulsifyAlbumDetailView = () => {
     setAlbumDetail({ ...albumDetail, tracks: newTracks });
     try {
       const orderedIds = newTracks.map(t => t.track_id?._id || t.track_id || t.id);
-      console.log('[Reorder] albumId:', albumDetail._id, 'orderedIds:', orderedIds);
       await PulsifyAlbumService.reorderTracks(albumDetail._id, orderedIds);
     } catch (err) {
-      console.error('[Reorder] Failed:', err.response?.status, err.response?.data);
+      console.error('[Reorder] Failed:', err.response?.status || err.message);
       setFetchError('Failed to persist track order.');
     }
   };

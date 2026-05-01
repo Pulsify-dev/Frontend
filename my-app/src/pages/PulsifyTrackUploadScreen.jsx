@@ -23,7 +23,6 @@ export const PulsifyTrackUploadScreen = () => {
     const fetchUsage = async () => {
       try {
         const data = await PulsifyPremiumService.getMyUsage();
-        console.log("[Upload] Usage data:", data);
         setUsageData(data);
       } catch (e) {
         console.warn("[Upload] Failed to fetch usage:", e);
