@@ -35,6 +35,7 @@ import { PulsifyPlaylistDetailView } from "@/pages/PulsifyPlaylistDetailView";
 import { PulsifyTrackUploadScreen } from "@/pages/PulsifyTrackUploadScreen";
 import { PulsifyMyTracksView } from "@/pages/PulsifyMyTracksView";
 import { PulsifyPremiumUpgradePage } from "@/pages/PulsifyPremiumUpgradePage";
+import { PulsifyCheckoutPage } from "@/pages/PulsifyCheckoutPage";
 
 // Module 13 – Albums (Omar Nasser)
 import { PulsifyAlbumDetailView } from "@/pages/PulsifyAlbumDetailView";
@@ -177,6 +178,7 @@ const AppRoutes = () => {
 
                 {/* Premium - Module 12 */}
                 <Route path="/premium" element={<PulsifyPremiumUpgradePage />} />
+                <Route path="/checkout" element={<PulsifyCheckoutPage />} />
 
                 {/* Discovery & Notifications - Module 8/10 */}
                 <Route path="/feed" element={<FeedPage />} />

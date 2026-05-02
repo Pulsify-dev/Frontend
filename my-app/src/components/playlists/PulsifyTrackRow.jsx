@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlayer } from '../../hooks/usePlayer';
 import { PulsifyTrackService } from '../../services/pulsifyTrackService';
+import { AddToPlaylistModal } from './AddToPlaylistModal';
 
 export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop, onDragEnd, onRemoveTrack }) => {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [isLiked, setIsLiked] = useState(() => {
     try {
       const localStr = localStorage.getItem('pulsifyLikedTracks');
@@ -74,6 +76,7 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
   if (!track) return null;
 
   return (
+    <>
     <div
       draggable
       onDragStart={(e) => onDragStart(e, index)}
@@ -165,6 +168,15 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
                 overflow: 'hidden', padding: '4px 0'
               }}>
                 <button
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setShowAddToPlaylist(true); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 16px', background: 'none', border: 'none', color: '#ccc', fontSize: '13px', cursor: 'pointer', textAlign: 'left' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#222'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#ccc'; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
+                  Add to playlist
+                </button>
+                <button
                   onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 16px', background: 'none', border: 'none', color: '#ccc', fontSize: '13px', cursor: 'pointer', textAlign: 'left' }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#222'; e.currentTarget.style.color = '#fff'; }}
@@ -194,6 +206,14 @@ export const PulsifyTrackRow = ({ track, index, onDragStart, onDragOver, onDrop,
         </div>
       )}
     </div>
+
+      {/* Add to Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={showAddToPlaylist}
+        onClose={() => setShowAddToPlaylist(false)}
+        trackId={track._id || track.id}
+      />
+    </>
   );
 };
 
