@@ -218,17 +218,45 @@ export const PlayerProvider = ({ children }) => {
       try {
         const sub = await PulsifyPremiumService.getMySubscription();
         if (cancelled) return;
+        console.log('[AdDelivery] Subscription response:', JSON.stringify(sub, null, 2));
+
+        const subscription = sub?.subscription || {};
         const features = sub?.features || {};
         const planLimits = sub?.plan_limits || {};
-        // Pro users get null for both
-        const interval = features.ad_interval_seconds ?? planLimits.ad_interval_seconds ?? null;
-        const videoUrl = features.ad_video_url ?? planLimits.ad_video_url ?? null;
+
+        // Check if user cancelled (backend still says Pro until period ends)
+        const isCancelled = subscription.cancel_at_period_end === true ||
+                            subscription.status === "Cancelled";
+
+        let interval = features.ad_interval_seconds ?? planLimits.ad_interval_seconds ?? null;
+        let videoUrl = features.ad_video_url ?? planLimits.ad_video_url ?? null;
+
+        // If cancelled but backend still returns Pro (null ad fields),
+        // fetch the Free plan's ad config from /plans
+        if (isCancelled && (!interval || !videoUrl)) {
+          console.log('[AdDelivery] User cancelled — fetching Free plan ad config...');
+          try {
+            const plans = await PulsifyPremiumService.getPlans();
+            const freePlan = (plans || []).find(p => p.plan === 'Free');
+            if (freePlan) {
+              interval = freePlan.ad_interval_seconds ?? interval;
+              videoUrl = freePlan.ad_video_url ?? videoUrl;
+              console.log('[AdDelivery] Free plan config:', interval, videoUrl);
+            }
+          } catch (planErr) {
+            console.warn('[AdDelivery] Could not fetch plans:', planErr);
+          }
+        }
+
+        console.log('[AdDelivery] interval:', interval, '| videoUrl:', videoUrl);
         if (interval && videoUrl) {
           setAdIntervalSeconds(interval);
           setAdVideoUrl(videoUrl);
+          console.log('[AdDelivery] ✅ Ads enabled — interval:', interval, 'seconds');
         } else {
           setAdIntervalSeconds(null);
           setAdVideoUrl(null);
+          console.log('[AdDelivery] ❌ Ads disabled — missing interval or videoUrl');
         }
       } catch (err) {
         // Fail silently — no ads if we can't fetch config
