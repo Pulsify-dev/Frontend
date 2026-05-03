@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PulsifyAuthVaultContext } from "../store/PulsifyAuthVault";
 import { PulsifyPremiumService } from "../services/pulsifyPremiumService";
 import "../components/premium/css/PulsifyPremium.css";
@@ -13,6 +13,7 @@ const isMockMode =
   ).toLowerCase() === "true";
 
 export const PulsifyPremiumUpgradePage = () => {
+  const navigate = useNavigate();
   const { subscriptionTier, setSubscriptionTierOverride, refreshSubscription } =
     useContext(PulsifyAuthVaultContext) || {};
 
@@ -432,10 +433,9 @@ export const PulsifyPremiumUpgradePage = () => {
             ) : (
               <button
                 className="pulsify-btn-subscribe pulsify-btn-dark"
-                onClick={handleUpgrade}
-                disabled={loading}
+                onClick={() => navigate("/checkout")}
               >
-                {loading ? "Processing..." : "Subscribe to Pro"}
+                Subscribe to Pro
               </button>
             )}
 

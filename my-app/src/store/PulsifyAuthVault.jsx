@@ -38,8 +38,14 @@ export const PulsifyAuthVaultProvider = ({ children }) => {
       // Backend returns { success, data: { subscription, effective_plan, plan_limits } }
       const responseData = data?.data || data;
       const plan = responseData?.effective_plan;
+      const subscription = responseData?.subscription;
       if (plan) {
-        const tier = plan === "Artist Pro" ? "PRO" : "FREE";
+        // If cancel_at_period_end is true, the user cancelled but backend
+        // still reports "Artist Pro" until the period ends.
+        // For UI purposes, treat them as FREE immediately.
+        const isCancelled = subscription?.cancel_at_period_end === true ||
+                            subscription?.status === "Cancelled";
+        const tier = (plan === "Artist Pro" && !isCancelled) ? "PRO" : "FREE";
         setSubscriptionTier(tier);
         if (responseData?.plan_limits) {
           setPlanLimits(responseData.plan_limits);

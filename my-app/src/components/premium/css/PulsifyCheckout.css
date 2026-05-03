@@ -1,0 +1,482 @@
+/* ═══════════════════════════════════════════════════════
+   PulsifyCheckout.css — Stripe-style checkout page
+   ═══════════════════════════════════════════════════════ */
+
+.pulsify-checkout-page {
+  min-height: 100vh;
+  background: #111;
+  color: #e1e1e1;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ─── Header ─── */
+.checkout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.checkout-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkout-header-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.checkout-back-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #aaa;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checkout-back-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+/* ─── Content Grid ─── */
+.checkout-content {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 48px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 40px 80px;
+}
+
+@media (max-width: 768px) {
+  .checkout-content {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+    gap: 32px;
+  }
+}
+
+/* ─── Section Titles ─── */
+.checkout-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.checkout-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 85, 0, 0.12);
+  color: #f50;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.checkout-lock-icon {
+  margin-left: 6px;
+  opacity: 0.5;
+}
+
+/* ─── Radio Cards (Billing Cycle) ─── */
+.checkout-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.checkout-radio-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.checkout-radio-card.selected {
+  border-color: #f50;
+  background: rgba(255, 85, 0, 0.06);
+}
+
+.checkout-radio-card input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  background: transparent;
+}
+
+.checkout-radio-card input[type="radio"]:checked {
+  border-color: #f50;
+}
+
+.checkout-radio-card input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f50;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.radio-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  gap: 12px;
+}
+
+.radio-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio-card-main strong {
+  color: #fff;
+  font-size: 15px;
+}
+
+.radio-card-price {
+  font-size: 13px;
+  color: #999;
+}
+
+.checkout-discount-badge {
+  background: linear-gradient(135deg, #f50, #e04500);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* ─── Payment Method ─── */
+.checkout-payment-method {
+  margin-bottom: 16px;
+}
+
+.card-brand-icons {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.card-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.card-brand.visa {
+  background: #1a1f71;
+  color: #fff;
+}
+
+.card-brand.mastercard {
+  background: #eb001b;
+  color: #fff;
+}
+
+.card-brand.amex {
+  background: #006fcf;
+  color: #fff;
+}
+
+/* ─── Form Fields ─── */
+.checkout-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.checkout-field {
+  position: relative;
+}
+
+.checkout-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.checkout-field input,
+.checkout-field select {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #e1e1e1;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.checkout-field input:focus,
+.checkout-field select:focus {
+  outline: none;
+  border-color: #f50;
+}
+
+.checkout-field input::placeholder {
+  color: #666;
+}
+
+.checkout-field-label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.field-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.checkout-field-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.checkout-field-row input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #e1e1e1;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.checkout-field-row input:focus {
+  outline: none;
+  border-color: #f50;
+}
+
+.checkout-field-row input::placeholder {
+  color: #666;
+}
+
+/* ─── Order Summary (Right Column) ─── */
+.checkout-summary {
+  position: sticky;
+  top: 24px;
+}
+
+.checkout-plan-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+.plan-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.checkout-summary-rows {
+  margin-bottom: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.summary-row.summary-total {
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+.summary-price {
+  color: #fff;
+}
+
+.checkout-renewal-note {
+  font-size: 12px;
+  color: #777;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* ─── Processing Steps ─── */
+.checkout-processing {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.processing-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+  transition: all 0.3s;
+}
+
+.processing-step.active {
+  color: #f50;
+}
+
+.processing-step.done {
+  color: #4caf50;
+}
+
+.processing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #333;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.processing-step.active .processing-dot {
+  background: #f50;
+  box-shadow: 0 0 8px rgba(255, 85, 0, 0.5);
+  animation: pulse-dot 1s ease infinite;
+}
+
+.processing-step.done .processing-dot {
+  background: #4caf50;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+}
+
+/* ─── Buy Button ─── */
+.checkout-buy-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #333, #222);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+}
+
+.checkout-buy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #444, #333);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.checkout-buy-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Legal Text ─── */
+.checkout-legal {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.checkout-legal a {
+  color: #68b5f5;
+  text-decoration: none;
+}
+
+.checkout-legal a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Stripe Badge ─── */
+.checkout-stripe-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: #555;
+}
+
+.stripe-logo {
+  opacity: 0.7;
+}
+
+.checkout-error {
+  background: rgba(255, 50, 50, 0.1);
+  border: 1px solid rgba(255, 50, 50, 0.3);
+  color: #ff5555;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
